@@ -263,7 +263,7 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 
 void TriggerEditor::saveScriptTriggers(const char* path)
 {
-	printf("自定义保存wtg文件\n");
+	printf("自定义保存wct文件\n");
 
 	clock_t start = clock();
 
