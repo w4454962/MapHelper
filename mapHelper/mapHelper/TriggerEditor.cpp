@@ -28,6 +28,14 @@ void TriggerEditor::saveTriggers(const char* path)
 		printf("缺少触发器数据\n");
 		return;
 	}
+
+	printf("自定义保存wtg文件\n");
+
+	clock_t start = clock();
+
+
+
+
 	BinaryWriter writer;
 
 
@@ -48,6 +56,8 @@ void TriggerEditor::saveTriggers(const char* path)
 	std::ofstream out(std::string(path) + ".wtg", std::ios::binary);
 	out.write((const char*)&writer.buffer[0],writer.buffer.size());
 	out.close();
+
+	printf("wtg 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 void TriggerEditor::writeCategoriy(BinaryWriter& writer)
@@ -253,6 +263,10 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 
 void TriggerEditor::saveScriptTriggers(const char* path)
 {
+	printf("自定义保存wtg文件\n");
+
+	clock_t start = clock();
+
 	TriggerData* data = m_editorData;
 
 	BinaryWriter writer;
@@ -292,4 +306,6 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	std::ofstream out(std::string(path) + ".wct", std::ios::binary);
 	out.write((const char*)&writer.buffer[0], writer.buffer.size());
 	out.close();
+
+	printf("wct 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
