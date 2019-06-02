@@ -3,6 +3,19 @@
 #include "stdafx.h"
 #include "mapHelper.h"
 
+struct TriggerType
+{
+	uint32_t flag;//0x0
+	const char type[0x8c];//0x4
+	const char value[0x110];//0x90 配置在TriggerData文件里的TriggerTypeDefaults的默认值
+};//size 0x1a0
+
+struct TriggerConfigData
+{
+	char unknow[0x1c];
+	uint32_t type_count; //0x1c
+	TriggerType* array;//0x20
+};
 
 struct Parameter
 {
@@ -121,10 +134,15 @@ class TriggerEditor
 public:
 	TriggerEditor();
 	~TriggerEditor();
+
+	static TriggerEditor* getInstance();
 	
 	void loadTriggers(TriggerData* data);
+	void loadTriggerConfig(TriggerConfigData* data);
+
 	void saveTriggers(const char* path); //生成wtg
 	void saveScriptTriggers(const char* path);//生成 wct
+	void saveSctipt(const char* path); //生成j
 private: 
 	void writeCategoriy(BinaryWriter& writer);
 	void writeVariable(BinaryWriter& writer);
@@ -133,6 +151,13 @@ private:
 	void writeAction(BinaryWriter& writer, Action* action);
 	void writeParameter(BinaryWriter& writer, Parameter* param);
 protected:
+	TriggerConfigData* m_configData;
 	TriggerData* m_editorData;
 	uint32_t m_version;
+	bool is_ydwe;
+
+	const std::string seperator = "//===========================================================================\n";
+
+	//变量类型默认的值
+	std::map<std::string, std::string> m_typeDefaultValues;
 };

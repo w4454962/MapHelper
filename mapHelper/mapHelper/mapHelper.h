@@ -1,8 +1,7 @@
 #pragma once
 #include "stdafx.h"
-
-
-
+#include "inline.h"
+#include "WorldEditor.h"
 
 template<typename dst_type, typename src_type>
 dst_type union_cast(src_type src)
@@ -18,60 +17,25 @@ dst_type union_cast(src_type src)
 
 class Helper
 {
-	typedef std::vector<uint8_t> Bytes;
 public:
 	Helper();
 	~Helper();
 	
-	uintptr_t getAddress(uintptr_t addr);
-	uintptr_t getEditorCurrentObject();
-	const char* getCurrentMapPath();
-	const char* getTempSavePath();
-
-	void saveMap(const char* outPath);
-
-	uintptr_t onMulSaveMap(uintptr_t);
-	uintptr_t onSaveMap();
-	
-
-	static Helper* instance;
-
-private:
-	
+	static Helper* getInstance();
 
 	void enableConsole();
 
-	int asmString(std::string& input,Bytes& bytes);
+	void attatch();//∏Ωº”
 
-	void hookSaveMapData();
+	void detach();//∑÷¿Î
 
-	//save map
-	
-	int saveWts();
-	int saveW3i();
-	int saveImp();
-	int saveW3e();
-	int saveShd();
-	int saveWpm();
-	int saveMiniMap();
-	int saveMmp();
-	int saveObject();
-	int saveDoodas();
-	int saveUnits();
-	int saveRect();
-	int saveCamara();
-	int saveSound();
-	int saveTrigger();
-	int saveScript();
-	int saveArchive();
+private: 
+
+	uintptr_t onSaveMap();
+
 protected:
-	int m_passStep;
+	bool m_bAttach;
 
-	bool m_init;;
-	bool m_isMulThread;
+	hook::hook_t* m_hookSaveMap;
 
-	uintptr_t m_editorObject;
-	const char* m_outpath;
-
-	class TriggerEditor* m_triggerEditor;
 };

@@ -23,7 +23,7 @@
     <ProjectGuid>{4A3C5086-97EE-4220-9264-BE5B1F8B1D0C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>mapHelper</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -168,20 +168,17 @@
     <ClInclude Include="dynarray.h" />
     <ClInclude Include="fp_call.h" />
     <ClInclude Include="inline.h" />
-    <ClInclude Include="is_utf8.h" />
     <ClInclude Include="mapHelper.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="string_view.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TriggerEditor.h" />
     <ClInclude Include="unicode.h" />
+    <ClInclude Include="WorldEditor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="inline.cpp" />
-    <ClCompile Include="is_utf8.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="mapHelper.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -195,6 +192,7 @@
     <ClCompile Include="unicode.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WorldEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="detail\ansi_codecvt.inl" />

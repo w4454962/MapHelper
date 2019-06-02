@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "TriggerEditor.h"
-
+#include "WorldEditor.h"
 //#define printf //
 
 TriggerEditor::TriggerEditor()
 	: m_editorData(NULL),
-	m_version(7)
+	m_version(7),
+	is_ydwe(false)
 {
 
 }
@@ -15,10 +16,32 @@ TriggerEditor::~TriggerEditor()
 
 }
 
+TriggerEditor* TriggerEditor::getInstance()
+{
+	static TriggerEditor instance; 
+	return &instance;
+}
+
 void TriggerEditor::loadTriggers(TriggerData* data)
 {
 	m_editorData = data;
 
+}
+
+void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
+{
+	m_configData = data;
+	printf("读取配置文件\n");
+	for (uint32_t i = 0; i < data->type_count; i++)
+	{
+		TriggerType* type_data = &data->array[i];
+		std::string value = type_data->value;
+		if (value.length() > 0)
+		{
+			m_typeDefaultValues[type_data->type] = value;
+		}
+		
+	}
 }
 
 void TriggerEditor::saveTriggers(const char* path)
@@ -68,7 +91,7 @@ void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 
 	writer.write(count);
 
-	for (int i = 0; i < count; i++)
+	for (uint32_t i = 0; i < count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
 		
@@ -96,7 +119,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 
 	uint32_t variable_count = 0;
 
-	for(int i = 0; i < variables->globals_count ; i++)
+	for(uint32_t i = 0; i < variables->globals_count ; i++)
 	{
 		VariableData* data = &variables->array[i];
 		//名字非gg_开头的变量
@@ -109,7 +132,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 	writer.write(variable_count);
 
 	//将非gg_的变量数据写入
-	for (int i = 0; i < variables->globals_count; i++)
+	for (uint32_t i = 0; i < variables->globals_count; i++)
 	{
 		VariableData* data = &variables->array[i];
 		if (data && strncmp(data->name, "gg_", 3))
@@ -135,11 +158,11 @@ void TriggerEditor::writeTrigger(BinaryWriter& writer)
 	uint32_t count = m_editorData->trigger_count;
 	writer.write(count);
 
-	for (int i = 0; i < m_editorData->categoriy_count; i++)
+	for (uint32_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
 		uint32_t trigger_count = categoriy->trigger_count;
-		for (int n = 0; n < trigger_count; n++)
+		for (uint32_t n = 0; n < trigger_count; n++)
 		{
 
 			Trigger* trigger = categoriy->triggers[n];
@@ -177,7 +200,7 @@ void TriggerEditor::writeTrigger(BinaryWriter& writer, Trigger* trigger)
 
 	writer.write(trigger->line_count);
 
-	for (int i = 0; i < trigger->line_count; i++)
+	for (uint32_t i = 0; i < trigger->line_count; i++)
 	{
 		Action* action = trigger->actions[i];
 
@@ -199,7 +222,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 	uint32_t count = action->param_count;
 
 	//循环写参数
-	for (int i = 0; i < count; i++)
+	for (uint32_t i = 0; i < count; i++)
 	{
 
 		Parameter* param = action->parameters[i];
@@ -209,7 +232,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 	uint32_t child_count = action->child_count;
 	writer.write(child_count);
 	//如果是 动作组 则循环将子动作写入
-	for (int i = 0; i < child_count; i++)
+	for (uint32_t i = 0; i < child_count; i++)
 	{
 		Action* child = action->child_actions[i];
 
@@ -283,11 +306,11 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 
 	writer.write(data->trigger_count);
 
-	for (int i = 0; i < m_editorData->categoriy_count; i++)
+	for (uint32_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
 		uint32_t trigger_count = categoriy->trigger_count;
-		for (int n = 0; n < trigger_count; n++)
+		for (uint32_t n = 0; n < trigger_count; n++)
 		{
 			Trigger* trigger = categoriy->triggers[n];
 			size_t size = 0;
@@ -308,4 +331,120 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	out.close();
 
 	printf("wct 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+}
+
+
+void TriggerEditor::saveSctipt(const char* path)
+{
+	TriggerData* data = m_editorData;
+
+	is_ydwe = false;
+
+	printf("1\n");
+	BinaryWriter writer;
+
+	//writer.write_string(seperator);
+	//writer.write_string("//*\n");
+	//writer.write_string("//*  Global variables\n");
+	//writer.write_string("//*\n");
+	//writer.write_string(seperator);
+
+	if (is_ydwe)//这是ydwe的内容
+	{
+		writer.write_string("#include <YDTrigger/Import.h>\n");
+		writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
+	}
+
+	writer.write_string("globals\n");
+	printf("开始写变量\n");
+	for (uint32_t i = 0; i < data->variables->globals_count; i++)
+	{
+		VariableData* var = &data->variables->array[i];
+		std::string name = var->name;
+		std::string type = var->type;
+
+		if (var->is_array)
+		{
+			writer.write_string("\t" + type + " array udg_" + name + "\n");
+		}
+		else
+		{
+			//非gg_开头的自定义变量
+			if (strncmp(var->name, "gg_", 3))
+				name = "udg_" + name;
+			std::string value = var->value;
+			if (value.length() == 0)
+			{
+				auto it = m_typeDefaultValues.find(type);
+				if (it != m_typeDefaultValues.end())
+					value = it->second;
+				else 
+					value = "null";;
+			}
+			writer.write_string("\t" + type + " " + name + " = " + value + "\n");
+		}
+	}
+
+	if (is_ydwe)
+	{
+		writer.write_string("#include <YDTrigger/Globals.h>\n");
+		writer.write_string("endglobals\n");
+		writer.write_string("#include <YDTrigger/Function.h>\n");
+	}
+	else
+	{
+		writer.write_string("endglobals\n");
+	}
+
+	//开始初始化全局变量
+	printf("开始初始化变量\n");
+	writer.write_string("function InitGlobals takes nothing returns nothing\n");
+	writer.write_string("\tlocal integer i = 0\n");
+
+	for (uint32_t i = 0; i < data->variables->globals_count; i++)
+	{
+		VariableData* var = &data->variables->array[i];
+		std::string name = var->name;
+		 
+		if (var->is_array )
+		{
+			//获取默认值
+			std::string type = var->type;
+
+			std::string defaultValue;
+			auto it = m_typeDefaultValues.find(type);
+			if (it != m_typeDefaultValues.end())
+				defaultValue = it->second;
+			if (!var->is_init && defaultValue.empty()) 
+				continue;
+			writer.write_string("\tset i = 0\n");
+			writer.write_string("\tloop\n");
+			writer.write_string("\t\texitwhen(i > " + std::to_string(var->array_size) + ")\n");
+
+			if (var->is_init) 
+			{
+				std::string value = var->value;
+				if (type == "string" && value.empty()) 
+					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+				else 
+					writer.write_string("\t\tset udg_" + name + "[i] = " + value + "\n");
+			}
+			else 
+			{
+				if (type == "string") 
+					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+				else 
+					writer.write_string("\t\tset udg_" + name + "[i] = " + defaultValue + "\n");
+			}
+			writer.write_string("\t\tset i = i + 1\n");
+			writer.write_string("\tendloop\n");
+		}
+		else if (var->is_init) 
+		{
+			writer.write_string("\tset udg_" + name + " = " + var->value + "\n");
+		}
+	}
+	writer.write_string("endfunction\n\n");
+
+	printf("脚本内容：%s\n", &writer.buffer[0]);
 }
