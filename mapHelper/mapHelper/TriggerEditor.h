@@ -136,7 +136,7 @@ public:
 	~TriggerEditor();
 
 	static TriggerEditor* getInstance();
-	
+
 	void loadTriggers(TriggerData* data);
 	void loadTriggerConfig(TriggerConfigData* data);
 

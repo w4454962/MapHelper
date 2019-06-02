@@ -1,20 +1,16 @@
 #include "stdafx.h"
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
-//#define printf //
+
 
 TriggerEditor::TriggerEditor()
 	: m_editorData(NULL),
 	m_version(7),
 	is_ydwe(false)
-{
-
-}
+{ }
 
 TriggerEditor::~TriggerEditor()
-{
-
-}
+{ }
 
 TriggerEditor* TriggerEditor::getInstance()
 {
@@ -340,14 +336,18 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	is_ydwe = false;
 
-	printf("1\n");
 	BinaryWriter writer;
 
-	//writer.write_string(seperator);
-	//writer.write_string("//*\n");
-	//writer.write_string("//*  Global variables\n");
-	//writer.write_string("//*\n");
-	//writer.write_string(seperator);
+
+	EditorData* worldData = WorldEditor::getInstance()->getEditorData();
+
+	char buffer[0x400];
+
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
+	writer.write_string("//*  Global variables\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
 
 	if (is_ydwe)//这是ydwe的内容
 	{
@@ -382,6 +382,17 @@ void TriggerEditor::saveSctipt(const char* path)
 					value = "null";;
 			}
 			writer.write_string("\t" + type + " " + name + " = " + value + "\n");
+		}
+	}
+
+	//申明随机组的全局变量
+	if (worldData->random_group_count > 0)
+	{
+
+		for (uint32_t i = 0; i < worldData->random_group_count; i++)
+		{
+			sprintf(buffer, "%03d", i);
+			writer.write_string("\tinteger array gg_rg_" + std::string(buffer) + "\n");
 		}
 	}
 
@@ -446,5 +457,135 @@ void TriggerEditor::saveSctipt(const char* path)
 	}
 	writer.write_string("endfunction\n\n");
 
-	printf("脚本内容：%s\n", &writer.buffer[0]);
+
+	printf("开始初始化随机组\n");
+	writer.write_string("function InitRandomGroups takes nothing returns nothing\n");
+	writer.write_string("\tlocal integer curset\n");
+
+	uint32_t count = worldData->random_group_count;
+
+	for (int i = 0; i < count; i++)
+	{
+		RandomGroupData* groupData = &worldData->random_groups[i];
+		if (groupData->group_count == 0)
+			continue;
+		writer.write_string("\t// Group " + std::to_string(i) + " - " + groupData->name + "\n");
+		writer.write_string("\tcall RandomDistReset()\n");
+		for (int a = 0; a < groupData->group_count; a++)
+		{
+			RandomGroup* group = &groupData->groups[a];
+			writer.write_string("\tcall RandomDistAddItem(" + std::to_string(a) + "," + std::to_string(group->rate) + ")\n");
+		}
+		writer.write_string("\tset curset=RandomDistChoose()\n");
+		
+		for (int a = 0; a < groupData->group_count; a++)
+		{
+			RandomGroup* group = &groupData->groups[a];
+			std::string head = "\tif";
+			if (a > 0) head = "\telseif";
+			writer.write_string( head + " ( curset == " + std::to_string(a) + " ) then\n");
+
+			for (int b = 0; b < groupData->param_count; b++)
+			{
+				const char* ptr = group->names[b];
+				std::string value = "-1";
+				if (*ptr) value = "'" + std::string(ptr, ptr + 0x4) + "'";
+				
+				sprintf(buffer, "\t\tset gg_rg_%03d[%i] = %s\n", i, b, value.c_str());
+				writer.write_string(buffer);
+			}
+		}
+		writer.write_string("\telse\n");
+		for (int b = 0; b < groupData->param_count; b++)
+		{
+			sprintf(buffer, "\t\tset gg_rg_%03d[%i] = -1\n", i, b);
+			writer.write_string(buffer);
+		}
+		writer.write_string("\tendif\n");
+	}
+	writer.write_string("endfunction\n\n");
+
+	
+
+	
+	printf("加载物品列表 %i  \n", worldData->item_table_count);
+	for (int i = 0; i < worldData->item_table_count; i++)
+	{
+		sprintf(buffer, "%06d",i);
+
+		writer.write_string("function ItemTable_" + std::string(buffer) + "_DropItems takes nothing returns nothing\n");
+		writer.write_string(R"(
+	local widget trigWidget= null
+	local unit trigUnit= null
+	local integer itemID= 0
+	local boolean canDrop= true
+
+	set trigWidget=bj_lastDyingWidget
+	if ( trigWidget == null ) then
+		set trigUnit=GetTriggerUnit()
+	endif
+
+	if ( trigUnit != null ) then
+		set canDrop=not IsUnitHidden(trigUnit)
+		if ( canDrop and GetChangingUnit() != null ) then
+			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
+		endif
+	endif
+
+	if ( canDrop ) then
+		)");
+
+		writer.write_string("\n");
+		ItemTable* itemTable = &worldData->item_table[i];
+
+		for (int a = 0; a < itemTable->setting_count; a++)
+		{
+			ItemTableSetting* itemSetting = &itemTable->item_setting[a];
+
+			writer.write_string("\t\tcall RandomDistReset()\n");
+			for (int b = 0; b < itemSetting->info_count; b++)
+			{
+				ItemTableInfo* info = &itemSetting->item_infos[b];
+				std::string id = std::string(info->name, info->name + 0x4);
+
+				writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+			}
+			writer.write_string(R"(
+		set itemID=RandomDistChoose()
+		if ( trigUnit != null ) then
+			call UnitDropItem(trigUnit, itemID)
+		else
+			call WidgetDropItem(trigWidget, itemID)
+		endif
+)");
+
+		}
+
+		writer.write_string(R"(
+	endif
+
+	set bj_lastDyingWidget=null
+	call DestroyTrigger(GetTriggeringTrigger())
+endfunction
+		)");
+
+		writer.write_string("\n");
+	}
+	//printf("加载物品列表 %i  \n", worldData->item_table_count);
+	//for (int i = 0; i < worldData->item_table_count; i++)
+	//{
+	//	ItemTable* itemTable = &worldData->item_table[i];
+	//	printf("读取物品列表%i  %i", i, itemTable->setting_count);
+	//	for (int a = 0; a < itemTable->setting_count; a++)
+	//	{
+	//		ItemTableSetting* itemSetting = &itemTable->item_setting[a];
+	//		for (int b = 0; b < itemSetting->info_count; b++)
+	//		{
+	//			ItemTableInfo* info = &itemSetting->item_infos[b];
+	//			printf("物品表信息 概率 %i id %.04s\n", info->rate, info->name);
+	//		}
+	//	}
+	//}
+
+	printf("脚本内容：\n%s\n", &writer.buffer[0]);
 }
