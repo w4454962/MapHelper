@@ -32,3 +32,6 @@ namespace fs = std::filesystem;
 #include "fp_call.h"
 #include "unicode.h"
 #include "BinaryWriter.h"
+
+
+std::string string_replaced(const std::string& source, const std::string& from, const std::string& to);

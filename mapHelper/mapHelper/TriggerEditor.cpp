@@ -643,24 +643,60 @@ endfunction
 	}
 	
 
+	writer.write_string("function InitSounds takes nothing returns nothing\n");
+
+	for (int i = 0; i < worldData->sounds->sound_count; i++)
+	{
+		Sound* sound = &worldData->sounds->array[i];
+
+		std::string sound_name = sound->name;
+
+		// Replace spaces by underscores
+		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
+		writer.write_string("\tset " + sound_name + " = CreateSound(\"" +
+			string_replaced(sound->file, "\\", "\\\\") + "\", " +
+			(sound->flag & 1 ? "true" : "false") + ", " +
+			(sound->flag & 2 ? "true" : "false") + ", " +
+			(sound->flag & 4 ? "true" : "false") + ", " +
+			std::to_string(sound->fade_in_rate) + ", " +
+			std::to_string(sound->fade_out_rate) + ", " +
+			"\"" + sound->effect + "\"" +
+			")\n");
+
+		int duration = WorldEditor::getInstance()->getSoundDuration(sound->file);
+		if (duration > 0)
+		{
+			
+			writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(duration) + ")\n"); // Sound duration
+			writer.write_string("\tcall SetSoundChannel(" + sound_name + ", " + std::to_string(sound->channel) + ")\n");
+			writer.write_string("\tcall SetSoundVolume(" + sound_name + ", " + std::to_string(sound->volume) + ")\n");
+
+			sprintf(buffer, "%.1f", sound->pitch);
+			writer.write_string("\tcall SetSoundPitch(" + sound_name + ", " + std::string(buffer) + ")\n");
+
+			//is 3d 
+			if (sound->flag & 2)
+			{
+				sprintf(buffer,"%.1f,%.1f", sound->min_range, sound->max_range);
+				writer.write_string("\tcall SetSoundDistances(" + sound_name + ", " + std::string(buffer) + ")\n");
+
+				sprintf(buffer, "%.1f", sound->distance_cutoff);
+				writer.write_string("\tcall SetSoundDistanceCutoff(" + sound_name + ", " + std::string(buffer) + ")\n");
+				
+				sprintf(buffer, "%.1f,%.1f,%d", sound->inside, sound->outside, sound->outsideVolume);
+				writer.write_string("\tcall SetSoundConeAngles(gg_snd_UndeadVictory," + std::string(buffer) + ")\n");
+
+				sprintf(buffer, "%.1f,%.1f,%.1f", sound->x,sound->y,sound->z);
+				writer.write_string("\tcall SetSoundConeOrientation(gg_snd_UndeadVictory," + std::string(buffer) + ")\n");
+			}
+
+		}
+	}
+
+	writer.write_string("endfunction\n");
+
+
 	printf("脚本内容：\n%s\n", &writer.buffer[0]);
 
-
-	//printf("遍历地形单位 %i\n", worldData->units->unit_count);
-	//for (int i = 0; i < worldData->units->unit_count; i++)
-	//{
-	//	Unit* unit = &worldData->units->array[i];
-	//	printf("读取单位 %i %.04s %i\n", i, unit->name,unit->item_setting_count);
-	//	for (int a = 0; a < unit->item_setting_count; a++)
-	//	{
-	//		ItemTableSetting* setting = &unit->item_setting[a];
-	//		printf("读取物品列表配置 %i %i\n", a, setting->info_count);
-	//		for (int b = 0; b < setting->info_count; b++)
-	//		{
-	//			ItemTableInfo* info = &setting->item_infos[b];
-	//			printf("读取物品%i  概率 %i %.04s\n", b,info->rate, info->name);
-	//		}
-	//	}
-	//}
 
 }

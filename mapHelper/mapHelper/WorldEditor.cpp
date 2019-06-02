@@ -76,6 +76,13 @@ const char* WorldEditor::getTempSavePath()
 	return m_tempPath;
 }
 
+int WorldEditor::getSoundDuration(const char* path)
+{
+	uint32_t param[10];
+	ZeroMemory(&param, sizeof param);
+	fast_call<int>(WorldEditor::getInstance()->getAddress(0x004DCFA0), path, &param);
+	return param[1];
+}
 
 void WorldEditor::onSaveMap(const char* tempPath)
 {

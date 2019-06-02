@@ -99,6 +99,37 @@ struct UnitData
 	Unit* array;//0x60
 };
 
+
+struct Sound
+{
+	const char name[0x64];//0x0 带gg_snd_ 前缀的全局变量名
+	const char file[0x104];//0x64
+	const char effect[0x34];//0x168
+	uint32_t flag;//0x19c  1 | 2 | 4   1是是否循环 2 是否3D音效 4 超出范围停止
+	uint32_t fade_out_rate;//0x1a0 淡出率
+	uint32_t fade_in_rate;//0x1a4 淡入率
+	uint32_t volume;//0x1a8 音量
+	float pitch;//0x1ac 速率 = 音调
+	char unknow1[0x8];//0x1b0
+	uint32_t channel;//0x1b8 通道
+	float min_range;//0x1bc 最小衰减范围
+	float max_range;//0x1c0 最大衰减范围
+	float distance_cutoff;//0x1c4 截断距离
+	float inside;//0x1c8
+	float outside;//0x1cc
+	uint32_t outsideVolume;//0x1d0
+	float x;//0x1d4
+	float y;//0x1d8
+	float z;//0x1dc
+};//size 0x1E0
+
+struct SoundData
+{
+	uint32_t unknow1;//0x0
+	uint32_t sound_count;//0x4
+	Sound* array;//0x8
+};
+
 struct EditorData
 {
 	char unknow1[0x38c4];// 0x0
@@ -115,7 +146,7 @@ struct EditorData
 	struct TriggerData* triggers;//0x38f0 //触发编辑器数据
 	void* cameras; //0x38f4
 	void* objects;//0x38f8
-	void* sounds; //0x38fc
+	SoundData* sounds; //0x38fc
 };
 
 class WorldEditor
@@ -135,10 +166,11 @@ public:
 
 	const char* getTempSavePath();
 
+	int getSoundDuration(const char* path);
+
 	void saveMap(const char* outPath);
 
 	void onSaveMap(const char* tempPath);
-
 
 private:
 
