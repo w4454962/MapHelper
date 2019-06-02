@@ -571,21 +571,96 @@ endfunction
 
 		writer.write_string("\n");
 	}
-	//printf("加载物品列表 %i  \n", worldData->item_table_count);
-	//for (int i = 0; i < worldData->item_table_count; i++)
+
+	for (int i = 0; i < worldData->units->unit_count; i++)
+	{
+		Unit* unit = &worldData->units->array[i];
+		if (unit->item_setting_count > 0) 
+		{
+			sprintf(buffer, "%06d", i);
+
+			writer.write_string("function Unit" + std::string(buffer) + "_DropItems takes nothing returns nothing\n");
+
+			writer.write_string(R"(
+	local widget trigWidget= null
+	local unit trigUnit= null
+	local integer itemID= 0
+	local boolean canDrop= true
+
+	set trigWidget=bj_lastDyingWidget
+	if ( trigWidget == null ) then
+		set trigUnit=GetTriggerUnit()
+	endif
+
+	if ( trigUnit != null ) then
+		set canDrop=not IsUnitHidden(trigUnit)
+		if ( canDrop and GetChangingUnit() != null ) then
+			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
+		endif
+	endif
+
+	if ( canDrop ) then
+		)");
+
+			writer.write_string("\n");
+
+			
+
+			for (int a = 0; a < unit->item_setting_count; a++)
+			{
+				ItemTableSetting* itemSetting = &unit->item_setting[a];
+
+				writer.write_string("\t\tcall RandomDistReset()\n");
+				
+				for (int b = 0; b < itemSetting->info_count; b++)
+				{
+					ItemTableInfo* info = &itemSetting->item_infos[b];
+					std::string id = std::string(info->name, info->name + 0x4);
+					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+				}
+
+				writer.write_string(R"(
+		set itemID=RandomDistChoose()
+		if ( trigUnit != null ) then
+			call UnitDropItem(trigUnit, itemID)
+		else
+			call WidgetDropItem(trigWidget, itemID)
+		endif
+)");
+
+			}
+
+			writer.write_string(R"(
+	endif
+
+	set bj_lastDyingWidget=null
+	call DestroyTrigger(GetTriggeringTrigger())
+endfunction
+		)");
+
+			writer.write_string("\n");
+		}
+	}
+	
+
+	printf("脚本内容：\n%s\n", &writer.buffer[0]);
+
+
+	//printf("遍历地形单位 %i\n", worldData->units->unit_count);
+	//for (int i = 0; i < worldData->units->unit_count; i++)
 	//{
-	//	ItemTable* itemTable = &worldData->item_table[i];
-	//	printf("读取物品列表%i  %i", i, itemTable->setting_count);
-	//	for (int a = 0; a < itemTable->setting_count; a++)
+	//	Unit* unit = &worldData->units->array[i];
+	//	printf("读取单位 %i %.04s %i\n", i, unit->name,unit->item_setting_count);
+	//	for (int a = 0; a < unit->item_setting_count; a++)
 	//	{
-	//		ItemTableSetting* itemSetting = &itemTable->item_setting[a];
-	//		for (int b = 0; b < itemSetting->info_count; b++)
+	//		ItemTableSetting* setting = &unit->item_setting[a];
+	//		printf("读取物品列表配置 %i %i\n", a, setting->info_count);
+	//		for (int b = 0; b < setting->info_count; b++)
 	//		{
-	//			ItemTableInfo* info = &itemSetting->item_infos[b];
-	//			printf("物品表信息 概率 %i id %.04s\n", info->rate, info->name);
+	//			ItemTableInfo* info = &setting->item_infos[b];
+	//			printf("读取物品%i  概率 %i %.04s\n", b,info->rate, info->name);
 	//		}
 	//	}
 	//}
 
-	printf("脚本内容：\n%s\n", &writer.buffer[0]);
 }

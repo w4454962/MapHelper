@@ -44,6 +44,61 @@ struct ItemTable
 	uint32_t unknow2;//0x74
 };//size 0x78
 
+struct UnitItem
+{
+	uint32_t slot_id;//0x0
+	const char name[0x4];//0x4 物品id
+};//size 0x8
+
+struct UnitSkill
+{
+	const char name[0x4];//0x0 技能id
+	uint32_t unknow1;//0x4
+	uint32_t level;//0x8
+};//size 0xc
+
+struct Unit
+{
+	uint32_t unknow1;//0x0
+	const char name[0x4];//0x4 单位物编id
+	uint32_t unknow12;//0x8
+	float x;//0xc	//在地形中的坐标
+	float y;//0x10
+	float z;//0x14
+	char unknow2[0x68];//0x18
+	uint32_t color;//0x80 颜色 当警戒范围-1时是0xFFFFFFFF 是-2时是0xFF1010FF
+	char unknow22[0x38];//0x84
+	uint32_t player_id;//0xbc
+	uint32_t unknow13;//0xc0
+	uint32_t life;//0xc4	生命百分比 最小1 大于或等于100则为负1
+	uint32_t mana;//0xc8	魔法百分比 最小1 大于或等于100则为负1
+	uint32_t level;//0xcc	等级
+	uint32_t state_str;//0xd0 属性 力量
+	uint32_t state_agi;//0xd4 属性 敏捷
+	uint32_t state_int;//0xd8 属性 智力
+	uint32_t unknow15;//0xdc
+	uint32_t item_setting_count;//0xe0
+	uint32_t item_setting_count2;//0xe4
+	ItemTableSetting* item_setting;//0xe8
+	char unknow4[0x8];//0xec
+	float warning_range;//0xf4 警戒范围 -1 是普通 -2 是营地
+	uint32_t item_count;//0xf8
+	uint32_t item_count2;//0xfc
+	UnitItem* items;//0x100
+	uint32_t unknow14;//0x104
+	uint32_t skill_count;//0x108
+	uint32_t skill_count2;//0x10c
+	UnitSkill* skills;//0x110
+	char unknow3[0x74];//0x114
+};//size 0x188
+
+struct UnitData
+{
+	char unknow[0x5c];//0x0
+	uint32_t unit_count;//0x5c
+	Unit* array;//0x60
+};
+
 struct EditorData
 {
 	char unknow1[0x38c4];// 0x0
@@ -55,7 +110,7 @@ struct EditorData
 	char unknow3[0x4];//0x38dc
 	void* terrain;//0x38e0
 	void* doodas;//0x38e4
-	void* units;//0x38e8
+	UnitData* units;//0x38e8
 	void* rects;//0x38ec
 	struct TriggerData* triggers;//0x38f0 //触发编辑器数据
 	void* cameras; //0x38f4
