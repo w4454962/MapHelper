@@ -840,7 +840,8 @@ endfunction
 		Unit* unit = &worldData->units->array[i];
 		if (unit->type == 1) //遍历地形上的单位 判断这个单位是物品
 		{
-			if (strncmp(unit->name, "iDNR",0x4) == 0)//判断是否是随机物品
+			bool b = strncmp(unit->name, "iDNR", 0x4) == 0;
+			if (b)//判断是否是随机物品
 			{
 				if (unit->random_item_mode == 0)//从所有物品里随机
 				{
@@ -870,26 +871,22 @@ endfunction
 					writer.write_string("\tset itemID = -1\n");
 				}
 
-				writer.write_string("\tif ( itemID != -1 ) then\n");
-				sprintf(buffer, "%.1f,%.1f",unit->x, unit->y);
-				writer.write_string("\t\tcall CreateItem(itemID," + std::string(buffer) + ")\n");
-				writer.write_string("\tendif\n");
+				writer.write_string("\tif ( itemID != -1 ) then\n\t");
+		
 			}
-			else
-			{
-				//否则是一般物品 
-				sprintf(buffer, "gg_item_%04s_%04d", unit->name, unit->index);
-				std::string var_name = buffer;
-				sprintf(buffer, "'%04s',%.1f,%.1f", unit->name, unit->x, unit->y);
+			
+			//否则是一般物品 
+			sprintf(buffer, "gg_item_%04s_%04d", unit->name, unit->index);
+			std::string var_name = buffer;
+			sprintf(buffer, "'%04s',%.1f,%.1f", unit->name, unit->x, unit->y);
 
-				auto it = variableTable.find(var_name);
-				if (it != variableTable.end())//判断是否有变量引用
-					writer.write_string("\tset " + var_name + " = CreateItem(" + std::string(buffer) + ")\n");
-				else
-					writer.write_string("\tcall CreateItem(" + std::string(buffer) + ")\n");
-			}
-			
-			
+			auto it = variableTable.find(var_name);
+			if (it != variableTable.end())//判断是否有变量引用
+				writer.write_string("\tset " + var_name + " = CreateItem(" + std::string(buffer) + ")\n");
+			else
+				writer.write_string("\tcall CreateItem(" + std::string(buffer) + ")\n");
+			if (b)
+				writer.write_string("\tendif\n");
 		}
 	}
 	writer.write_string("endfunction\n");
