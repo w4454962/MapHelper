@@ -140,13 +140,6 @@ struct SoundData
 };
 
 
-struct Destructable
-{
-
-};//size 0x188
-
-
-
 struct EditorData
 {
 	char unknow1[0x38c4];// 0x0
