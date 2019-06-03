@@ -61,11 +61,16 @@ struct Unit
 {
 	uint32_t unknow1;//0x0
 	const char name[0x4];//0x4 单位物编id
-	uint32_t unknow12;//0x8
+	uint32_t variation;//0x8 样式
 	float x;//0xc	//在地形中的坐标
 	float y;//0x10
 	float z;//0x14
-	char unknow2[0x68];//0x18
+	float facing;//0x18 弧度制 要转回角度 * 180 / pi = 角度制
+	float sacle_x;//0x1c 
+	float sacle_y;//0x20
+	float scale_z;//0x24
+	float sacle;//0x28
+	char unknow2[0x54];//0x2c
 	uint32_t color;//0x80 颜色 当警戒范围-1时是0xFFFFFFFF 是-2时是0xFF1010FF
 	char unknow22[0x38];//0x84
 	uint32_t player_id;//0xbc
@@ -76,7 +81,7 @@ struct Unit
 	uint32_t state_str;//0xd0 属性 力量
 	uint32_t state_agi;//0xd4 属性 敏捷
 	uint32_t state_int;//0xd8 属性 智力
-	uint32_t unknow15;//0xdc
+	uint32_t item_table_index;//0xdc 物品表的索引
 	uint32_t item_setting_count;//0xe0
 	uint32_t item_setting_count2;//0xe4
 	ItemTableSetting* item_setting;//0xe8
@@ -89,7 +94,11 @@ struct Unit
 	uint32_t skill_count;//0x108
 	uint32_t skill_count2;//0x10c
 	UnitSkill* skills;//0x110
-	char unknow3[0x74];//0x114
+	char unknow3[0x38];//0x114
+	uint32_t doodas_life;// 0x14c 可破坏物的生命
+	char unknow21[0x8];//0x150
+	uint32_t index;//0x158 全局预设变量的id
+	char unknow23[0x2c];//0x15c
 };//size 0x188
 
 struct UnitData
@@ -130,6 +139,14 @@ struct SoundData
 	Sound* array;//0x8
 };
 
+
+struct Destructable
+{
+
+};//size 0x188
+
+
+
 struct EditorData
 {
 	char unknow1[0x38c4];// 0x0
@@ -140,7 +157,7 @@ struct EditorData
 	ItemTable* item_table;//0x38d8		物品表
 	char unknow3[0x4];//0x38dc
 	void* terrain;//0x38e0
-	void* doodas;//0x38e4
+	UnitData* doodas;//0x38e4
 	UnitData* units;//0x38e8
 	void* rects;//0x38ec
 	struct TriggerData* triggers;//0x38f0 //触发编辑器数据

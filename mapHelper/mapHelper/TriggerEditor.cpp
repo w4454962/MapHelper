@@ -336,12 +336,13 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	is_ydwe = false;
 
-	BinaryWriter writer;
+	BinaryWriter writer,writer2;
 
 
 	EditorData* worldData = WorldEditor::getInstance()->getEditorData();
 
 	char buffer[0x400];
+	std::map<std::string, VariableData*> variableTable;
 
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
@@ -362,6 +363,8 @@ void TriggerEditor::saveSctipt(const char* path)
 		VariableData* var = &data->variables->array[i];
 		std::string name = var->name;
 		std::string type = var->type;
+
+		variableTable[name] = var;
 
 		if (var->is_array)
 		{
@@ -577,9 +580,79 @@ endfunction
 		Unit* unit = &worldData->units->array[i];
 		if (unit->item_setting_count > 0) 
 		{
-			sprintf(buffer, "%06d", i);
+			sprintf(buffer, "%06d", unit->index);
 
 			writer.write_string("function Unit" + std::string(buffer) + "_DropItems takes nothing returns nothing\n");
+
+			writer.write_string(R"(
+	local widget trigWidget= null
+	local unit trigUnit= null
+	local integer itemID= 0
+	local boolean canDrop= true
+
+	set trigWidget=bj_lastDyingWidget
+	if ( trigWidget == null ) then
+		set trigUnit=GetTriggerUnit()
+	endif
+
+	if ( trigUnit != null ) then
+		set canDrop=not IsUnitHidden(trigUnit)
+		if ( canDrop and GetChangingUnit() != null ) then
+			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
+		endif
+	endif
+
+	if ( canDrop ) then
+		)");
+
+			writer.write_string("\n");
+
+			
+
+			for (int a = 0; a < unit->item_setting_count; a++)
+			{
+				ItemTableSetting* itemSetting = &unit->item_setting[a];
+
+				writer.write_string("\t\tcall RandomDistReset()\n");
+				
+				for (int b = 0; b < itemSetting->info_count; b++)
+				{
+					ItemTableInfo* info = &itemSetting->item_infos[b];
+					std::string id = std::string(info->name, info->name + 0x4);
+					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+				}
+
+				writer.write_string(R"(
+		set itemID=RandomDistChoose()
+		if ( trigUnit != null ) then
+			call UnitDropItem(trigUnit, itemID)
+		else
+			call WidgetDropItem(trigWidget, itemID)
+		endif
+)");
+
+			}
+
+			writer.write_string(R"(
+	endif
+
+	set bj_lastDyingWidget=null
+	call DestroyTrigger(GetTriggeringTrigger())
+endfunction
+		)");
+
+			writer.write_string("\n");
+		}
+	}
+
+	for (int i = 0; i < worldData->doodas->unit_count; i++)
+	{
+		Unit* unit = &worldData->doodas->array[i];
+		if (unit->item_setting_count > 0) 
+		{
+			sprintf(buffer, "%06d", unit->index);
+
+			writer.write_string("function Doodad" + std::string(buffer) + "_DropItems takes nothing returns nothing\n");
 
 			writer.write_string(R"(
 	local widget trigWidget= null
@@ -692,6 +765,55 @@ endfunction
 
 		}
 	}
+
+	writer.write_string("endfunction\n");
+
+
+	writer.write_string("function CreateDestructables takes nothing returns nothing\n");
+	writer.write_string("\tlocal destructable d\n");
+	writer.write_string("\tlocal trigger t\n");
+	writer.write_string("\tlocal real life\n");
+
+	writer2.buffer.clear();
+
+	for (int i = 0; i < worldData->doodas->unit_count; i++)
+	{
+		Unit* unit = &worldData->doodas->array[i];
+		sprintf(buffer, "gg_dest_%.04s_%04d", unit->name, unit->index);
+
+		std::string id = buffer;
+
+		if (variableTable.find(id) == variableTable.end()) 
+			continue;
+		
+		printf(buffer, "%.4s,%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->facing, unit->sacle_x, unit->variation);
+		writer.write_string("\tset " + id + " = CreateDestructable('" + std::string(buffer) + ")\n");
+
+		if (unit->doodas_life != 100) {
+			sprintf(buffer, "%.2f", unit->doodas_life / 100.f);
+			writer2.write_string("\tset life = GetDestructableLife(" + id + ")\n");
+			writer2.write_string("\tcall SetDestructableLife(" + id + ", " + std::string(buffer) + " * life)\n");
+		}
+
+		if (unit->item_setting_count > 0) {
+			sprintf(buffer, "%06d", unit->index);
+
+			writer2.write_string("\tset t = CreateTrigger()\n");
+			writer2.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
+			writer2.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
+			writer2.write_string("\tcall TriggerAddAction(t, function Doodad" + std::string(buffer) + "_DropItems)\n");
+		}
+		else if (unit->item_table_index != -1) {
+			sprintf(buffer, "%06d", unit->item_table_index);
+
+			writer2.write_string("\tset t = CreateTrigger()\n");
+			writer2.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
+			writer2.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
+			writer2.write_string("\tcall TriggerAddAction(t, function ItemTable_" + std::string(buffer) + "_DropItems)\n");
+		}
+
+	}
+	writer.write_vector(writer2.buffer);
 
 	writer.write_string("endfunction\n");
 
