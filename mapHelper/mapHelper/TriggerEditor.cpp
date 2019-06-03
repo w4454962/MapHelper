@@ -822,13 +822,74 @@ endfunction
 
 	writer.write_string("\tlocal integer itemID\n");
 
-	for (int i = 0; i > worldData->units->unit_count; i++)
+
+	//所有物品类型的jass变量名
+	std::string randomTypes[] = {
+		"ITEM_TYPE_ANY",
+		"ITEM_TYPE_PERMANENT",
+		"ITEM_TYPE_CHARGED",
+		"ITEM_TYPE_POWERUP",
+		"ITEM_TYPE_ARTIFACT",
+		"ITEM_TYPE_PURCHASABLE",
+		"ITEM_TYPE_CAMPAIGN",
+		"ITEM_TYPE_MISCELLANEOUS"
+	};
+
+	for (int i = 0; i < worldData->units->unit_count; i++)
 	{
 		Unit* unit = &worldData->units->array[i];
-		if (unit->type == 1)
+		if (unit->type == 1) //遍历地形上的单位 判断这个单位是物品
 		{
-			sprintf(buffer, "'%04s',%.1f,%.1f", unit->name, unit->x, unit->y);
-			writer.write_string("\tcall CreateItem(" + std::string(buffer) + ")\n");
+			if (strncmp(unit->name, "iDNR",0x4) == 0)//判断是否是随机物品
+			{
+				if (unit->random_item_mode == 0)//从所有物品里随机
+				{
+					writer.write_string("\tset itemID=ChooseRandomItemEx(" + randomTypes[unit->random_item_type % 8] + ", " + std::to_string(unit->random_item_level) + ")\n");
+				}
+				else if (unit->random_item_mode == 1)
+				{
+					//随机组里面获取
+					sprintf(buffer, "\t set itemID=gg_rg_%03d[%i]\n", unit->random_group_index,unit->random_group_child_index);
+
+					writer.write_string(buffer);
+				}
+				else if (unit->random_item_mode == 2)
+				{
+					//从自定义列表中获取
+					writer.write_string("\tcall RandomDistReset()\n");
+					for (int a = 0; a < unit->random_item_count; a++)
+					{
+						ItemTableInfo* info = &unit->random_items[a];
+						std::string id = std::string(info->name, info->name + 0x4);
+						writer.write_string("\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+					}
+					writer.write_string("\tset itemID = RandomDistChoose()\n");
+				}
+				else
+				{
+					writer.write_string("\tset itemID = -1\n");
+				}
+
+				writer.write_string("\tif ( itemID != -1 ) then\n");
+				sprintf(buffer, "%.1f,%.1f",unit->x, unit->y);
+				writer.write_string("\t\tcall CreateItem(itemID," + std::string(buffer) + ")\n");
+				writer.write_string("\tendif\n");
+			}
+			else
+			{
+				//否则是一般物品 
+				sprintf(buffer, "gg_item_%04s_%04d", unit->name, unit->index);
+				std::string var_name = buffer;
+				sprintf(buffer, "'%04s',%.1f,%.1f", unit->name, unit->x, unit->y);
+
+				auto it = variableTable.find(var_name);
+				if (it != variableTable.end())//判断是否有变量引用
+					writer.write_string("\tset " + var_name + " = CreateItem(" + std::string(buffer) + ")\n");
+				else
+					writer.write_string("\tcall CreateItem(" + std::string(buffer) + ")\n");
+			}
+			
+			
 		}
 	}
 	writer.write_string("endfunction\n");

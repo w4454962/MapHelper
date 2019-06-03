@@ -96,11 +96,27 @@ struct Unit
 	uint32_t skill_count;//0x108
 	uint32_t skill_count2;//0x10c
 	UnitSkill* skills;//0x110
-	char unknow3[0x38];//0x114
+	char unknow3[0x4];//0x114
+
+	//0x118 随机物品模式 0 为任何物品 指定 等级跟类型  1 来自随机组 2 是来自自定义列表
+	uint32_t random_item_mode;//0x118
+
+	uint8_t random_item_level;//0x11c
+	char unknow23[0x2];//0x11d
+	uint8_t random_item_type;//0x11f
+	
+	uint32_t random_group_index;//0x120 随机组的id 当随机物品模式为1时取用
+	uint32_t random_group_child_index; // 0x124随机组 子项位置 如果不存在则为-1
+
+	uint32_t random_item_count;//0x128
+	uint32_t random_item_count2;//0x12c
+	ItemTableInfo* random_items;//0x130
+
+	char unknow25[0x18];//0x134
 	uint32_t doodas_life;// 0x14c 可破坏物的生命
 	char unknow21[0x8];//0x150
 	uint32_t index;//0x158 全局预设变量的id
-	char unknow23[0x2c];//0x15c
+	char unknow28[0x2c];//0x15c
 };//size 0x188
 
 struct UnitData
