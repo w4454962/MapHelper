@@ -818,6 +818,22 @@ endfunction
 	writer.write_string("endfunction\n");
 
 
+	writer.write_string("function CreateItems takes nothing returns nothing\n");
+
+	writer.write_string("\tlocal integer itemID\n");
+
+	for (int i = 0; i > worldData->units->unit_count; i++)
+	{
+		Unit* unit = &worldData->units->array[i];
+		if (unit->type == 1)
+		{
+			sprintf(buffer, "'%04s',%.1f,%.1f", unit->name, unit->x, unit->y);
+			writer.write_string("\tcall CreateItem(" + std::string(buffer) + ")\n");
+		}
+	}
+	writer.write_string("endfunction\n");
+
+
 	printf("½Å±¾ÄÚÈÝ£º\n%s\n", &writer.buffer[0]);
 
 

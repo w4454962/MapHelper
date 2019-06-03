@@ -72,7 +72,9 @@ struct Unit
 	float sacle;//0x28
 	char unknow2[0x54];//0x2c
 	uint32_t color;//0x80 颜色 当警戒范围-1时是0xFFFFFFFF 是-2时是0xFF1010FF
-	char unknow22[0x38];//0x84
+	char unknow24[0x3]; //0x84
+	uint8_t type;//0x87 类型 物品是1
+	char unknow22[0x34];//0x88
 	uint32_t player_id;//0xbc
 	uint32_t unknow13;//0xc0
 	uint32_t life;//0xc4	生命百分比 最小1 大于或等于100则为负1
