@@ -338,8 +338,8 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	BinaryWriter writer,writer2;
 
-
-	EditorData* worldData = WorldEditor::getInstance()->getEditorData();
+	WorldEditor* worldEditor = WorldEditor::getInstance();
+	EditorData* worldData = worldEditor->getEditorData();
 
 	char buffer[0x400];
 	std::map<std::string, VariableData*> variableTable;
@@ -578,7 +578,14 @@ endfunction
 	for (int i = 0; i < worldData->units->unit_count; i++)
 	{
 		Unit* unit = &worldData->units->array[i];
-		if (unit->item_setting_count > 0) 
+		uint32_t size = 0;
+		for (int a = 0; a < unit->item_setting_count; a++)
+		{
+			ItemTableSetting* itemSetting = &unit->item_setting[a];
+			size += itemSetting->info_count;
+		}
+
+		if (size > 0) 
 		{
 			sprintf(buffer, "%06d", unit->index);
 
@@ -786,7 +793,7 @@ endfunction
 		if (variableTable.find(id) == variableTable.end()) 
 			continue;
 		
-		sprintf(buffer, "%.4s,%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->facing, unit->sacle_x, unit->variation);
+		sprintf(buffer, "%.4s,%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle, unit->sacle_x, unit->variation);
 		writer.write_string("\tset " + id + " = CreateDestructable('" + std::string(buffer) + ")\n");
 
 		if (unit->doodas_life != 100) {
@@ -891,6 +898,133 @@ endfunction
 	}
 	writer.write_string("endfunction\n");
 
+
+	writer.write_string("function CreateUnits takes nothing returns nothing\n");
+
+	writer.write_string("\tlocal unit u\n");
+	writer.write_string("\tlocal integer unitID\n");
+	writer.write_string("\tlocal trigger t\n");
+	writer.write_string("\tlocal real life\n");
+
+
+	for (int i = 0; i < worldData->units->unit_count; i++)
+	{
+		Unit* unit = &worldData->units->array[i];
+
+		//类型 不是单位 或者 是玩家开始点 则跳过
+		if (unit->type != 0 || strncmp(unit->name,"sloc",4) == 0)
+			continue;
+
+		std::string unit_reference = "u";
+
+
+		sprintf(buffer, "Player(%i),'%.4s',%.1f,%.1f,%.1f", unit->player_id, unit->name, unit->x, unit->y, unit->angle * 180.f / 3.141592f);
+		writer.write_string("\tset " + unit_reference + " = CreateUnit(" + std::string(buffer) + ")\n");
+
+		sprintf(buffer, "gg_unit_%.04s_%04d", unit->name, unit->index);
+		std::string name = buffer;
+		if (variableTable.find(name) != variableTable.end())
+		{
+			writer.write_string("\tset " + name + " = u\n");
+		}
+
+		if (unit->health != -1) 
+		{
+			writer.write_string("\tset life = GetUnitState(" + unit_reference + ", UNIT_STATE_LIFE)\n");
+			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_LIFE, " + std::to_string(unit->health / 100.f) + "* life)\n");
+		}
+
+		if (unit->mana != -1) 
+			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_MANA, " + std::to_string(unit->mana) + ")\n");
+		
+		if (unit->level != 1) 
+			writer.write_string("\tcall SetHeroLevel(" + unit_reference + ", " + std::to_string(unit->level) + ", false)\n");
+		
+
+		if (unit->state_str != 0) 
+			writer.write_string("\tcall SetHeroStr(" + unit_reference + ", " + std::to_string(unit->state_str) + ", true)\n");
+		
+
+		if (unit->state_agi != 0) 
+			writer.write_string("\tcall SetHeroAgi(" + unit_reference + ", " + std::to_string(unit->state_agi) + ", true)\n");
+		
+
+		if (unit->state_int != 0) 
+			writer.write_string("\tcall SetHeroInt(" + unit_reference + ", " + std::to_string(unit->state_int) + ", true)\n");
+		
+		float range;
+		if (unit->warning_range != -1.f) 
+		{
+			if (unit->warning_range == -2.f) 
+				range = 200.f;
+			 else 
+				range = unit->warning_range;
+			writer.write_string("\tcall SetUnitAcquireRange(" + unit_reference + ", " + std::to_string(range) + ")\n");
+		}
+
+		for (int a = 0; a < unit->skill_count; a++)
+		{
+			UnitSkill* skill = &unit->skills[a];
+			std::string skillId = std::string(skill->name, skill->name + 0x4);
+			for (int b = 0; b < skill->level; b++) 
+			{
+				writer.write_string("\tcall SelectHeroSkill(" + unit_reference + ", \'" + std::string(skillId) + "\')\n");
+			}
+		
+			std::string objectValue;
+		
+			
+			if (skill->is_enable)
+			{
+				worldEditor->getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderon", objectValue);
+				if (objectValue.empty()) 
+					worldEditor->getSkillObjectData(*(uint32_t*)(skill->name), 0, "Order", objectValue);
+				writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + objectValue + "\")\n");
+			} 
+			else 
+			{
+				worldEditor->getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderoff", objectValue);
+				if (!objectValue.empty()) 
+					writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + objectValue + "\")\n");
+			}
+		}
+		
+		for (int a = 0; a < unit->item_count; a++)
+		{
+			UnitItem* item = &unit->items[a];
+			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", '" + std::string(item->name,item->name + 0x4) + "', " + std::to_string(item->slot_id) + ")\n");
+		}
+
+		std::string dropName;
+
+		uint32_t size = 0;
+		for (int a = 0; a < unit->item_setting_count; a++)
+		{
+			ItemTableSetting* itemSetting = &unit->item_setting[a];
+			size += itemSetting->info_count;
+		}
+
+		if (size > 0)
+		{
+			sprintf(buffer, "Unit%06d_DropItems", unit->index);
+			dropName = buffer;
+		}
+		else if(unit->item_table_index != -1)
+		{
+			sprintf(buffer, "ItemTable%06d_DropItems", unit->item_table_index);
+			dropName = buffer;
+		}
+		if (!dropName.empty())
+		{
+			
+			writer.write_string("\tset t = CreateTrigger()\n");
+			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_DEATH)\n");
+			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_CHANGE_OWNER)\n");
+			writer.write_string("\tcall TriggerAddAction(t, function " + dropName + ")\n");
+		}
+	}
+
+	writer.write_string("endfunction\n");
 
 	printf("脚本内容：\n%s\n", &writer.buffer[0]);
 

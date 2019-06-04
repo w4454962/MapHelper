@@ -53,8 +53,8 @@ struct UnitItem
 struct UnitSkill
 {
 	const char name[0x4];//0x0 技能id
-	uint32_t unknow1;//0x4
-	uint32_t level;//0x8
+	uint32_t is_enable;//0x4 开关 是否初始化激活该技能
+	uint32_t level;//0x8 初始化等级
 };//size 0xc
 
 struct Unit
@@ -65,7 +65,7 @@ struct Unit
 	float x;//0xc	//在地形中的坐标
 	float y;//0x10
 	float z;//0x14
-	float facing;//0x18 弧度制 要转回角度 * 180 / pi = 角度制
+	float angle;//0x18 弧度制 要转回角度 * 180 / pi = 角度制
 	float sacle_x;//0x1c 
 	float sacle_y;//0x20
 	float scale_z;//0x24
@@ -77,7 +77,7 @@ struct Unit
 	char unknow22[0x34];//0x88
 	uint32_t player_id;//0xbc
 	uint32_t unknow13;//0xc0
-	uint32_t life;//0xc4	生命百分比 最小1 大于或等于100则为负1
+	uint32_t health;//0xc4	生命百分比 最小1 大于或等于100则为负1
 	uint32_t mana;//0xc8	魔法百分比 最小1 大于或等于100则为负1
 	uint32_t level;//0xcc	等级
 	uint32_t state_str;//0xd0 属性 力量
@@ -193,6 +193,9 @@ public:
 	const char* getCurrentMapPath();
 
 	const char* getTempSavePath();
+
+	//获取技能物编数据 技能id 等级 字段 返回值
+	bool getSkillObjectData(uint32_t id, uint32_t level, std::string text, std::string& value);
 
 	int getSoundDuration(const char* path);
 

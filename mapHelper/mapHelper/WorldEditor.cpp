@@ -84,6 +84,15 @@ int WorldEditor::getSoundDuration(const char* path)
 	return param[1];
 }
 
+bool WorldEditor::getSkillObjectData(uint32_t id,uint32_t level,std::string text, std::string& value)
+{
+	uint32_t data = std_call<uint32_t>(getAddress(0x004D4EE0));
+	char buffer[0x400];
+	bool ret = this_call<bool>(getAddress(0x0050B7B0), data, id, text.c_str(), buffer, 0x400, level, 1);
+	if (ret) value = buffer;
+	return ret;
+}
+
 void WorldEditor::onSaveMap(const char* tempPath)
 {
 	m_tempPath = tempPath;
