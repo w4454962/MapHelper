@@ -21,6 +21,7 @@
 #include <inttypes.h>
 #include <fstream>
 #include <filesystem>
+#include <algorithm>
 
 #ifdef _HAS_CXX17
 namespace fs = std::experimental::filesystem;

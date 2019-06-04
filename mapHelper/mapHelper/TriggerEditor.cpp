@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
-
+#include <algorithm>
 
 TriggerEditor::TriggerEditor()
 	: m_editorData(NULL),
@@ -1026,6 +1026,65 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
+
+
+
+	writer.write_string("function CreateRegions takes nothing returns nothing\n");
+	writer.write_string("\tlocal weathereffect we\n\n");
+
+	for (int i = 0; i < worldData->regions->region_count; i++)
+	{
+		Region* region = worldData->regions->array[i];
+		std::string region_name = std::string("gg_rct_") + region->name;
+
+		for (int a = 0; a < region_name.length(); a++)
+		{
+			char c = region_name[a];
+			if (!isalpha(c) && !isdigit(c) && c != '_')
+				region_name[a] = '_';
+		}
+		std::replace(region_name.begin(), region_name.end(), ' ', '_');
+
+		int left = region->left * 32 + region->info->minX;
+		int right = region->right * 32 + region->info->minX;
+		int top = region->top * 32 + region->info->minY;
+		int bottom = region->bottom * 32 + region->info->minY;
+
+		int minX = min(left, right);
+		int minY = min(bottom, top);
+		int maxX = max(left, right);
+		int maxY = max(bottom, top);
+
+		writer.write_string("\tset " + region_name + "= Rect(" +
+			std::to_string(minX) + "," +
+			std::to_string(minY) + "," +
+			std::to_string(maxX) + "," +
+			std::to_string(maxY) + ")\n");
+
+		if (*region->weather_id) 
+		{
+			std::string id = std::string(region->weather_id, region->weather_id + 0x4);
+			writer.write_string("\tset we = AddWeatherEffect(" + region_name + ", '" + id + "')\n");
+			writer.write_string("\tcall EnableWeatherEffect(we, true)\n");
+		}
+
+		if (strlen(region->sound_name) > 0)
+		{
+			int width = maxX - minX;
+			int height = maxY - minY;
+			int centerX = minX + width / 2;
+			int centerY = minY + height / 2;
+			sprintf(buffer, "%s,%i,%i,0.0", region->sound_name, centerX, centerY);
+			writer.write_string("\tcall call SetSoundPosition("  + std::string(buffer) + ")\n");
+
+			sprintf(buffer, "%s,true,%i,%i", region->sound_name, width, height);
+			writer.write_string("\tcall call RegisterStackedSound(" + std::string(buffer) + ")\n");
+		}
+
+	}
+	
+
+	writer.write_string("endfunction\n");
 	printf("½Å±¾ÄÚÈÝ£º\n%s\n", &writer.buffer[0]);
 
 

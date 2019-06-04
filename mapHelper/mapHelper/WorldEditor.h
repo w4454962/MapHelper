@@ -158,15 +158,29 @@ struct SoundData
 };
 
 
+struct MapInfo
+{
+	char unknow1[0xc4];
+	float minY;//0xc4 地图最小y
+	float minX;//0xc8 地图最小x
+	float maxY;//0xcc 地图最大Y
+	float maxX;//0xd0 地图最大X
+};
+
 struct Region
 {
 	uint32_t unknow1;//0x0 
 	const char name[0x80];//0x4;
-	uint32_t bottom;//0x84 下
-	uint32_t left;//0x88 左
-	uint32_t top;//0x8c上
-	uint32_t right;//0x90右
-
+	int bottom;//0x84 下 需要地图  * 32 - 地图最小坐标
+	int left;//0x88 左
+	int top;//0x8c上
+	int right;//0x90右
+	MapInfo* info;//0x94
+	char unknow3[0x44];//98
+	char weather_id[0x4];//0xdc
+	char unknow[0x8];//0xe0
+	char sound_name[0x64];//0xe8
+	uint32_t color;//0x14c
 };
 
 struct RegionData
