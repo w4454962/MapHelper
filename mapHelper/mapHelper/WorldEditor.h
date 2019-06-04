@@ -158,6 +158,24 @@ struct SoundData
 };
 
 
+struct Region
+{
+	uint32_t unknow1;//0x0 
+	const char name[0x80];//0x4;
+	uint32_t bottom;//0x84 下
+	uint32_t left;//0x88 左
+	uint32_t top;//0x8c上
+	uint32_t right;//0x90右
+
+};
+
+struct RegionData
+{
+	char unknow[0x60];//0x0
+	uint32_t region_count;//0x60
+	Region** array; //0x64
+};
+
 struct EditorData
 {
 	char unknow1[0x38c4];// 0x0
@@ -170,7 +188,7 @@ struct EditorData
 	void* terrain;//0x38e0
 	UnitData* doodas;//0x38e4
 	UnitData* units;//0x38e8
-	void* rects;//0x38ec
+	RegionData* regions;//0x38ec
 	struct TriggerData* triggers;//0x38f0 //触发编辑器数据
 	void* cameras; //0x38f4
 	void* objects;//0x38f8

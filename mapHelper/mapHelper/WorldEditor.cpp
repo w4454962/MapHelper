@@ -319,7 +319,7 @@ int WorldEditor::saveRect()
 
 	clock_t start = clock();
 
-	int ret = this_call<int>(getAddress(0x0062ACF0), getEditorData()->rects, getTempSavePath());
+	int ret = this_call<int>(getAddress(0x0062ACF0), getEditorData()->regions, getTempSavePath());
 
 	printf("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
