@@ -19,3 +19,13 @@ std::string string_replaced(const std::string& source, const std::string& from, 
 
 	return new_string;
 }
+
+void replace_string(std::string::iterator begin, std::string::iterator end)
+{
+	for (; begin != end; ++begin)
+	{
+		uint8_t c = *begin;
+		if (!isalnum(c) && c != '_')
+			*begin = '_';
+	}
+}

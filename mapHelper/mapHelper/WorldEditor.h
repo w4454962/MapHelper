@@ -190,6 +190,29 @@ struct RegionData
 	Region** array; //0x64
 };
 
+
+struct Camera
+{
+	uint32_t unknow1;//0x0
+	float x;//0x4 
+	float y;//0x8
+	float z_offset;//0xc 高度偏移
+	float rotation;//0x10  z轴旋转
+	float angle_of_attack;//0x14 x轴旋转水平
+	float target_distance;//0x18 镜头距离
+	float roll;//0x1c 滚动(横侧角)
+	float of_view;//0x20 观察区域
+	float farz;//0x24 远景截断
+	float unknow2;//0x28
+	const char name[0x50];//0x2c
+};//size 0x7c
+
+struct CameraData
+{
+	char unknow[0x144]; //0x0
+	uint32_t camera_count; //0x144
+	Camera* array;//0x148
+};
 struct EditorData
 {
 	char unknow1[0x38c4];// 0x0
@@ -204,7 +227,7 @@ struct EditorData
 	UnitData* units;//0x38e8
 	RegionData* regions;//0x38ec
 	struct TriggerData* triggers;//0x38f0 //触发编辑器数据
-	void* cameras; //0x38f4
+	CameraData* cameras; //0x38f4
 	void* objects;//0x38f8
 	SoundData* sounds; //0x38fc
 };

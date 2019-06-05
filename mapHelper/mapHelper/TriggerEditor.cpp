@@ -2,6 +2,7 @@
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
 #include <algorithm>
+#include <assert.h>
 
 TriggerEditor::TriggerEditor()
 	: m_editorData(NULL),
@@ -213,7 +214,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 
 	writer.write_c_string(action->name);
 
-	writer.write(action->group_id);
+	writer.write(action->enable);
 	
 	uint32_t count = action->param_count;
 
@@ -236,7 +237,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 
 		writer.write(child_type);
 
-		writer.write(child->child_flag);
+		writer.write(child->group_id);
 
 		writeAction(writer, child);
 	}
@@ -1037,13 +1038,8 @@ endfunction
 		Region* region = worldData->regions->array[i];
 		std::string region_name = std::string("gg_rct_") + region->name;
 
-		for (int a = 0; a < region_name.length(); a++)
-		{
-			char c = region_name[a];
-			if (!isalpha(c) && !isdigit(c) && c != '_')
-				region_name[a] = '_';
-		}
-		std::replace(region_name.begin(), region_name.end(), ' ', '_');
+		replace_string(region_name.begin(), region_name.end());
+
 
 		int left = region->left * 32 + region->info->minX;
 		int right = region->right * 32 + region->info->minX;
@@ -1083,9 +1079,389 @@ endfunction
 
 	}
 	
-
 	writer.write_string("endfunction\n");
-	printf("脚本内容：\n%s\n", &writer.buffer[0]);
+
+
+
+	writer.write_string("function CreateCameras takes nothing returns nothing\n");
+
+	for (int i = 0; i < worldData->cameras->camera_count; i++)
+	{
+		Camera* camera = &worldData->cameras->array[i];
+		std::string camera_name = "gg_cam_" + std::string(camera->name);
+		
+		replace_string(camera_name.begin(), camera_name.end());
+
+		writer.write_string("\tset " + camera_name + " = CreateCameraSetup()\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(camera->z_offset)  + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ROTATION, " + std::to_string(camera->rotation) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ANGLE_OF_ATTACK, " + std::to_string(camera->angle_of_attack) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_TARGET_DISTANCE, " + std::to_string(camera->target_distance) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ROLL, " + std::to_string(camera->roll) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_FIELD_OF_VIEW, " + std::to_string(camera->of_view) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_FARZ, " + std::to_string(camera->farz) + ", 0.0)\n");
+		
+		writer.write_string("\tcall CameraSetupSetDestPosition(" + camera_name + ", " + std::to_string(camera->x) + ", " + std::to_string(camera->y) + ", 0.0)\n");
+
+	}
+	
+	writer.write_string("endfunction\n");
+
+
+
+	TriggerData* trigger_data = worldData->triggers;
+
+	//写入全局jass
+	std::string_view globals_jass = std::string_view(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1);
+	
+	writer.write_string_view(globals_jass);
+
+
+	std::vector<std::string> initialization_triggers;
+
+
+	std::string scripts;
+	
+	for (uint32_t i = 0; i < m_editorData->categoriy_count; i++)
+	{
+		Categoriy* categoriy = m_editorData->categories[i];
+		uint32_t trigger_count = categoriy->trigger_count;
+		for (uint32_t n = 0; n < trigger_count; n++)
+		{
+			Trigger* trigger = categoriy->triggers[n];
+
+			if (trigger->is_comment || !trigger->is_enable) 
+			{
+				continue;
+			}
+			if (trigger->custom_jass_size > 0) 
+			{
+				//writer.write_c_string_view(std::string_view(trigger->custom_jass_script, trigger->custom_jass_size));
+			}
+			else 
+			{
+				writer.write_c_string("");
+				writer.write_c_string(convert_gui_to_jass(trigger, initialization_triggers));
+			}
+		}
+	}
+
+	printf("脚本内容：\n%s\n",std::string_view((const char*)&writer.buffer[0],writer.buffer.size()).data());
 
 
 }
+
+
+
+std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions) 
+{
+	
+	std::string trigger_name = std::string(trigger->name);
+
+	replace_string(trigger_name.begin(), trigger_name.end());
+
+	std::string trigger_variable_name = "gg_trg_" + trigger_name;
+	std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
+
+
+	std::string events = "";
+	std::string conditions = "";
+	std::string pre_actions = "";
+	std::string actions = "";
+
+	events += "function InitTrig_" + trigger_name + " takes nothing returns nothing\n";
+	events += "\tset " + trigger_variable_name + " = CreateTrigger()\n";
+
+	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
+
+	for (int i = 0; i < trigger->line_count; i++)
+	{
+		Action* action = trigger->actions[i];
+		if (action->enable) 
+			continue;
+		uint32_t type = action->table->getType(action);
+
+		std::string name = action->name;
+
+		switch (type) 
+		{
+		case Action::Type::event:
+			
+			if (name == "MapInitializationEvent") 
+			{
+				initializtions.push_back(trigger_variable_name);
+				continue;
+			}
+			events += "\tcall " + name + "(" + trigger_variable_name + ", ";
+			for (int k = 0; k < action->param_count; k++) 
+			{
+				Parameter* param = action->parameters[k];
+				
+				TriggerType* type_data = &m_configData->array[param->type];
+				std::string type = type_data->type;
+
+				events += resolve_parameter(param, trigger_name, pre_actions, type);
+
+				if (k < action->param_count - 1) 
+					events += ", ";
+			}
+			events += ")\n";
+
+			break;
+		case Action::Type::condition:
+			//conditions += "\tif (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
+			conditions += "\treturn false\n";
+			conditions += "\tendif\n";
+			break;
+		case Action::Type::action:
+			//actions += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+			break;
+		}
+	}
+
+	actions += "endfunction\n\n";
+
+	if (!conditions.empty()) {
+		conditions = "function Trig_" + trigger_name + "_Conditions takes nothing returns boolean\n" + conditions;
+		conditions += "\treturn true\n";
+		conditions += "endfunction\n\n";
+
+		events += "\tcall TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
+	}
+
+	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
+	events += "endfunction\n\n";
+
+	printf("22222222222222222222222222222222\n");
+	printf("33333333333333%s444444444444\n", events.c_str());
+	return events;//seperator + "// Trigger: " + trigger_name + "\n" + seperator + pre_actions + conditions + actions + seperator + events;
+}
+
+
+std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call) const {
+	if (parameter->funcParam) 
+	{
+		//return testt(trigger_name, parameter->funcParam->name, parameter->funcParam->parameters, pre_actions, add_call);
+	}
+	else {
+	
+		std::string value = std::string(parameter->value);
+
+		switch (parameter->type) 
+		{
+		case Parameter::Type::invalid:
+	
+			return "";
+		case Parameter::Type::preset: 
+		{
+			
+			//const std::string preset_type = trigger_data.data("TriggerParams", parameter.value, 1);
+			//
+			//if (get_base_type(preset_type) == "string") {
+			//	return string_replaced(trigger_data.data("TriggerParams", parameter.value, 2), "`", "\"");
+			//}
+			//
+			//return trigger_data.data("TriggerParams", parameter.value, 2);
+		}
+		case Parameter::Type::function:
+			return value + "()";
+		case Parameter::Type::variable:
+		{
+			
+			std::string output = value;
+
+			if (!output._Starts_with("gg_")) 
+			{
+				output = "udg_" + output;
+			}
+
+			if (value == "Armagedontimerwindow") 
+			{
+				puts("s");
+			}
+			if (parameter->arrayParam) {
+				output += "[" + resolve_parameter(&parameter->arrayParam[0], trigger_name, pre_actions, "integer") + "]";
+			}
+			return output;
+		}
+		case Parameter::Type::string:
+		{
+
+		}
+			//std::string import_type = trigger_data.data("TriggerTypes", type, 5);
+			//
+			//if (not import_type.empty()) {
+			//	return "\"" + string_replaced(parameter.value, "\\", "\\\\") + "\"";
+			//}
+			//else if (get_base_type(type) == "string") 
+			//{
+			//	return "\"" + value + "\"";
+			//}
+			//else if (type == "abilcode" || // ToDo this seems like a hack?
+			//	type == "buffcode" ||
+			//	type == "destructablecode" ||
+			//	type == "itemcode" ||
+			//	type == "ordercode" ||
+			//	type == "techcode" ||
+			//	type == "unitcode") {
+			//	return "'" + value + "'";
+			//}
+			//else 
+			//{
+			//	return value;
+			//}
+		}
+	}
+	assert(false, "error");
+	return "";
+}
+//
+//
+//
+//std::string TriggerEditor::testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters, std::string& pre_actions, bool add_call) const 
+//{
+//	std::string output;
+//
+//	if (parent_name == "CommentString") {
+//		return "//" + resolve_parameter(parameters[0], trigger_name, pre_actions, "");
+//	}
+//
+//	if (parent_name == "CustomScriptCode") {
+//		return resolve_parameter(parameters[0], trigger_name, pre_actions, "");
+//	}
+//
+//
+//	if (parent_name.substr(0, 15) == "OperatorCompare") {
+//		output += resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+//		output += " " + resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + " ";
+//		output += resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2));
+//		return output;
+//	}
+//
+//	if (parent_name == "OperatorString") {
+//		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+//		output += " + ";
+//		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + ")";
+//		return output;
+//	}
+//
+//	if (parent_name == "ForLoopVar") {
+//		//std::string variable = "udg_" + resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
+//		std::string variable = resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
+//
+//		output += "set " + variable + " = ";
+//		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + "\n";
+//		output += "loop\n";
+//		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)) + "\n";
+//		output += resolve_parameter(parameters[3], trigger_name, pre_actions, get_type(parent_name, 3), true) + "\n";
+//		output += "set " + variable + " = " + variable + " + 1\n";
+//		output += "endloop\n";
+//		return output;
+//	}
+//
+//	if (parent_name == "IfThenElse") {
+//		std::string thentext;
+//		std::string elsetext;
+//
+//		std::string function_name = generate_function_name(trigger_name);
+//		std::string tttt = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+//
+//		output += "if (" + function_name + "()) then\n";
+//		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1), true) + "\n";
+//		output += "else\n";
+//		output += resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2), true) + "\n";
+//		output += "endif";
+//
+//		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+//		pre_actions += "return " + tttt + "\n";
+//		pre_actions += "endfunction\n";
+//		return output;
+//	}
+//
+//	if (parent_name == "ForForce" || parent_name == "ForGroup") {
+//		std::string function_name = generate_function_name(trigger_name);
+//
+//		std::string tttt = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
+//
+//		output += parent_name + "(";
+//		output += resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+//		output += ", function " + function_name;
+//		output += ")";
+//
+//		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
+//		pre_actions += "\tcall " + tttt + "\n";
+//		pre_actions += "endfunction\n\n";
+//		return (add_call ? "call " : "") + output;
+//	}
+//
+//	if (parent_name == "GetBooleanAnd") {
+//		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+//		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
+//
+//		std::string function_name = generate_function_name(trigger_name);
+//		output += "GetBooleanAnd(" + function_name + "(), ";
+//		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+//		pre_actions += "\t return ( " + first_parameter + ")\n";
+//		pre_actions += "endfunction\n\n";
+//
+//		function_name = generate_function_name(trigger_name);
+//		output += function_name + "())";
+//		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+//		pre_actions += "\t return ( " + second_parameter + ")\n";
+//		pre_actions += "endfunction\n\n";
+//
+//		return (add_call ? "call " : "") + output;
+//	}
+//
+//	if (parent_name == "GetBooleanOr") {
+//		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+//		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
+//
+//		std::string function_name = generate_function_name(trigger_name);
+//		output += "GetBooleanOr(" + function_name + "(), ";
+//		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+//		pre_actions += "\t return ( " + first_parameter + ")\n";
+//		pre_actions += "endfunction\n\n";
+//
+//		function_name = generate_function_name(trigger_name);
+//		output += function_name + "())";
+//		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+//		pre_actions += "\t return ( " + second_parameter + ")\n";
+//		pre_actions += "endfunction\n\n";
+//
+//		return (add_call ? "call " : "") + output;
+//	}
+//
+//	if (parent_name == "OperatorInt" || parent_name == "OperatorReal") {
+//		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+//		output += " " + resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + " ";
+//		output += resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)) + ")";
+//		return output;
+//	}
+//
+//	for (int k = 0; k < parameters.size(); k++) {
+//		const auto& i = parameters[k];
+//
+//		const std::string type = get_type(parent_name, k);
+//
+//		if (type == "boolexpr") {
+//			const std::string function_name = generate_function_name(trigger_name);
+//
+//			std::string tttt = resolve_parameter(parameters[k], trigger_name, pre_actions, get_type(parent_name, k));
+//
+//			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+//			pre_actions += "\treturn " + tttt + "\n";
+//			pre_actions += "endfunction\n\n";
+//
+//			output += "function " + function_name;
+//		}
+//		else {
+//			output += resolve_parameter(i, trigger_name, pre_actions, get_type(parent_name, k));
+//		}
+//
+//		if (k < parameters.size() - 1) {
+//			output += ", ";
+//		}
+//	}
+//	return (add_call ? "call " : "") + parent_name + "(" + output + ")";
+//}

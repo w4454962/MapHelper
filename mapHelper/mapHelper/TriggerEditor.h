@@ -37,6 +37,12 @@ struct Parameter
 
 struct Action
 {
+	enum Type {
+		event,
+		condition,
+		action
+	};
+
 	struct VritualTable
 	{
 		uint32_t unknow1;
@@ -54,9 +60,9 @@ struct Action
 	uint32_t param_count; // 0x128
 	Parameter** parameters;//0x12c
 	char unknow4[0xC];//0x130
-	uint32_t group_id;//0x13c 
+	uint32_t enable;//0x13c 
 	char unknow5[0x14];//0x140
-	uint32_t child_flag;//0x154 当该条动作是子动作时为0 否则是-1
+	uint32_t group_id;//0x154 当该条动作是子动作时为0 否则是-1
 };
 
 struct Trigger
@@ -143,7 +149,14 @@ public:
 	void saveTriggers(const char* path); //生成wtg
 	void saveScriptTriggers(const char* path);//生成 wct
 	void saveSctipt(const char* path); //生成j
+
+	
 private: 
+	std::string convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions);
+	std::string resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call = false) const;
+	std::string testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters, std::string& pre_actions, bool add_call) const;
+
+
 	void writeCategoriy(BinaryWriter& writer);
 	void writeVariable(BinaryWriter& writer);
 	void writeTrigger(BinaryWriter& writer);

@@ -1,4 +1,5 @@
 #pragma once
+#include <string_view>
 
 class BinaryWriter {
 public:
@@ -34,6 +35,17 @@ public:
 		}
 	}
 
+	void write_string_view(const std::string_view& string) {
+		if (!string.empty() && string.back() == '\0') {
+			buffer.resize(buffer.size() + string.size());
+			std::copy(string.begin(), string.end(), buffer.end() - string.size());
+		}
+		else {
+			buffer.resize(buffer.size() + string.size() + 1);
+			std::copy(string.begin(), string.end(), buffer.end() - string.size() - 1);
+			buffer[buffer.size() - 1] = '\0';
+		}
+	}
 
 	/// Copies the contents of the array to the buffer, has special code for std::string
 	template<typename T>
