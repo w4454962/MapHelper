@@ -3,6 +3,7 @@
 #include "WorldEditor.h"
 #include <algorithm>
 #include <assert.h>
+#include <iostream>
 
 TriggerEditor::TriggerEditor()
 	: m_editorData(NULL),
@@ -298,8 +299,8 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 
 	writer.write(data->globals_jass_size);
 
-	std::string jass(data->globals_jass_script, data->globals_jass_size);
-	writer.write_c_string(jass);
+	std::string_view jass(data->globals_jass_script, data->globals_jass_size);
+	writer.write_c_string_view(jass);
 
 	writer.write(data->trigger_count);
 
@@ -1113,15 +1114,14 @@ endfunction
 
 	//写入全局jass
 	std::string_view globals_jass = std::string_view(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1);
-	
-	writer.write_string_view(globals_jass);
+
+	writer.write_c_string_view(globals_jass);
 
 
 	std::vector<std::string> initialization_triggers;
 
+	writer.write_string("\n");
 
-	std::string scripts;
-	
 	for (uint32_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
@@ -1136,17 +1136,17 @@ endfunction
 			}
 			if (trigger->custom_jass_size > 0) 
 			{
-				//writer.write_c_string_view(std::string_view(trigger->custom_jass_script, trigger->custom_jass_size));
+				writer.write_c_string_view(std::string_view(trigger->custom_jass_script, trigger->custom_jass_size));
 			}
 			else 
 			{
-				writer.write_c_string("");
-				writer.write_c_string(convert_gui_to_jass(trigger, initialization_triggers));
+				writer.write_c_string_view(convert_gui_to_jass(trigger, initialization_triggers));
 			}
 		}
 	}
 
-	printf("脚本内容：\n%s\n",std::string_view((const char*)&writer.buffer[0],writer.buffer.size()).data());
+	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+
 
 
 }
@@ -1232,9 +1232,8 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 
-	printf("22222222222222222222222222222222\n");
-	printf("33333333333333%s444444444444\n", events.c_str());
-	return events;//seperator + "// Trigger: " + trigger_name + "\n" + seperator + pre_actions + conditions + actions + seperator + events;
+
+	return seperator + "// Trigger: " + trigger_name + "\n" + seperator + pre_actions + conditions + actions + seperator + events;
 }
 
 

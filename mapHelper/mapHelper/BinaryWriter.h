@@ -35,7 +35,7 @@ public:
 		}
 	}
 
-	void write_string_view(const std::string_view& string) {
+	void write_c_string_view(const std::string_view& string) {
 		if (!string.empty() && string.back() == '\0') {
 			buffer.resize(buffer.size() + string.size());
 			std::copy(string.begin(), string.end(), buffer.end() - string.size());
