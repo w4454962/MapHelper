@@ -7,7 +7,10 @@ struct TriggerType
 {
 	uint32_t flag;//0x0
 	const char type[0x8c];//0x4
-	const char value[0x110];//0x90 配置在TriggerData文件里的TriggerTypeDefaults的默认值
+	const char value[0xc8];//0x90 配置在TriggerData文件里的TriggerTypeDefaults的默认值
+	const char base_type[0x30];//0x158
+	uint32_t is_import_path;//0x188
+	char unknow[0x14];//0x18c
 };//size 0x1a0
 
 struct TriggerConfigData
@@ -28,8 +31,8 @@ struct Parameter
 	};
 	uint32_t table; //0x0
 	uint32_t unknow2; //0x4
-	uint32_t type;		  //0x8
-	char unknow3[0x40];//0xc
+	uint32_t typeId; //0x8 参数器类型 -1 ~3
+	char type_name[0x40];//0xc 参数类型 字符串
 	const char value[0x12c]; //0x4c
 	struct Action* funcParam;//0x178 非0时表示 此参数包含参数
 	Parameter* arrayParam;//0x17c 非0时 表示该参数是数组变量 并且拥有子参数
@@ -60,9 +63,9 @@ struct Action
 	uint32_t param_count; // 0x128
 	Parameter** parameters;//0x12c
 	char unknow4[0xC];//0x130
-	uint32_t enable;//0x13c 
+	uint32_t group;//0x13c 
 	char unknow5[0x14];//0x140
-	uint32_t group_id;//0x154 当该条动作是子动作时为0 否则是-1
+	uint32_t child_flag;//0x154 当该条动作是子动作时为0 否则是-1
 };
 
 struct Trigger
@@ -153,9 +156,13 @@ public:
 	
 private: 
 	std::string convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions);
-	std::string resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call = false) const;
-	std::string testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters, std::string& pre_actions, bool add_call) const;
+	std::string convert_action_to_jass(Action* action, std::string& pre_actions, const std::string& trigger_name, bool nested) const;
 
+	std::string resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call = false) const;
+	std::string testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters,uint32_t size, std::string& pre_actions, bool add_call) const;
+	
+	std::string get_base_type(const std::string& type) const;
+	std::string generate_function_name(const std::string & trigger_name) const;
 
 	void writeCategoriy(BinaryWriter& writer);
 	void writeVariable(BinaryWriter& writer);
@@ -163,6 +170,7 @@ private:
 	void writeTrigger(BinaryWriter& writer,Trigger* trigger);
 	void writeAction(BinaryWriter& writer, Action* action);
 	void writeParameter(BinaryWriter& writer, Parameter* param);
+
 protected:
 	TriggerConfigData* m_configData;
 	TriggerData* m_editorData;
@@ -172,5 +180,5 @@ protected:
 	const std::string seperator = "//===========================================================================\n";
 
 	//变量类型默认的值
-	std::map<std::string, std::string> m_typeDefaultValues;
+	std::map<std::string, TriggerType*> m_typesTable;
 };
