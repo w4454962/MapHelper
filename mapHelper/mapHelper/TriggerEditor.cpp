@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "YDTrigger.h"
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
 #include <algorithm>
@@ -35,9 +36,9 @@ constexpr unsigned int operator "" _hash(char const* p, size_t)
 
 
 TriggerEditor::TriggerEditor()
-	: m_editorData(NULL),
-	m_version(7),
-	is_ydwe(false)
+	:m_ydweTrigger(YDTrigger::getInstance()),
+	m_editorData(NULL),
+	m_version(7)
 { }
 
 TriggerEditor::~TriggerEditor()
@@ -240,7 +241,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 
 	writer.write_c_string(action->name);
 
-	writer.write(action->group);
+	writer.write(action->enable);
 	
 	uint32_t count = action->param_count;
 
@@ -366,7 +367,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	TriggerData* data = m_editorData;
 
-	is_ydwe = false;
+
 
 	BinaryWriter writer,writer2;
 
@@ -382,12 +383,11 @@ void TriggerEditor::saveSctipt(const char* path)
 	writer.write_string("//*\n");
 	writer.write_string(seperator);
 
-	if (is_ydwe)//这是ydwe的内容
+	if (m_ydweTrigger->isEnable())
 	{
-		writer.write_string("#include <YDTrigger/Import.h>\n");
-		writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
+		m_ydweTrigger->onGlobals(writer);
 	}
-
+	
 	writer.write_string("globals\n");
 	printf("开始写变量\n");
 	for (uint32_t i = 0; i < data->variables->globals_count; i++)
@@ -413,8 +413,8 @@ void TriggerEditor::saveSctipt(const char* path)
 				auto it = m_typesTable.find(type);
 				if (it != m_typesTable.end())
 					value = it->second->value;
-				else 
-					value = "null";;
+				if (value.length() == 0)
+					value = "null";
 			}
 			writer.write_string("\t" + type + " " + name + " = " + value + "\n");
 		}
@@ -431,11 +431,9 @@ void TriggerEditor::saveSctipt(const char* path)
 		}
 	}
 
-	if (is_ydwe)
+	if (m_ydweTrigger->isEnable())
 	{
-		writer.write_string("#include <YDTrigger/Globals.h>\n");
-		writer.write_string("endglobals\n");
-		writer.write_string("#include <YDTrigger/Function.h>\n");
+		m_ydweTrigger->onEndGlobals(writer);
 	}
 	else
 	{
@@ -1175,13 +1173,15 @@ endfunction
 		}
 	}
 
-	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+
+	std::ofstream file("D:\\war3\\out.txt");
+	file.write((const char*)&writer.buffer[0], writer.buffer.size());
+	file.close();
 
 	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
-	std::ofstream file("D\\war3\\out.txt");
-	file.write((const char*)&writer.buffer[0], writer.buffer.size());
-	file.close();
+
 
 
 }
@@ -1213,7 +1213,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 	{
 		Action* action = trigger->actions[i];
 
-		if (!action->group) 
+		if (!action->enable) 
 			continue;
 		uint32_t type = action->table->getType(action);
 
@@ -1222,7 +1222,13 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 		switch (type) 
 		{
 		case Action::Type::event:
-			
+			if (m_ydweTrigger->isEnable())
+			{
+				//返回false 跳过注册事件
+				if (!m_ydweTrigger->onRegisterEvent(events, trigger,action, name))
+					continue;
+
+			}
 			if (name == "MapInitializationEvent") 
 			{
 				initializtions.push_back(trigger_variable_name);
@@ -1242,6 +1248,10 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 					events += ", ";
 			}
 			events += ")\n";
+			if (m_ydweTrigger->isEnable())
+			{
+				m_ydweTrigger->onRegisterEvent2(events, trigger,action, name);
+			}
 
 			break;
 		case Action::Type::condition:
@@ -1507,7 +1517,8 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
 				is_import_path = it->second->is_import_path;
-				
+			printf("%s : %s : %s\n", parameter->value, type.c_str(), get_base_type(type).c_str());
+
 			if (is_import_path) {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
 			}
@@ -1555,6 +1566,10 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		return resolve_parameter(parameters[0], trigger_name, pre_actions, "");
 	}
 
+	case "GetTriggerName"_hash:
+	{
+		return "\"" + trigger_name + "\"";
+	}
 	case "OperatorString"_hash:
 	{
 		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
@@ -1709,9 +1724,12 @@ std::string TriggerEditor::get_base_type(const std::string& type) const
 	auto it = m_typesTable.find(type);
 	if (it != m_typesTable.end())
 	{
-		return it->second->base_type;
+		if (*it->second->base_type)
+		{
+			return it->second->base_type;
+		}
 	}
-	return std::string();
+	return type;
 }
 
 std::string TriggerEditor::generate_function_name(const std::string & trigger_name) const {

@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <unordered_map>
+#include <functional>
 #ifdef _HAS_CXX17
 namespace fs = std::experimental::filesystem;
 #else

@@ -63,7 +63,7 @@ struct Action
 	uint32_t param_count; // 0x128
 	Parameter** parameters;//0x12c
 	char unknow4[0xC];//0x130
-	uint32_t group;//0x13c 
+	uint32_t enable;//0x13c 
 	char unknow5[0x14];//0x140
 	uint32_t child_flag;//0x154 当该条动作是子动作时为0 否则是-1
 };
@@ -174,8 +174,10 @@ private:
 protected:
 	TriggerConfigData* m_configData;
 	TriggerData* m_editorData;
+
+	class YDTrigger* m_ydweTrigger;
+
 	uint32_t m_version;
-	bool is_ydwe;
 
 	const std::string seperator = "//===========================================================================\n";
 
