@@ -103,6 +103,21 @@ void YDTrigger::onRegisterEvent2(std::string& events, Trigger* trigger, Action* 
 	}
 }
 
+bool YDTrigger::onActionToJass(std::string& actions, Action* action, std::string& pre_actions, const std::string& trigger_name, bool nested)
+{
+	Parameter** parameters = action->parameters;
+	switch (hash_(action->name))
+	{
+	case "YDWEForLoopLocVarMultiple"_hash:
+	{
+
+		break;
+	}
+
+	}
+
+}
+
 bool YDTrigger::hasDisableRegister(Trigger* trigger)
 {
 	auto it = m_triggerHasDisable.find(trigger);

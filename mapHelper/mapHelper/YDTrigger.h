@@ -20,6 +20,8 @@ public:
 	bool onRegisterEvent(std::string& events, Trigger* trigger, Action* action, std::string& name);
 	void onRegisterEvent2(std::string& events, Trigger* trigger, Action* action, std::string& name);
 
+	bool onActionToJass(std::string& actions, Action* action, std::string& pre_actions, const std::string& trigger_name, bool nested);
+
 	//ÅÐ¶Ï´¥·¢ÊÇ·ñÐÝÃß true ÎªÐÝÃß×´Ì¬
 	bool hasDisableRegister(Trigger* trigger);
 
