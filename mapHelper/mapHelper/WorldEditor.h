@@ -249,6 +249,9 @@ public:
 
 	const char* getTempSavePath();
 
+	std::string getTriggerConfigData(const std::string& parentKey, const std::string& childKey, int index);
+
+
 	//获取技能物编数据 技能id 等级 字段 返回值
 	bool getSkillObjectData(uint32_t id, uint32_t level, std::string text, std::string& value);
 

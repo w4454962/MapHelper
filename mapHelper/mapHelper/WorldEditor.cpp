@@ -10,6 +10,8 @@ WorldEditor::WorldEditor()
 
 	TriggerConfigData* configData = std_call<TriggerConfigData*>(getAddress(0x004D4DA0));
 	triggerEditor->loadTriggerConfig(configData);
+
+
 }
 
 WorldEditor::~WorldEditor()
@@ -82,6 +84,17 @@ int WorldEditor::getSoundDuration(const char* path)
 	ZeroMemory(&param, sizeof param);
 	fast_call<int>(WorldEditor::getInstance()->getAddress(0x004DCFA0), path, &param);
 	return param[1];
+}
+
+std::string WorldEditor::getTriggerConfigData(const std::string& parentKey, const std::string& childKey, int index)
+{
+	char buffer[0x100];
+	bool result = fast_call<uint32_t>(getAddress(0x004D1EC0), parentKey.c_str(), childKey.c_str(),buffer, 0x100, index);
+	if (result)
+	{
+		return buffer;
+	}
+	return std::string();
 }
 
 bool WorldEditor::getSkillObjectData(uint32_t id,uint32_t level,std::string text, std::string& value)

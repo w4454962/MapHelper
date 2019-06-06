@@ -180,5 +180,5 @@ protected:
 	const std::string seperator = "//===========================================================================\n";
 
 	//变量类型默认的值
-	std::map<std::string, TriggerType*> m_typesTable;
+	std::unordered_map<std::string, TriggerType*> m_typesTable;
 };

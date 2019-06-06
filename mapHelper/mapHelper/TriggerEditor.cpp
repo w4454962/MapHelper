@@ -62,14 +62,9 @@ void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 	for (uint32_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
-		//printf("%s : %x   %i\n", type_data->type, type_data,type_data->is_import_path);
-		std::string value = type_data->value;
-		if (value.length() > 0)
-		{
-			m_typesTable[type_data->type] = type_data;
-		}
-		
+		m_typesTable[type_data->type] = type_data;
 	}
+	
 }
 
 void TriggerEditor::saveTriggers(const char* path)
@@ -364,6 +359,11 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 
 void TriggerEditor::saveSctipt(const char* path)
 {
+
+	printf("自定义保存wct文件\n");
+
+	clock_t start = clock();
+
 	TriggerData* data = m_editorData;
 
 	is_ydwe = false;
@@ -1175,8 +1175,13 @@ endfunction
 		}
 	}
 
-	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
+	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+	std::ofstream file("D\\war3\\out.txt");
+	file.write((const char*)&writer.buffer[0], writer.buffer.size());
+	file.close();
 
 
 }
@@ -1194,10 +1199,10 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 	std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
 
 
-	std::string events = "";
-	std::string conditions = "";
-	std::string pre_actions = "";
-	std::string actions = "";
+	std::string events;
+	std::string conditions;
+	std::string pre_actions;
+	std::string actions;
 
 	events += "function InitTrig_" + trigger_name + " takes nothing returns nothing\n";
 	events += "\tset " + trigger_variable_name + " = CreateTrigger()\n";
@@ -1347,7 +1352,7 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& p
 				iftext += "\tendif\n";
 			}
 			else if (childType == Action::Type::action) {
-				if (action->group == 1) {
+				if (childAction->child_flag == 1) {
 					thentext += convert_action_to_jass(childAction, pre_actions, trigger_name, false) + "\n";
 				}
 				else {
@@ -1459,13 +1464,19 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 		case Parameter::Type::preset: 
 		{
 			
-			const std::string preset_type = parameter->type_name;
-			
-			if (get_base_type(preset_type) == "string") {
-				return string_replaced(value, "`", "\"");
+			auto it = m_typesTable.find(parameter->type_name);
+			if (it != m_typesTable.end())
+			{
+				TriggerType* type_data = it->second;
+				std::string base_type = type_data->base_type;
+				std::string default_value = type_data->value;
+
+				if (base_type == "string")
+				{
+					return string_replaced(value, "`", "\"");
+				}
 			}
-			
-			return value;
+			return WorldEditor::getInstance()->getTriggerConfigData("TriggerParams", value, 2);
 		}
 		case Parameter::Type::function:
 			return value + "()";
@@ -1491,11 +1502,12 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 		case Parameter::Type::string:
 		{
 			
-			bool is_import_path = false;
+			uint32_t is_import_path = 0;
+	
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
 				is_import_path = it->second->is_import_path;
-			
+				
 			if (is_import_path) {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
 			}
@@ -1587,7 +1599,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	}
 
 	case "ForForce"_hash:
-	case"ForGroup"_hash:
+	case "ForGroup"_hash:
 	{
 		std::string function_name = generate_function_name(trigger_name);
 
