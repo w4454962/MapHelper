@@ -9,10 +9,18 @@
 
 
 TriggerEditor::TriggerEditor()
-	:m_ydweTrigger(YDTrigger::getInstance()),
-	m_editorData(NULL),
+	:m_editorData(NULL),
 	m_version(7)
-{ }
+{ 
+	space_stack = 0;
+	for (int i = 0; i < 200; i++)
+	{
+		for (int k = 0; k < i; k++)
+		{
+			spaces[i] += '\t';
+		}
+	}
+}
 
 TriggerEditor::~TriggerEditor()
 { }
@@ -38,7 +46,7 @@ void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 		TriggerType* type_data = &data->array[i];
 		m_typesTable[type_data->type] = type_data;
 	}
-	
+	m_ydweTrigger = YDTrigger::getInstance();
 }
 
 void TriggerEditor::saveTriggers(const char* path)
@@ -1176,11 +1184,12 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 	std::string conditions;
 	std::string pre_actions;
 	std::string actions;
+	std::string action_code;
 
 	events += "function InitTrig_" + trigger_name + " takes nothing returns nothing\n";
 	events += "\tset " + trigger_variable_name + " = CreateTrigger()\n";
 
-	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
+	space_stack++;
 
 	for (uint32_t i = 0; i < trigger->line_count; i++)
 	{
@@ -1228,15 +1237,31 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 
 			break;
 		case Action::Type::condition:
-			conditions += "\tif (not (" + convert_action_to_jass(action, pre_actions, trigger_name, true) + ")) then\n";
+			conditions += "\tif (not (" + convert_action_to_jass(action,NULL, pre_actions, trigger_name, true) + ")) then\n";
 			conditions += "\treturn false\n";
 			conditions += "\tendif\n";
 			break;
 		case Action::Type::action:
-			actions += "\t" + convert_action_to_jass(action, pre_actions, trigger_name, false) + "\n";
+			space_stack = 1;
+			action_code += spaces[space_stack];
+			action_code += convert_action_to_jass(action,NULL, pre_actions, trigger_name, false) + "\n";
 			break;
 		}
 	}
+
+	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
+
+	if (m_ydweTrigger->isEnable())
+	{
+		m_ydweTrigger->onActionsToFuncBegin(actions, trigger);
+		actions += action_code;
+		m_ydweTrigger->onActionsToFuncEnd(actions,trigger);
+	}
+	else
+	{
+		actions += action_code;
+	}
+	
 
 	actions += "endfunction\n\n";
 
@@ -1256,106 +1281,135 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 }
 
 
-std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& pre_actions, const std::string& trigger_name, bool nested) const 
+std::string TriggerEditor::convert_action_to_jass(Action* action,Action* parent, std::string& pre_actions, const std::string& trigger_name, bool nested) 
 {
 	std::string output;
 	std::string name = action->name;
 	bool is_loopa = false;
 
 	Parameter** parameters = action->parameters;
+
 	switch (hash_(action->name))
 	{
-	case "WaitForCondition"_hash:
+	case "WaitForCondition"s_hash:
 	{
+		output += spaces[space_stack];
 		output += "loop\n";
+		output += spaces[++space_stack];
 		output += "exitwhen (" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name) + ")\n";
+		output += spaces[space_stack];
 		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "))\n";
+		output += spaces[--space_stack];
 		output += "endloop";
 		return output;
 	}
 	
-	case "ForLoopAMultiple"_hash:
+	case "ForLoopAMultiple"s_hash:
 		is_loopa = true;
-	case "ForLoopBMultiple"_hash:
+	case "ForLoopBMultiple"s_hash:
 	{
 		std::string loop_index = is_loopa ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = is_loopa ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
+		output += spaces[space_stack];
 		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name) + "\n";
+		output += spaces[space_stack];
 		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "\n";
+		output += spaces[space_stack];
 		output += "loop\n";
+		output += spaces[++space_stack];
 		output += "exitwhen " + loop_index + " > " + loop_index_end + "\n";
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
-			output += convert_action_to_jass(childAction, pre_actions, trigger_name, false) + "\n";
+			output += spaces[space_stack];
+			output += convert_action_to_jass(childAction,action, pre_actions, trigger_name, false) + "\n";
 		}
+		output += spaces[space_stack];
 		output += "set " + loop_index + " = " + loop_index + " + 1\n";
+		output += spaces[--space_stack];
 		output += "endloop\n";
 		return output;
 	}
 
-	case "ForLoopVarMultiple"_hash:
+	case "ForLoopVarMultiple"s_hash:
 	{
 		std::string variable = resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
-
+		output += spaces[space_stack];
 		output += "set " + variable + " = ";
 		output += resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "\n";
+		output += spaces[space_stack];
 		output += "loop\n";
+		output += spaces[++space_stack];
 		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name) + "\n";
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
-			output += convert_action_to_jass(childAction, pre_actions, trigger_name, false) + "\n";
+			output += spaces[space_stack];
+			output += convert_action_to_jass(childAction,action, pre_actions, trigger_name, false) + "\n";
 		}
+		output += spaces[space_stack];
 		output += "set " + variable + " = " + variable + " + 1\n";
+		output += spaces[--space_stack];
 		output += "endloop\n";
 		return output;
 	}
 	
-	case "IfThenElseMultiple"_hash:
+	case "IfThenElseMultiple"s_hash:
 	{
 		std::string iftext;
 		std::string thentext;
 		std::string elsetext;
 
 		std::string function_name = generate_function_name(trigger_name);
-		iftext += "function " + function_name + " takes nothing returns boolean\n";
 
+		bool firstBoolexper = true;
+		space_stack++;
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
-
 			uint32_t childType = childAction->table->getType(childAction);
 
 			if (childType == Action::Type::condition)
 			{
-				iftext += "\tif (not (" + convert_action_to_jass(childAction, pre_actions, trigger_name, true) + ")) then\n";
-				iftext += "\t\treturn false\n";
-				iftext += "\tendif\n";
+				if (firstBoolexper)
+					firstBoolexper = false;
+				else
+					iftext += " and ";
+				iftext += convert_action_to_jass(childAction,action, pre_actions, trigger_name, true);
 			}
 			else if (childType == Action::Type::action) {
 				if (childAction->child_flag == 1) {
-					thentext += convert_action_to_jass(childAction, pre_actions, trigger_name, false) + "\n";
+					output += spaces[space_stack];
+					thentext += convert_action_to_jass(childAction, action, pre_actions, trigger_name, false) + "\n";
 				}
 				else {
-					elsetext += convert_action_to_jass(childAction, pre_actions, trigger_name, false) + "\n";
+					output += spaces[space_stack];
+					elsetext += convert_action_to_jass(childAction, action, pre_actions, trigger_name, false) + "\n";
 				}
 			}
 		}
-		iftext += "\treturn true\n";
-		iftext += "endfunction\n";
-		pre_actions += iftext;
+		space_stack--;
+		output += spaces[space_stack];
+		output += "if (";
+		output += iftext;
+		output += ") then\n";
+		output += thentext;
+		output += spaces[space_stack];
+		output += "else\n";
+		output += elsetext;
+		output += spaces[space_stack];
+		output += "endif";
 
-		return "if (" + function_name + "()) then\n" + thentext + "\telse\n" + elsetext + "\tendif";
+		return output;
 	}
 
-	case "ForForceMultiple"_hash:
-	case "ForGroupMultiple"_hash:
+	case "ForForceMultiple"s_hash:
+	case "ForGroupMultiple"s_hash:
 
-	case "EnumDestructablesInRectAllMultiple"_hash:
-	case "EnumDestructablesInCircleBJMultiple"_hash:
-	case "EnumItemsInRectBJMultiple"_hash:
+	case "EnumDestructablesInRectAllMultiple"s_hash:
+	case "EnumDestructablesInCircleBJMultiple"s_hash:
+	case "EnumItemsInRectBJMultiple"s_hash:
 	{
 		const std::string function_name = generate_function_name(trigger_name);
 
@@ -1363,19 +1417,34 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& p
 		output += "call " + name.substr(0, name.length() - 8) + "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name) + ", function " + function_name + ")\n";
 
 		std::string toto;
+
+		int stack = space_stack;
+		space_stack = 1;
+
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
-			toto += "\t" + convert_action_to_jass(childAction, pre_actions, trigger_name, false) + "\n";
+			toto += spaces[space_stack];
+			toto +=  convert_action_to_jass(childAction, action, pre_actions, trigger_name, false) + "\n";
 		}
 		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-		pre_actions += toto;
+		if (m_ydweTrigger->isEnable())
+		{
+			m_ydweTrigger->onActionsToFuncBegin(pre_actions,NULL,action);
+			pre_actions += toto;
+			m_ydweTrigger->onActionsToFuncEnd(pre_actions, NULL, action);
+		}
+		else
+		{
+			pre_actions += toto;
+		}
+	
 		pre_actions += "\nendfunction\n";
-
+		space_stack = stack;
 		return output;
 	}
 
-	case "AndMultiple"_hash:
+	case "AndMultiple"s_hash:
 	{
 		const std::string function_name = generate_function_name(trigger_name);
 
@@ -1383,7 +1452,7 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& p
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
-			iftext += "\tif (not (" + convert_action_to_jass(childAction, pre_actions, trigger_name, true) + ")) then\n";
+			iftext += "\tif (not (" + convert_action_to_jass(childAction, action, pre_actions, trigger_name, true) + ")) then\n";
 			iftext += "\t\treturn false\n";
 			iftext += "\tendif\n";
 		}
@@ -1394,7 +1463,7 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& p
 		return function_name + "()";
 	}
 
-	case "OrMultiple"_hash:
+	case "OrMultiple"s_hash:
 	{
 		const std::string function_name = generate_function_name(trigger_name);
 		
@@ -1402,7 +1471,7 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& p
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
-			iftext += "\tif (" + convert_action_to_jass(childAction, pre_actions, trigger_name, true) + ") then\n";
+			iftext += "\tif (" + convert_action_to_jass(childAction, action, pre_actions, trigger_name, true) + ") then\n";
 			iftext += "\t\treturn true\n";
 			iftext += "\tendif\n";
 		}
@@ -1413,20 +1482,20 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& p
 		return function_name + "()";
 	}
 
-	case "SetVariable"_hash:
+	case "SetVariable"s_hash:
 	{
 		const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
 		const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
-		return "set " + first + " = " + second;
+		return spaces[space_stack] + "set " + first + " = " + second;
 	}
 
-	default:
-		break;
 	}
+
 	if (m_ydweTrigger->isEnable())
 	{
 		std::string actions;
-		if (m_ydweTrigger->onActionToJass(actions, action, pre_actions, trigger_name, nested))
+	
+		if (m_ydweTrigger->onActionToJass(actions, action,parent, pre_actions, trigger_name, nested))
 		{
 			return actions;
 		}
@@ -1436,6 +1505,18 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, std::string& p
 }
 
 std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call) const {
+	
+	if (m_ydweTrigger->isEnable())
+	{
+		std::string output;
+
+		if (m_ydweTrigger->onParamterToJass(output, parameter, pre_actions, trigger_name, add_call))
+		{
+			return output;
+		}
+	}
+	
+
 	if (parameter->funcParam) 
 	{
 		return testt(
@@ -1501,8 +1582,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 	
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
-				is_import_path = it->second->is_import_path;
-			printf("%s : %s : %s\n", parameter->value, type.c_str(), get_base_type(type).c_str());
+				is_import_path = it->second->is_import_path;;
 
 			if (is_import_path) {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
@@ -1541,21 +1621,21 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	switch (hash_(parent_name.c_str()))
 	{
 
-	case "CommentString"_hash:
+	case "CommentString"s_hash:
 	{
 		return "//" + resolve_parameter(parameters[0], trigger_name, pre_actions, "");
 	}
 
-	case "CustomScriptCode"_hash:
+	case "CustomScriptCode"s_hash:
 	{
 		return resolve_parameter(parameters[0], trigger_name, pre_actions, "");
 	}
 
-	case "GetTriggerName"_hash:
+	case "GetTriggerName"s_hash:
 	{
 		return "\"" + trigger_name + "\"";
 	}
-	case "OperatorString"_hash:
+	case "OperatorString"s_hash:
 	{
 		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
 		output += " + ";
@@ -1563,7 +1643,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		return output;
 	}
 
-	case "ForLoopVar"_hash:
+	case "ForLoopVar"s_hash:
 	{
 		//std::string variable = "udg_" + resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
 		std::string variable = resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
@@ -1578,7 +1658,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		return output;
 	}
 
-	case "IfThenElse"_hash:
+	case "IfThenElse"s_hash:
 	{
 		std::string thentext;
 		std::string elsetext;
@@ -1598,8 +1678,8 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		return output;
 	}
 
-	case "ForForce"_hash:
-	case "ForGroup"_hash:
+	case "ForForce"s_hash:
+	case "ForGroup"s_hash:
 	{
 		std::string function_name = generate_function_name(trigger_name);
 
@@ -1616,7 +1696,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		return (add_call ? "call " : "") + output;
 	}
 
-	case "GetBooleanAnd"_hash:
+	case "GetBooleanAnd"s_hash:
 	{
 		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
 		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
@@ -1636,7 +1716,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		return (add_call ? "call " : "") + output;
 	}
 
-	case "GetBooleanOr"_hash:
+	case "GetBooleanOr"s_hash:
 	{
 		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
 		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
@@ -1656,8 +1736,8 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		return (add_call ? "call " : "") + output;
 	}
 
-	case "OperatorInt"_hash:
-	case"OperatorReal"_hash:
+	case "OperatorInt"s_hash:
+	case"OperatorReal"s_hash:
 	{
 		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
 		output += " " + resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + " ";

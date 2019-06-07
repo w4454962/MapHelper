@@ -150,6 +150,8 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		triggerEditor->saveTriggers(getTempSavePath());
 		triggerEditor->saveScriptTriggers(getTempSavePath());
 		triggerEditor->saveSctipt(getTempSavePath());
+	
+	
 	}
 	else
 	{

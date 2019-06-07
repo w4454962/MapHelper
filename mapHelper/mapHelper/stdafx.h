@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <functional>
+#include <tuple>
 #ifdef _HAS_CXX17
 namespace fs = std::experimental::filesystem;
 #else
@@ -42,27 +43,18 @@ void replace_string(std::string::iterator begin, std::string::iterator end);
 
 typedef std::uint32_t hash_t;
 
-constexpr hash_t prime = 0x100000001B3ull;
-constexpr hash_t basis = 0xCBF29CE484222325ull;
+constexpr hash_t prime = 0x000001B3;
+constexpr hash_t basis = 0x84222325;
 
-hash_t hash_(const char* str)
-{
-	hash_t ret{ basis };
-	while (*str)
-	{
-		ret ^= *str;
-		ret *= prime;
-		str++;
-	}
-	return ret;
-}
+hash_t hash_(const char* str);
+
 
 constexpr hash_t hash_compile_time(char const* str, hash_t last_value = basis)
 {
 	return *str ? hash_compile_time(str + 1, (*str ^ last_value) * prime) : last_value;
 }
 
-constexpr unsigned int operator "" _hash(char const* p, size_t)
+constexpr unsigned int operator "" s_hash(char const* p, size_t)
 {
 	return hash_compile_time(p);
 }

@@ -1,5 +1,16 @@
 #include "stdafx.h"
 
+hash_t hash_(const char* str)
+{
+	hash_t ret{ basis };
+	while (*str)
+	{
+		ret ^= *str;
+		ret *= prime;
+		str++;
+	}
+	return ret;
+}
 
 std::string string_replaced(const std::string& source, const std::string& from, const std::string& to) {
 	std::string new_string;

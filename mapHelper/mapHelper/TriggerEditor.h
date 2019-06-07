@@ -154,9 +154,9 @@ public:
 	void saveSctipt(const char* path); //生成j
 
 	
-private: 
+
 	std::string convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions);
-	std::string convert_action_to_jass(Action* action, std::string& pre_actions, const std::string& trigger_name, bool nested) const;
+	std::string convert_action_to_jass(Action* action,Action* parent, std::string& pre_actions, const std::string& trigger_name, bool nested);
 
 	std::string resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call = false) const;
 	std::string testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters,uint32_t size, std::string& pre_actions, bool add_call) const;
@@ -164,6 +164,7 @@ private:
 	std::string get_base_type(const std::string& type) const;
 	std::string generate_function_name(const std::string & trigger_name) const;
 
+private:
 	void writeCategoriy(BinaryWriter& writer);
 	void writeVariable(BinaryWriter& writer);
 	void writeTrigger(BinaryWriter& writer);
@@ -183,4 +184,8 @@ protected:
 
 	//变量类型默认的值
 	std::unordered_map<std::string, TriggerType*> m_typesTable;
+
+public:
+	std::string spaces[200];
+	int space_stack;
 };
