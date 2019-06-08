@@ -41,14 +41,20 @@ private:
 
 	void addLocalVar(std::string name,std::string type, std::string value = std::string());
 
-	std::string setLocal(Action* action,Action* parent,std::string name, std::string type,std::string value);
-	std::string getLocal(Action* action, Action* parent, std::string name, std::string type);
+	std::string setLocal(Action* action,Action* parent, const std::string& name, const std::string& type, const std::string& value);
+	std::string getLocal(Action* action, Action* parent, const std::string& name, const std::string& type);
+
+	std::string setLocalArray(Action* action, Action* parent, const  std::string& name, const std::string& type, const std::string& index, const std::string& value);
+	std::string getLocalArray(Action* action, Action* parent, const std::string& name, const std::string& type, const std::string& index);
+
 	bool seachHashLocal(Parameter** parameters, uint32_t count, std::map<std::string, std::string>* mapPtr = NULL);
 protected: 
 	bool m_bEnable;
 	bool m_isInYdweEnumUnit;
 	bool m_hasAnyPlayer;
 	bool m_isInMainProc;
+
+	bool m_isFuncBegin;
 	std::map<Trigger*, bool> m_triggerHasDisable;
 
 	struct LocalVar
