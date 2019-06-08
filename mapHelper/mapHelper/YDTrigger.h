@@ -24,7 +24,7 @@ public:
 	bool onActionToJass(std::string& actions, Action* action,Action* parent, std::string& pre_actions, const std::string& trigger_name, bool nested);
 
 	//每条参数生成时
-	bool onParamterToJass(std::string& actions, Parameter* action, std::string& pre_actions, const std::string& trigger_name, bool nested);
+	bool onParamterToJass(std::string& actions, Parameter* parameter,Action* parent, std::string& pre_actions, const std::string& trigger_name, bool nested);
 
 	//当动作生成函数开始时 写入局部变量
 	void onActionsToFuncBegin(std::string& funcCode, Trigger* trigger, Action* parent = NULL);
@@ -38,10 +38,12 @@ public:
 
 	bool isEnable();
 private:
+
 	void addLocalVar(std::string name,std::string type, std::string value = std::string());
 
-	bool setHashLocal(std::string name, std::string type);
-
+	std::string setLocal(Action* action,Action* parent,std::string name, std::string type,std::string value);
+	std::string getLocal(Action* action, Action* parent, std::string name, std::string type);
+	bool seachHashLocal(Parameter** parameters, uint32_t count, std::map<std::string, std::string>* mapPtr = NULL);
 protected: 
 	bool m_bEnable;
 	bool m_isInYdweEnumUnit;
@@ -58,8 +60,17 @@ protected:
 	//局部变量表 名字,类型,默认值
 	std::vector<LocalVar> m_localTable;
 	std::map<std::string, bool> m_localMap;
+	
 
-
+	struct HashVar
+	{
+		std::string name;
+		std::string type;
+		Action* action;//申请时的动作对象
+		Action* parent;//动作对象所在的父动作
+	};
 	//哈希局部变量表 名字,类型
-	std::map<std::string,std::string> m_HashLocalTable;
+	std::map<std::string, HashVar> m_HashLocalTable;
+
+
 };

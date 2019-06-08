@@ -1224,7 +1224,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 		
 				std::string type = param->type_name;
 
-				events += resolve_parameter(param, trigger_name, pre_actions, type);
+				events += resolve_parameter(param,NULL, trigger_name, pre_actions);
 
 				if (k < action->param_count - 1) 
 					events += ", ";
@@ -1296,9 +1296,9 @@ std::string TriggerEditor::convert_action_to_jass(Action* action,Action* parent,
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen (" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name) + ")\n";
+		output += "exitwhen (" + resolve_parameter(parameters[0], parent, trigger_name, pre_actions) + ")\n";
 		output += spaces[space_stack];
-		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "))\n";
+		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + "))\n";
 		output += spaces[--space_stack];
 		output += "endloop";
 		return output;
@@ -1312,9 +1312,9 @@ std::string TriggerEditor::convert_action_to_jass(Action* action,Action* parent,
 		std::string loop_index_end = is_loopa ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
 		output += spaces[space_stack];
-		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name) + "\n";
+		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], parent, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
-		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "\n";
+		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
@@ -1334,14 +1334,14 @@ std::string TriggerEditor::convert_action_to_jass(Action* action,Action* parent,
 
 	case "ForLoopVarMultiple"s_hash:
 	{
-		std::string variable = resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
+		std::string variable = resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 		output += spaces[space_stack];
 		output += "set " + variable + " = ";
-		output += resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "\n";
+		output += resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name) + "\n";
+		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], parent, trigger_name, pre_actions) + "\n";
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
@@ -1414,7 +1414,7 @@ std::string TriggerEditor::convert_action_to_jass(Action* action,Action* parent,
 		const std::string function_name = generate_function_name(trigger_name);
 
 		// Remove multiple
-		output += "call " + name.substr(0, name.length() - 8) + "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name) + ", function " + function_name + ")\n";
+		output += "call " + name.substr(0, name.length() - 8) + "(" + resolve_parameter(parameters[0], parent, trigger_name, pre_actions) + ", function " + function_name + ")\n";
 
 		std::string toto;
 
@@ -1484,8 +1484,8 @@ std::string TriggerEditor::convert_action_to_jass(Action* action,Action* parent,
 
 	case "SetVariable"s_hash:
 	{
-		const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
-		const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		const std::string first = resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
+		const std::string second = resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 		return spaces[space_stack] + "set " + first + " = " + second;
 	}
 
@@ -1501,16 +1501,16 @@ std::string TriggerEditor::convert_action_to_jass(Action* action,Action* parent,
 		}
 	}
 
-	return testt(trigger_name, name, parameters, action->param_count, pre_actions, !nested);
+	return testt(trigger_name, name, parameters, action->param_count,parent, pre_actions, !nested);
 }
 
-std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call) const {
+std::string TriggerEditor::resolve_parameter(Parameter* parameter,Action* parent, const std::string& trigger_name, std::string& pre_actions, bool add_call) const {
 	
 	if (m_ydweTrigger->isEnable())
 	{
 		std::string output;
 
-		if (m_ydweTrigger->onParamterToJass(output, parameter, pre_actions, trigger_name, add_call))
+		if (m_ydweTrigger->onParamterToJass(output, parameter,parent, pre_actions, trigger_name, add_call))
 		{
 			return output;
 		}
@@ -1524,6 +1524,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 			parameter->funcParam->name, 
 			parameter->funcParam->parameters,
 			parameter->funcParam->param_count,
+			parent,
 			pre_actions, 
 			add_call
 		);
@@ -1571,7 +1572,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 				puts("s");
 			}
 			if (parameter->arrayParam) {
-				output += "[" + resolve_parameter(&parameter->arrayParam[0], trigger_name, pre_actions, "integer") + "]";
+				output += "[" + resolve_parameter(&parameter->arrayParam[0], parent, trigger_name, pre_actions) + "]";
 			}
 			return output;
 		}
@@ -1579,7 +1580,8 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 		{
 			
 			uint32_t is_import_path = 0;
-	
+			std::string type = parameter->type_name;
+
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
 				is_import_path = it->second->is_import_path;;
@@ -1614,7 +1616,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, const std::st
 
 
 
-std::string TriggerEditor::testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters,uint32_t size, std::string& pre_actions, bool add_call) const 
+std::string TriggerEditor::testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters,uint32_t size,Action* parent, std::string& pre_actions, bool add_call) const 
 {
 	std::string output;
 
@@ -1623,12 +1625,12 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 
 	case "CommentString"s_hash:
 	{
-		return "//" + resolve_parameter(parameters[0], trigger_name, pre_actions, "");
+		return "//" + resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 	}
 
 	case "CustomScriptCode"s_hash:
 	{
-		return resolve_parameter(parameters[0], trigger_name, pre_actions, "");
+		return resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 	}
 
 	case "GetTriggerName"s_hash:
@@ -1637,22 +1639,22 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	}
 	case "OperatorString"s_hash:
 	{
-		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
+		output += "(" + resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 		output += " + ";
-		output += resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + ")";
+		output += resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + ")";
 		return output;
 	}
 
 	case "ForLoopVar"s_hash:
 	{
 		//std::string variable = "udg_" + resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
-		std::string variable = resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
+		std::string variable = resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 
 		output += "set " + variable + " = ";
-		output += resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "\n";
+		output += resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + "\n";
 		output += "loop\n";
-		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name) + "\n";
-		output += resolve_parameter(parameters[3], trigger_name, pre_actions, parameters[3]->type_name, true) + "\n";
+		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], parent, trigger_name, pre_actions) + "\n";
+		output += resolve_parameter(parameters[3], parent, trigger_name, pre_actions, true) + "\n";
 		output += "set " + variable + " = " + variable + " + 1\n";
 		output += "endloop\n";
 		return output;
@@ -1664,12 +1666,12 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		std::string elsetext;
 
 		std::string function_name = generate_function_name(trigger_name);
-		std::string tttt = resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
+		std::string tttt = resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 
 		output += "if (" + function_name + "()) then\n";
-		output += resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name, true) + "\n";
+		output += resolve_parameter(parameters[1], parent, trigger_name, pre_actions, true) + "\n";
 		output += "else\n";
-		output += resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name, true) + "\n";
+		output += resolve_parameter(parameters[2], parent, trigger_name, pre_actions, true) + "\n";
 		output += "endif";
 
 		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
@@ -1683,10 +1685,10 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	{
 		std::string function_name = generate_function_name(trigger_name);
 
-		std::string tttt = resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		std::string tttt = resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 
 		output += parent_name + "(";
-		output += resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
+		output += resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 		output += ", function " + function_name;
 		output += ")";
 
@@ -1698,8 +1700,8 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 
 	case "GetBooleanAnd"s_hash:
 	{
-		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
-		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		std::string first_parameter = resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
+		std::string second_parameter = resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanAnd(" + function_name + "(), ";
@@ -1718,8 +1720,8 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 
 	case "GetBooleanOr"s_hash:
 	{
-		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
-		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		std::string first_parameter = resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
+		std::string second_parameter = resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanOr(" + function_name + "(), ";
@@ -1739,9 +1741,9 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	case "OperatorInt"s_hash:
 	case"OperatorReal"s_hash:
 	{
-		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
-		output += " " + resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + " ";
-		output += resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name) + ")";
+		output += "(" + resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
+		output += " " + resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + " ";
+		output += resolve_parameter(parameters[2], parent, trigger_name, pre_actions) + ")";
 		return output;
 	}
 	default:
@@ -1749,9 +1751,9 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	}
 
 	if (parent_name.substr(0, 15) == "OperatorCompare") {
-		output += resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
-		output += " " + resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + " ";
-		output += resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name);
+		output += resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
+		output += " " + resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + " ";
+		output += resolve_parameter(parameters[2], parent, trigger_name, pre_actions);
 		return output;
 	}
 
@@ -1763,7 +1765,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		if (child_type == "boolexpr") {
 			const std::string function_name = generate_function_name(trigger_name);
 
-			std::string tttt = resolve_parameter(param, trigger_name, pre_actions, child_type);
+			std::string tttt = resolve_parameter(param, parent, trigger_name, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
 			pre_actions += "\treturn " + tttt + "\n";
@@ -1772,7 +1774,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 			output += "function " + function_name;
 		}
 		else {
-			output += resolve_parameter(param, trigger_name, pre_actions, child_type);
+			output += resolve_parameter(param, parent, trigger_name, pre_actions);
 		}
 
 		if (k < size - 1) {

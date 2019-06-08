@@ -117,11 +117,11 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,Action* paren
 	{
 		std::string variable = std::string("ydul_") + action->parameters[0]->value;
 		output += "set " + variable + " = ";
-		output += editor->resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name) + "\n";
+		output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions) + "\n";
 		output += editor->spaces[stack];
 		output += "loop\n";
 		output += editor->spaces[++stack];
-		output += "exitwhen " + variable + " > " + editor->resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name) + "\n";
+		output += "exitwhen " + variable + " > " + editor->resolve_parameter(parameters[2], parent, trigger_name, pre_actions) + "\n";
 		for (uint32_t i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
@@ -178,13 +178,13 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,Action* paren
 		output += "call YDUserDataSet(";
 		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 		output += ",";
-		output += editor->resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 		output += ",\"";
 		output += parameters[2]->value;
 		output += "\",";
 		output += parameters[3]->value + 11;
 		output += ",";
-		output += editor->resolve_parameter(parameters[4], trigger_name, pre_actions, parameters[4]->type_name);
+		output += editor->resolve_parameter(parameters[4], parent, trigger_name, pre_actions);
 		output += ")\n";
 		return true;
 	}
@@ -193,7 +193,7 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,Action* paren
 		output += "call YDUserDataClear(";
 		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 		output += ",";
-		output += editor->resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 		output += ",\"";
 		output += parameters[3]->value;
 		output += "\",";
@@ -207,7 +207,7 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,Action* paren
 		output += "call YDUserDataClearTable(";
 		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 		output += ",";
-		output += editor->resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 		output += ")\n";
 		return true;
 	}
@@ -215,7 +215,7 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,Action* paren
 	case "YDWEExecuteTriggerMultiple"s_hash:
 	{
 		output += "set ydl_trigger = ";
-		output += editor->resolve_parameter(parameters[0], trigger_name, pre_actions, parameters[0]->type_name);
+		output += editor->resolve_parameter(parameters[0], parent, trigger_name, pre_actions);
 		output += "\n" + editor->spaces[stack];
 		output += "YDLocalExecuteTrigger(ydl_trigger)\n";
 
@@ -228,154 +228,122 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,Action* paren
 		}
 		output += editor->spaces[stack];
 		output += "call YDTriggerExecuteTrigger(ydl_trigger,";
-		output += editor->resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+		output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 		output += ")\n";
 		return true;
 		
 	}
 	case "YDWETimerStartMultiple"s_hash:
 	{
-		output += "set ydl_timer = CreateTimer()\n";
+
+		std::string param_text;
+		std::string action_text;
+
+		param_text += "set ydl_timer = ";
+		param_text += editor->resolve_parameter(parameters[0], parent, trigger_name, pre_actions) + "\n";
+
+		std::map<std::string, std::string> hashVarTable;
+		std::map<std::string, std::string> hashVarTable2;
 
 		for (int i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
-			if (childAction->child_flag == 0)//如果是参数区的动作
-			{
 
-			}
-			else
+			if (childAction->child_flag == 0)//如果是参数区
 			{
-
-			}
+				output += editor->spaces[stack];
+				if (strcmp(childAction->name, "YDWESetAnyTypeLocalVariable") == 0)
+				{
+					std::string var_name = childAction->parameters[1]->value;
+					std::string var_type = childAction->parameters[0]->value + 11;
+					hashVarTable.emplace(var_name, var_type);
 			
+					//在参数区 值是用上一个父节点的
+					std::string var_value = editor->resolve_parameter(childAction->parameters[2], parent, trigger_name, pre_actions);
+					//设置局部变量则是新的节点里的
+					param_text += editor->spaces[stack];
+					param_text += setLocal(childAction, action, var_name, var_type, var_value) + "\n";
+				}
+				else
+				{
+					//用当前逆天计时器作为新的父节点来生成代码
+					param_text += editor->convert_action_to_jass(childAction, action, pre_actions, trigger_name, false) + "\n";
+				}
+			}
 		}
 
+
+		int s = stack;
+		stack = 1;
+
+
+		for (int i = 0; i < action->child_count; i++)
+		{
+			Action* childAction = action->child_actions[i];
+
+			if (childAction->child_flag != 0)//如果是动作区
+			{
+
+				seachHashLocal(childAction->parameters, childAction->param_count, &hashVarTable2);
+				action_text += editor->spaces[stack];
+				action_text += editor->convert_action_to_jass(childAction, action, pre_actions, trigger_name, false) + "\n";
+			}
+		}
+
+		stack = s;
+
+		for (auto&[n, t] : hashVarTable)
+		{	
+			hashVarTable2.erase(n);
+		}
+
+
+		output += param_text;
+
+		for (auto&[n, t] : hashVarTable2)
+		{
+			output += editor->spaces[stack];
+			output += setLocal(action, parent, n, t, getLocal(action, parent, n, t)) + "\n";
+		}
+
+		std::string func_name = editor->generate_function_name(trigger_name);
+		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
+		onActionsToFuncBegin(pre_actions, NULL, action);
+		pre_actions += action_text;
+		onActionsToFuncEnd(pre_actions, NULL, action);
+		pre_actions += "endfunction\n";
+
+		output += editor->spaces[stack];
+		output += "call TimerStart(ydl_timer,";
+		output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
+		output += ",";
+		output += editor->resolve_parameter(parameters[2], parent, trigger_name, pre_actions);
+		output += ",function ";
+		output += func_name;
+		output += ")";
+
+		return true;
+		
 	}
 
 	case "YDWESetAnyTypeLocalVariable"s_hash:
 	{
-		//根据当前设置逆天局部变量的位置 来决定生成的代码
-		std::string callname;
-		std::string handle;
-		if (parent == NULL)//如果是在触发中
-		{
-			callname = "YDLocal1Set";
-		}
-		else
-		{
-			switch (hash_(parent->name))
-			{
-			//如果是在逆天计时器里
-			case "YDWETimerStartMultiple"s_hash:
-			{
-				if (action->child_flag == 1) //1是参数区
-					handle = "ydl_timer";
-				else //否则是动作区
-					handle = "GetExpiredTimer()";
-				callname = "YDLocalSet";
-				break;
-			}
-			//如果是在逆天触发器里
-			case "YDWERegisterTriggerMultiple"s_hash:
-			{
-				if (action->child_flag == 1) //1是参数区
-					handle = "ydl_trigger";
-				else //否则是动作区
-					handle = "GetTriggeringTrigger()";
-				
-				callname = "YDLocalSet";
-				break;
-			}
-			//如果是在 逆天运行动作传参里
-			case "YDWEExecuteTriggerMultiple"s_hash:
-			{
-				callname = "YDLocal5Set"; 
-				break;
-			}
-			//否则 在其他未定义的动作组中
-			default:
-			{
-				if (m_isInMainProc)
-					callname = "YDLocal1Set";
-				else
-					callname = "YDLocal2Set";
-			}
-				
-			}
-		}
+		
 		std::string var_name = parameters[1]->value;
 		std::string var_type= parameters[0]->value + 11;
 		
-		if (!setHashLocal(var_name, var_type))
-		{
-			auto it = m_HashLocalTable.find(var_name);
-			output += "\n你使用了局部变量“" + var_name + "”(类型:" + var_type;
-			output += ")，但你在其他地方使用的是 " + it->second + "类型)。\n";
-		}
-		output += "call " + callname + "(";
-		if (!handle.empty()) //带handle参数的
-		{
-			output += handle + ",";
-		}
-		output += var_type + ",\"" + var_name + "\",";
-		output += editor->resolve_parameter(parameters[2], trigger_name, pre_actions, parameters[2]->type_name);
-		output += ")";
+		std::string var_value = editor->resolve_parameter(parameters[2], parent, trigger_name, pre_actions);
+		
+		output +=setLocal(action,parent,var_name, var_type, var_value);
+		return true;
 	}
 
-	
-	//case "YDWEGetAnyTypeLocalVariable"s_hash:
-	//{
-	//	//根据当前设置逆天局部变量的位置 来决定生成的代码
-	//	std::string callname;
-	//	std::string handle;
-	//	if (parent == NULL)//如果是在触发中
-	//	{
-	//		callname = "YDLocal1Get";
-	//	}
-	//	else
-	//	{
-	//		switch (hash_(parent->name))
-	//		{
-	//			//如果是在逆天计时器里
-	//		case "YDWETimerStartMultiple"s_hash:
-	//		{
-	//			if (action->child_flag == 1) //1是参数区
-	//				handle = "ydl_timer";
-	//			else //否则是动作区
-	//				handle = "GetExpiredTimer()";
-	//			callname = "YDLocalGet";
-	//			break;
-	//		}
-	//		//如果是在逆天触发器里
-	//		case "YDWERegisterTriggerMultiple"s_hash:
-	//		{
-	//			if (action->child_flag == 1) //1是参数区
-	//				handle = "ydl_trigger";
-	//			else //否则是动作区
-	//				handle = "GetTriggeringTrigger()";
-	//
-	//			callname = "YDLocalGet";
-	//			break;
-	//		}
-	//		//否则 在其他未定义的动作组中
-	//		default:
-	//		{
-	//			if (m_isInMainProc)
-	//				callname = "YDLocal1Get";
-	//			else
-	//				callname = "YDLocal2Get";
-	//		}
-	//
-	//		}
-	//	}
-	//}
 	}
 
 	return false;
 }
 
-bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, std::string& pre_actions, const std::string& trigger_name, bool nested)
+bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, Action* parent, std::string& pre_actions, const std::string& trigger_name, bool nested)
 {
 	TriggerEditor* editor = TriggerEditor::getInstance();
 
@@ -393,7 +361,7 @@ bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, std::
 			output += "YDUserDataGet(";
 			output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 			output += ",";
-			output += editor->resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+			output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 			output += ",\"";
 			output += parameters[2]->value;
 			output += "\",";
@@ -406,7 +374,7 @@ bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, std::
 			output += "YDUserDataHas(";
 			output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 			output += ",";
-			output += editor->resolve_parameter(parameters[1], trigger_name, pre_actions, parameters[1]->type_name);
+			output += editor->resolve_parameter(parameters[1], parent, trigger_name, pre_actions);
 			output += ",\"";
 			output += parameters[3]->value;
 			output += "\",";
@@ -435,6 +403,16 @@ bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, std::
 			output = "ydul_" + varname;
 			return true;
 		}
+		case "YDWEGetAnyTypeLocalVariable"s_hash:
+		{
+			
+
+			std::string var_name = parameters[0]->value;
+			std::string var_type = paramter->type_name;
+
+			output += getLocal(action, parent, var_name, var_type);
+			return true;
+		}
 		}
 	}
 
@@ -442,53 +420,69 @@ bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, std::
 	return false;
 }
 
+bool YDTrigger::seachHashLocal(Parameter** parameters, uint32_t count, std::map<std::string, std::string>* mapPtr)
+{
+
+	for (int i = 0; i < count; i++)
+	{
+		Parameter* param = parameters[i];
+
+		Parameter**  childs = NULL;
+		uint32_t child_count = 0;
+		switch (param->typeId)
+		{
+		case Parameter::Type::variable:
+			if (param->arrayParam)
+			{
+				child_count = 1;
+				childs = &param->arrayParam;
+			}
+			break;
+		case Parameter::Type::function:
+		{
+			Action* action = param->funcParam;
+			switch (hash_(action->name))
+			{
+			case "YDWEGetAnyTypeLocalVariable"s_hash:
+			//case "YDWEGetAnyTypeLocalArray"s_hash:
+			{
+				if (mapPtr)
+				{
+					std::string var_name = action->parameters[0]->value;
+					std::string var_type = param->type_name;
+					if (mapPtr->find(var_type) == mapPtr->end())
+						mapPtr->emplace(var_name, var_type);
+				}
+				else
+				{
+					return true; //搜索到了就退出递归
+				}
+			}
+			}
+			child_count = action->param_count;
+			childs = param->funcParam->parameters;
+			break;
+		}
+		}
+		if (child_count > 0 && childs)
+		{
+			return seachHashLocal(childs, child_count,mapPtr);
+		}
+	}
+	if (mapPtr && mapPtr->size() > 0)
+	{
+		return true;
+	}
+	return false;
+}
 void YDTrigger::onActionsToFuncBegin(std::string& funcCode,Trigger* trigger, Action* parent)
 {
 	if (!trigger && !parent)
 		return;
 	bool isSeachHashLocal = parent == NULL;
 
-	//搜索参数中是否有引用到逆天局部变量
-	std::function<void(Parameter**, uint32_t)> seachParam = [&](Parameter** params, uint32_t count)
-	{
-		for (int i = 0; i < count; i++)
-		{
-			Parameter* param = params[i];
-			
-			Parameter**  childs = NULL;
-			uint32_t child_count = 0;
-			switch (param->typeId)
-			{
-			case Parameter::Type::variable:
-				if (param->arrayParam)
-				{
-					child_count = 1;
-					childs = &param->arrayParam;
-				}
-				break;
-			case Parameter::Type::function:
-			{
-				Action* action = param->funcParam;
-				switch (hash_(action->name))
-				{
-				case "YDWEGetAnyTypeLocalVariable"s_hash:
-				case "YDWEGetAnyTypeLocalArray"s_hash:
-				{
-					m_isInMainProc = true;
-					return; //搜索到了就退出递归
-				}
-				}
-				child_count = action->param_count;
-				childs = param->funcParam->parameters;
-				break;
-			}
-			}
-			if (child_count > 0 && childs)
-			{
-				seachParam(childs, child_count);
-			}
-		}
-	};
+	
+
 
 	//搜索需要注册的局部变量
 	std::function<void(Action**, uint32_t,Action*,bool,bool)> seachLocal = [&](Action** actions, uint32_t count,Action* parent_action,bool isSeachChild,bool isTimer)
@@ -510,7 +504,8 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode,Trigger* trigger, Act
 						isTimer = true;
 				}
 		
-				seachParam(action->parameters, action->param_count);
+				//搜索参数中是否有引用到逆天局部变量
+				m_isInMainProc = seachHashLocal(action->parameters, action->param_count);
 			}
 
 #define next(b) seachLocal(action->child_actions, action->child_count,action,b,isTimer);
@@ -602,7 +597,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode,Trigger* trigger, Act
 
 	if (m_isInMainProc)
 	{
-		funcCode += "\tcall YDLocalInitialize()\n";
+		funcCode += "\tYDLocalInitialize()\n";
 	}
 	
 }
@@ -633,6 +628,8 @@ void YDTrigger::onActionsToFuncEnd(std::string& funcCode, Trigger* trigger, Acti
 	m_localTable.clear();
 	m_localMap.clear();
 	m_isInMainProc = false;
+
+	m_HashLocalTable.clear();
 }
 
 bool YDTrigger::hasDisableRegister(Trigger* trigger)
@@ -650,15 +647,154 @@ void YDTrigger::addLocalVar(std::string name, std::string type, std::string valu
 	m_localMap[name] = true;
 }
 
-bool YDTrigger::setHashLocal(std::string name, std::string type)
+std::string YDTrigger::setLocal(Action* action, Action* parent, std::string name, std::string type,std::string value)
 {
-	TriggerEditor* editor = TriggerEditor::getInstance();
-	std::string base_type = editor->get_base_type(type);
-	auto it = m_HashLocalTable.find(name);
-	if (it == m_HashLocalTable.end() && !type.empty())
+	//TriggerEditor* editor = TriggerEditor::getInstance();
+	//std::string base_type = editor->get_base_type(type);
+	//auto it = m_HashLocalTable.find(name);
+	//if (it == m_HashLocalTable.end() && !type.empty())
+	//{
+	//	m_HashLocalTable[name] = base_type;
+	//	return true;
+	//}
+	//return it->second.compare(base_type) == 0
+
+	//根据当前设置逆天局部变量的位置 来决定生成的代码
+	std::string callname;
+	std::string handle;
+	if (parent == NULL)//如果是在触发中
 	{
-		m_HashLocalTable[name] = base_type;
-		return true;
+		callname = "YDLocal1Set";
 	}
-	return it->second.compare(base_type) == 0;
+	else
+	{
+		switch (hash_(parent->name))
+		{
+			//如果是在逆天计时器里
+		case "YDWETimerStartMultiple"s_hash:
+		{
+			if (action->child_flag == 0) 
+				handle = "ydl_timer";
+			else //否则是动作区
+				handle = "GetExpiredTimer()";
+			callname = "YDLocalSet";
+			break;
+		}
+		//如果是在逆天触发器里
+		case "YDWERegisterTriggerMultiple"s_hash:
+		{
+			if (action->child_flag == 0) 
+				handle = "ydl_trigger";
+			else //否则是动作区
+				handle = "GetTriggeringTrigger()";
+
+			callname = "YDLocalSet";
+			break;
+		}
+		//如果是在 逆天运行动作传参里
+		case "YDWEExecuteTriggerMultiple"s_hash:
+		{
+			callname = "YDLocal5Set";
+			break;
+		}
+		//否则 在其他未定义的动作组中
+		default:
+		{
+			if (m_isInMainProc)
+				callname = "YDLocal1Set";
+			else
+				callname = "YDLocal2Set";
+		}
+
+		}
+	}
+	//std::string var_name = parameters[1]->value;
+	//std::string var_type = parameters[0]->value + 11;
+	//
+	//if (!setHashLocal(var_name, var_type))
+	//{
+	//	auto it = m_HashLocalTable.find(var_name);
+	//	output += "\n你使用了局部变量“" + var_name + "”(类型:" + var_type;
+	//	output += ")，但你在其他地方使用的是 " + it->second + "类型)。\n";
+	//}
+
+	std::string output;
+
+	output += "call " + callname + "(";
+	if (!handle.empty()) //带handle参数的
+	{
+		output += handle + ",";
+	}
+	output += type + ",\"" + name + "\",";
+	output += value;
+	output += ")";
+
+	HashVar var;
+	var.name = name;
+	var.type = type;
+	var.action = action;
+	var.parent = parent;
+	
+	m_HashLocalTable[name] = var;
+
+	return output;
+}
+
+std::string YDTrigger::getLocal(Action* action, Action* parent, std::string name, std::string type)
+{
+
+	//根据当前设置逆天局部变量的位置 来决定生成的代码
+	std::string callname;
+	std::string handle;
+	if (action == NULL || parent == NULL)//如果是在触发中
+	{
+		callname = "YDLocal1Get";
+	}
+	else
+	{
+		switch (hash_(parent->name))
+		{
+			//如果是在逆天计时器里
+		case "YDWETimerStartMultiple"s_hash:
+		{
+			if (action->child_flag == 0) //0是参数区
+				handle = "ydl_timer";
+			else //否则是动作区
+				handle = "GetExpiredTimer()";
+			callname = "YDLocalGet";
+			break;
+		}
+		//如果是在逆天触发器里
+		case "YDWERegisterTriggerMultiple"s_hash:
+		{
+			if (action->child_flag == 0) //0是参数区
+				handle = "ydl_trigger";
+			else //否则是动作区
+				handle = "GetTriggeringTrigger()";
+
+			callname = "YDLocalGet";
+			break;
+		}
+		//否则 在其他未定义的动作组中
+		default:
+		{
+			if (m_isInMainProc)
+				callname = "YDLocal1Get";
+			else
+				callname = "YDLocal2Get";
+			break;
+		}
+		}
+	}
+
+	std::string output;
+
+	output += callname + "(";
+	if (!handle.empty()) //带handle参数的
+	{
+		output += handle + ",";
+	}
+	output += type + ",\"" + name + "\")";
+
+	return output;
 }

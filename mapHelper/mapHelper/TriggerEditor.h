@@ -158,8 +158,8 @@ public:
 	std::string convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions);
 	std::string convert_action_to_jass(Action* action,Action* parent, std::string& pre_actions, const std::string& trigger_name, bool nested);
 
-	std::string resolve_parameter(Parameter* parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call = false) const;
-	std::string testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters,uint32_t size, std::string& pre_actions, bool add_call) const;
+	std::string resolve_parameter(Parameter* parameter,Action* parent, const std::string& trigger_name, std::string& pre_actions, bool add_call = false) const;
+	std::string testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters,uint32_t size, Action* parent, std::string& pre_actions, bool add_call) const;
 	
 	std::string get_base_type(const std::string& type) const;
 	std::string generate_function_name(const std::string & trigger_name) const;
