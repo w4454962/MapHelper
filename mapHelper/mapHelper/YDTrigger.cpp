@@ -420,7 +420,8 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,ActionNode* n
 
 	case "YDWETimerStartFlush"s_hash:
 	{
-		if (node->parent && strcmp(node->parent->action->name, "YDWETimerStartMultiple") == 0)
+		ActionNode root = getRootNode(node);
+		if (root.parent && strcmp(root.parent->action->name, "YDWETimerStartMultiple") == 0)
 		{
 			output += "call YDLocal3Release()\n";
 			output += editor->spaces[stack];
@@ -438,10 +439,11 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,ActionNode* n
 	case "TriggerSleepAction"s_hash:
 	case "PolledWait"s_hash:
 	{
+		ActionNode root = getRootNode(node);
 		output += editor->testt(trigger_name, action->name, parameters, action->param_count, node, pre_actions, !nested);
-		if (node->parent && (
-			strcmp(node->parent->action->name, "YDWETimerStartMultiple") == 0 ||
-			strcmp(node->parent->action->name, "YDWERegisterTriggerMultiple") == 0
+		if (root.parent && (
+			strcmp(root.parent->action->name, "YDWETimerStartMultiple") == 0 ||
+			strcmp(root.parent->action->name, "YDWERegisterTriggerMultiple") == 0
 			))
 		{
 			output += "不要在逆天计时器/逆天触发器内使用等待";
@@ -865,7 +867,6 @@ ActionNode YDTrigger::getRootNode(ActionNode* node)
 
 std::string YDTrigger::setLocal(ActionNode* node, const std::string& name, const std::string& type, const std::string& value,bool add)
 {
-	printf("父节点1 %s %s\n", node->action->name, node->parent->action->name);
 
 	ActionNode root = getRootNode(node);
 
@@ -876,12 +877,10 @@ std::string YDTrigger::setLocal(ActionNode* node, const std::string& name, const
 
 	if (root.parent == NULL)//如果是在触发中
 	{
-		printf("父节点是空的\n");
 		callname = "YDLocal1Set";
 	}
 	else
 	{
-		printf("当前节点 %s  %s \n",root.action->name,root.parent->action->name);
 		switch (root.parent->name_id)
 		{
 			//如果是在逆天计时器里
