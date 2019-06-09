@@ -58,3 +58,4 @@ constexpr unsigned int operator "" s_hash(char const* p, size_t)
 {
 	return hash_compile_time(p);
 }
+

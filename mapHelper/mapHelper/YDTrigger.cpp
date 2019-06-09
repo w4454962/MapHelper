@@ -113,8 +113,7 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,ActionNode* n
 
 
 	Parameter** parameters = action->parameters;
-
-	switch (hash_(action->name))
+    switch (node->name_id)
 	{
 	case "YDWEForLoopLocVarMultiple"s_hash:
 	{
@@ -265,8 +264,33 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,ActionNode* n
 		param_text += "set ydl_timer = ";
 		param_text += editor->resolve_parameter(parameters[0], node, trigger_name, pre_actions) + "\n";
 
+
 		std::map<std::string, std::string> hashVarTable;
+
+		//当前这一层需要传参的变量表
+		std::map<std::string, std::string> thisVarTable;
+
+		//这个是上一层需要传参的变量表 
+		std::map<std::string, std::string>* mapPtr = NULL;
+		
+		//找到上一层函数的逆天局部变量表
+		ActionNode* ptr = node;
+		while (ptr)
+		{
+			if (ptr->mapPtr)
+			{
+				mapPtr = ptr->mapPtr;
+				break;
+			}
+			ptr = ptr->parent;
+		}
 	
+		if (mapPtr == NULL)
+		{
+			mapPtr = new std::map<std::string, std::string>;
+			node->mapPtr = mapPtr;
+		}
+
 		for (int i = 0; i < action->child_count; i++)
 		{
 			Action* childAction = action->child_actions[i];
@@ -301,7 +325,7 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,ActionNode* n
 			if (childAction->child_flag != 0)//如果是动作区
 			{
 
-				seachHashLocal(childAction->parameters, childAction->param_count, &m_HashLocalTable);
+				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
 				action_text += editor->spaces[stack];
 				action_text += editor->convert_action_to_jass(childAction, node, pre_actions, trigger_name, false) + "\n";
 			}
@@ -311,19 +335,42 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,ActionNode* n
 
 		for (auto&[n, t] : hashVarTable)
 		{	
-			m_HashLocalTable.erase(n);
-		}
+			thisVarTable.erase(n);
+			if (node->mapPtr)
+			{
+				node->mapPtr->erase(n);
+			}
 
+		}
 
 		output += param_text;
 
+		ActionNode temp(action, node);
+
+		//如果当前这层有需要申请的变量
+		if (node->mapPtr)
+		{
+			for (auto&[n, t] : *node->mapPtr)
+			{
+				output += editor->spaces[stack];
+				output += setLocal(&temp, n, t, getLocal(node->parent, n, t), true) + "\n";
+			}
+		}
 		
-		
-		for (auto&[n, t] : m_HashLocalTable)
+		//将这一层需要传参的变量 传递给上一层
+		for (auto&[n, t] : thisVarTable)
 		{
 			output += editor->spaces[stack];
-			output += setLocal(node, n, t, getLocal(node->parent, n, t),true) + "\n";
+			output += setLocal(&temp, n, t, getLocal(node->parent, n, t),true) + "\n";
+
+			mapPtr->emplace(n, t);
 		}
+		if (node->mapPtr)
+		{
+			delete node->mapPtr;
+			node->mapPtr = NULL;
+		}
+
 
 		std::string func_name = editor->generate_function_name(trigger_name);
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
@@ -418,7 +465,7 @@ bool YDTrigger::onActionToJass(std::string& output, Action* action,ActionNode* n
 
 	case "YDWECustomScriptCode"s_hash:
 	{
-		output += editor->resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		output += parameters[0]->value;
 		return true;
 	}
 	case "YDWEActivateTrigger"s_hash:
@@ -492,17 +539,25 @@ bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, Actio
 		case "GetEnumUnit"s_hash:
 		{
 			if (m_isInYdweEnumUnit)
+			{
 				output += "ydl_unit";
+			}
 			else
+			{
 				output += "GetEnumUnit()";
+			}
 			return true;
 		}
 		case "GetFilterUnit"s_hash:
 		{
 			if (m_isInYdweEnumUnit)
+			{
 				output += "ydl_unit";
+			}
 			else
+			{
 				output += "GetFilterUnit()";
+			}
 			return true;
 		}
 		case "YDWEForLoopLocVarIndex"s_hash:
@@ -527,6 +582,10 @@ bool YDTrigger::onParamterToJass(std::string& output, Parameter* paramter, Actio
 	
 			output += getLocalArray(node, var_name, var_type,index);
 			return true;
+		}
+		case "YDWECustomScriptCode"s_hash:
+		{
+			return parameters[0]->value;
 		}
 		}
 	}
@@ -722,10 +781,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode,Trigger* trigger, Act
 void YDTrigger::onActionsToFuncEnd(std::string& funcCode, Trigger* trigger, ActionNode* parent)
 {
 	m_funcStack--;
-	if (m_funcStack == 1)
-	{
-		m_HashLocalTable.clear();
-	}
+
 	if (m_isInMainProc)
 	{
 		funcCode += "\tcall YDLocal1Release()\n";
@@ -809,6 +865,8 @@ ActionNode YDTrigger::getRootNode(ActionNode* node)
 
 std::string YDTrigger::setLocal(ActionNode* node, const std::string& name, const std::string& type, const std::string& value,bool add)
 {
+	printf("父节点1 %s %s\n", node->action->name, node->parent->action->name);
+
 	ActionNode root = getRootNode(node);
 
 	//根据当前设置逆天局部变量的位置 来决定生成的代码
@@ -818,20 +876,25 @@ std::string YDTrigger::setLocal(ActionNode* node, const std::string& name, const
 
 	if (root.parent == NULL)//如果是在触发中
 	{
+		printf("父节点是空的\n");
 		callname = "YDLocal1Set";
 	}
 	else
 	{
-	
+		printf("当前节点 %s  %s \n",root.action->name,root.parent->action->name);
 		switch (root.parent->name_id)
 		{
 			//如果是在逆天计时器里
 		case "YDWETimerStartMultiple"s_hash:
 		{
 			if (root.action->child_flag == 0 || add)
+			{
 				handle = "ydl_timer";
+			}
 			else //否则是动作区
+			{
 				handle = "GetExpiredTimer()";
+			}
 			callname = "YDLocalSet";
 			break;
 		}
@@ -839,10 +902,13 @@ std::string YDTrigger::setLocal(ActionNode* node, const std::string& name, const
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
 			if (root.action->child_flag == 0)
+			{
 				handle = "ydl_trigger";
+			}
 			else //否则是动作区
+			{	
 				handle = "GetTriggeringTrigger()";
-	
+			}
 			callname = "YDLocalSet";
 			break;
 		}
@@ -856,9 +922,13 @@ std::string YDTrigger::setLocal(ActionNode* node, const std::string& name, const
 		default:
 		{
 			if (m_isInMainProc)
+			{
 				callname = "YDLocal1Set";
+			}
 			else
+			{
 				callname = "YDLocal2Set";
+			}
 		}
 		}
 	}
@@ -925,9 +995,13 @@ std::string YDTrigger::getLocal(ActionNode* node, const std::string& name,const 
 		default:
 		{
 			if (m_isInMainProc)
+			{
 				callname = "YDLocal1Get";
+			}
 			else
+			{
 				callname = "YDLocal2Get";
+			}
 			break;
 		}
 		}
@@ -966,9 +1040,13 @@ std::string YDTrigger::setLocalArray(ActionNode* node, const  std::string& name,
 		case "YDWETimerStartMultiple"s_hash:
 		{
 			if (root.action->child_flag == 0)
+			{
 				handle = "ydl_timer";
+			}
 			else //否则是动作区
+			{
 				handle = "GetExpiredTimer()";
+			}
 			callname = "YDLocalArraySet";
 			break;
 		}
@@ -976,9 +1054,13 @@ std::string YDTrigger::setLocalArray(ActionNode* node, const  std::string& name,
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
 			if (root.action->child_flag == 0)
+			{
 				handle = "ydl_trigger";
+			}
 			else //否则是动作区
+			{
 				handle = "GetTriggeringTrigger()";
+			}
 
 			callname = "YDLocalArraySet";
 			break;
@@ -993,9 +1075,13 @@ std::string YDTrigger::setLocalArray(ActionNode* node, const  std::string& name,
 		default:
 		{
 			if (m_isInMainProc)
+			{
 				callname = "YDLocal1ArraySet";
+			}
 			else
+			{
 				callname = "YDLocal2ArraySet";
+			}
 		}
 
 		}
@@ -1068,9 +1154,13 @@ std::string YDTrigger::getLocalArray(ActionNode* node, const std::string& name, 
 		default:
 		{
 			if (m_isInMainProc)
+			{
 				callname = "YDLocal1ArrayGet";
+			}
 			else
+			{
 				callname = "YDLocal2ArrayGet";
+			}
 			break;
 		}
 		}

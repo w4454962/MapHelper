@@ -146,11 +146,16 @@ struct ActionNode
 	Action* action;//当前动作
 	ActionNode* parent;//父节点
 	uint32_t name_id;//动作名的哈希值id
+
+	//用来记录多层次逆天计时器的局部变量 以便再上一层函数中申明
+	std::map<std::string, std::string>* mapPtr;
+
 	ActionNode(Action* param_action,ActionNode* param_parent)
 	{
 		action = param_action;
 		parent = param_parent;
 		name_id = action != NULL ? hash_(action->name) : 0;
+		mapPtr = NULL;
 	}
 };
 

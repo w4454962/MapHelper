@@ -7,7 +7,6 @@
 #include <iostream>
 
 
-
 TriggerEditor::TriggerEditor()
 	:m_editorData(NULL),
 	m_version(7)
@@ -20,6 +19,7 @@ TriggerEditor::TriggerEditor()
 			spaces[i] += '\t';
 		}
 	}
+	
 }
 
 TriggerEditor::~TriggerEditor()
@@ -450,16 +450,24 @@ void TriggerEditor::saveSctipt(const char* path)
 			{
 				std::string value = var->value;
 				if (type == "string" && value.empty()) 
+				{
 					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+				}
 				else 
+				{
 					writer.write_string("\t\tset udg_" + name + "[i] = " + value + "\n");
+				}
 			}
 			else 
 			{
 				if (type == "string") 
+				{
 					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+				}
 				else 
+				{
 					writer.write_string("\t\tset udg_" + name + "[i] = " + defaultValue + "\n");
+				}
 			}
 			writer.write_string("\t\tset i = i + 1\n");
 			writer.write_string("\tendloop\n");
@@ -900,11 +908,17 @@ endfunction
 
 			auto it = variableTable.find(var_name);
 			if (it != variableTable.end())//判断是否有变量引用
+			{
 				writer.write_string("\tset " + var_name + " = CreateItem(" + std::string(buffer) + ")\n");
+			}
 			else
+			{
 				writer.write_string("\tcall CreateItem(" + std::string(buffer) + ")\n");
+			}
 			if (b)
+			{
 				writer.write_string("\tendif\n");
+			}
 		}
 	}
 	writer.write_string("endfunction\n");
@@ -967,9 +981,13 @@ endfunction
 		if (unit->warning_range != -1.f) 
 		{
 			if (unit->warning_range == -2.f) 
+			{
 				range = 200.f;
+			}
 			 else 
+			 {
 				range = unit->warning_range;
+			 }
 			writer.write_string("\tcall SetUnitAcquireRange(" + unit_reference + ", " + std::to_string(range) + ")\n");
 		}
 
@@ -1298,7 +1316,7 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 
 	ActionNode node(action, parent);
 
-	switch (hash_(action->name))
+	switch (node.name_id)
 	{
 	case "WaitForCondition"s_hash:
 	{
@@ -1320,7 +1338,6 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 		std::string loop_index = is_loopa ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = is_loopa ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
-		output += spaces[space_stack];
 		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], &node, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], &node, trigger_name, pre_actions) + "\n";
@@ -1346,7 +1363,6 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 	case "ForLoopVarMultiple"s_hash:
 	{
 		std::string variable = resolve_parameter(parameters[0], &node, trigger_name, pre_actions);
-		output += spaces[space_stack];
 		output += "set " + variable + " = ";
 		output += resolve_parameter(parameters[1], &node, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
@@ -1386,24 +1402,31 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 			if (childType == Action::Type::condition)
 			{
 				if (firstBoolexper)
+				{
 					firstBoolexper = false;
+				}
 				else
+				{
 					iftext += " and ";
+				}
 				iftext += convert_action_to_jass(childAction,&node, pre_actions, trigger_name, true);
 			}
 			else if (childType == Action::Type::action) {
 				if (childAction->child_flag == 1) {
-					output += spaces[space_stack];
+					thentext += spaces[space_stack];
 					thentext += convert_action_to_jass(childAction, &node, pre_actions, trigger_name, false) + "\n";
 				}
 				else {
-					output += spaces[space_stack];
+					elsetext += spaces[space_stack];
 					elsetext += convert_action_to_jass(childAction, &node, pre_actions, trigger_name, false) + "\n";
 				}
 			}
 		}
+		if (iftext.empty())
+		{
+			iftext += "true";
+		}
 		space_stack--;
-		output += spaces[space_stack];
 		output += "if (";
 		output += iftext;
 		output += ") then\n";
@@ -1517,7 +1540,10 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 }
 
 std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNode* node, const std::string& trigger_name, std::string& pre_actions, bool add_call) const {
-	
+	if (parameter == NULL)
+	{
+		return "";
+	}
 	if (m_ydweTrigger->isEnable())
 	{
 		std::string output;
@@ -1642,7 +1668,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 
 	case "CustomScriptCode"s_hash:
 	{
-		return resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		return parameters[0]->value;
 	}
 
 	case "GetTriggerName"s_hash:
