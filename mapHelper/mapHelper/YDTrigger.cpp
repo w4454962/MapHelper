@@ -851,7 +851,6 @@ ActionNode YDTrigger::getRootNode(ActionNode* node)
 			case "EnumItemsInRectBJMultiple"s_hash:
 			case "YDWETimerStartMultiple"s_hash:
 			case "YDWERegisterTriggerMultiple"s_hash:
-			case "YDWEExecuteTriggerMultiple"s_hash:
 				isBreak = true; break;
 			default:
 				break;
