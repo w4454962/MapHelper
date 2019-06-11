@@ -66,6 +66,12 @@
     <ClInclude Include="YDTrigger.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="ActionNode.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorData.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -90,6 +96,9 @@
       <Filter>源文件\utils</Filter>
     </ClCompile>
     <ClCompile Include="YDTrigger.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ActionNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
