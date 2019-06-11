@@ -37,14 +37,16 @@ namespace fs = std::filesystem;
 #include "BinaryWriter.h"
 
 
+#pragma  warning( disable: 4307 4455 )
+
 std::string string_replaced(const std::string& source, const std::string& from, const std::string& to);
 void replace_string(std::string::iterator begin, std::string::iterator end);
 
 
 typedef std::uint32_t hash_t;
 
-constexpr hash_t prime = 0x000001B3;
-constexpr hash_t basis = 0x84222325;
+constexpr hash_t prime = 0x000001B3u;
+constexpr hash_t basis = 0x84222325u;
 
 hash_t hash_(const char* str);
 
@@ -58,4 +60,6 @@ constexpr unsigned int operator "" s_hash(char const* p, size_t)
 {
 	return hash_compile_time(p);
 }
+
+
 

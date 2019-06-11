@@ -10,9 +10,9 @@
 
 typedef std::shared_ptr<class ActionNode> ActionNodePtr;
 
-typedef std::shared_ptr<class ParamNode> ParamNodePtr;
+typedef std::shared_ptr<std::map<std::string, std::string>> HashVarTablePtr;
 
-class ActionNode
+class ActionNode :public std::enable_shared_from_this<ActionNode>
 {
 public:
 
@@ -27,12 +27,18 @@ public:
 	ActionNode();
 	ActionNode(Trigger* root);
 	ActionNode(Action* action, ActionNodePtr parent);
+	ActionNode(Action* action, Parameter* owner, ActionNodePtr parent);
 
 	//获取节点的动作
 	Action* getAction();
 
 	//获取节点所属触发器
-	Trigger* getOwner();
+	Trigger* getTrigger();
+
+	std::shared_ptr<std::string> getTriggerNamePtr();
+
+	//获取动作名
+	std::string getName();
 
 	//获取动作名id 字符串哈希值
 	uint32_t getNameId();
@@ -49,62 +55,53 @@ public:
 	//获取根节点
 	ActionNodePtr getRootNode();
 
-	//获取支点
+	//获取支点 action 为支点下的第一个动作  返回值->getParentNode()可以获得实际分支的节点
 	ActionNodePtr getBranchNode();
 
-	size_t getChildCount();
-	//获取子动作节点
+	//获取子动作数量
+	size_t size();
+
+	//node[1] 取得子动作
+	ActionNodePtr operator[](size_t n);
+
+	//获取全部子动作节点
 	void getChildNodeList(std::vector<ActionNodePtr>& list);
 	
-	size_t getParamCount();
-	void getParamNodeList(std::vector<ParamNodePtr>& list);
+
+
+	//获取参数数量
+	size_t count();
+	
+	// node(1) 取该动作的参数
+	Parameter* operator()(size_t n);
 
 
 	Action::Type getActionType();
 
+	HashVarTablePtr getLastVarTable();
+
 private:
 
 protected:
-	Action* m_action;//当前动作
+	ActionNodePtr m_root;
+
 	ActionNodePtr m_parent;//父节点
 
 	uint32_t m_nameId;//动作名的哈希值id
 
-	Trigger* m_trigger;//所属触发器
+	Action* m_action;//当前动作
 
 	Parameter* m_parameter;//所属参数 只有节点类型为参数时才有效
 
-	//用来记录多层次逆天计时器的局部变量 以便再上一层函数中申明
-	std::map<std::string, std::string>* mapPtr;
+	Trigger* m_trigger;//所属触发器
+
+	std::shared_ptr<std::string> m_trigger_name;
 
 	Type m_type;
 
+	//用来记录多层次逆天计时器的局部变量 以便再上一层函数中申明
+	std::shared_ptr<std::map<std::string, std::string>> mapPtr;
+
 };
 
-
-
-class ParamNode
-{
-public:
-	ParamNode(Parameter* param, ActionNodePtr parent);
-
-	ActionNodePtr getOwner();
-
-private: 
-
-protected: 
-	Parameter* m_parameter;
-	ActionNodePtr m_parent;
-};
-
-ParamNode::ParamNode(Parameter* param,ActionNodePtr parent)
-{
-	m_parameter = param;
-	m_parent = parent;
-}
-
-ActionNodePtr ParamNode::getOwner()
-{
-	return m_parent;
-}
 

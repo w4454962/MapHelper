@@ -41,7 +41,7 @@ void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 {
 	m_configData = data;
 	printf("读取配置文件\n");
-	for (uint32_t i = 0; i < data->type_count; i++)
+	for (size_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
 		m_typesTable[type_data->type] = type_data;
@@ -96,7 +96,7 @@ void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 
 	writer.write(count);
 
-	for (uint32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
 		
@@ -124,7 +124,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 
 	uint32_t variable_count = 0;
 
-	for(uint32_t i = 0; i < variables->globals_count ; i++)
+	for(size_t i = 0; i < variables->globals_count ; i++)
 	{
 		VariableData* data = &variables->array[i];
 		//名字非gg_开头的变量
@@ -137,7 +137,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 	writer.write(variable_count);
 
 	//将非gg_的变量数据写入
-	for (uint32_t i = 0; i < variables->globals_count; i++)
+	for (size_t i = 0; i < variables->globals_count; i++)
 	{
 		VariableData* data = &variables->array[i];
 		if (data && strncmp(data->name, "gg_", 3))
@@ -163,7 +163,7 @@ void TriggerEditor::writeTrigger(BinaryWriter& writer)
 	uint32_t count = m_editorData->trigger_count;
 	writer.write(count);
 
-	for (uint32_t i = 0; i < m_editorData->categoriy_count; i++)
+	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
 		uint32_t trigger_count = categoriy->trigger_count;
@@ -205,7 +205,7 @@ void TriggerEditor::writeTrigger(BinaryWriter& writer, Trigger* trigger)
 
 	writer.write(trigger->line_count);
 
-	for (uint32_t i = 0; i < trigger->line_count; i++)
+	for (size_t i = 0; i < trigger->line_count; i++)
 	{
 		Action* action = trigger->actions[i];
 
@@ -227,7 +227,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 	uint32_t count = action->param_count;
 
 	//循环写参数
-	for (uint32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 
 		Parameter* param = action->parameters[i];
@@ -237,7 +237,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 	uint32_t child_count = action->child_count;
 	writer.write(child_count);
 	//如果是 动作组 则循环将子动作写入
-	for (uint32_t i = 0; i < child_count; i++)
+	for (size_t i = 0; i < child_count; i++)
 	{
 		Action* child = action->child_actions[i];
 
@@ -311,7 +311,7 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 
 	writer.write(data->trigger_count);
 
-	for (uint32_t i = 0; i < m_editorData->categoriy_count; i++)
+	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
 		uint32_t trigger_count = categoriy->trigger_count;
@@ -371,7 +371,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	
 	writer.write_string("globals\n");
 	printf("开始写变量\n");
-	for (uint32_t i = 0; i < data->variables->globals_count; i++)
+	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
 		VariableData* var = &data->variables->array[i];
 		std::string name = var->name;
@@ -405,7 +405,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	if (worldData->random_group_count > 0)
 	{
 
-		for (uint32_t i = 0; i < worldData->random_group_count; i++)
+		for (size_t i = 0; i < worldData->random_group_count; i++)
 		{
 			sprintf(buffer, "%03d", i);
 			writer.write_string("\tinteger array gg_rg_" + std::string(buffer) + "\n");
@@ -426,7 +426,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	writer.write_string("function InitGlobals takes nothing returns nothing\n");
 	writer.write_string("\tlocal integer i = 0\n");
 
-	for (uint32_t i = 0; i < data->variables->globals_count; i++)
+	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
 		VariableData* var = &data->variables->array[i];
 		std::string name = var->name;
@@ -486,21 +486,21 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	uint32_t count = worldData->random_group_count;
 
-	for (uint32_t i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		RandomGroupData* groupData = &worldData->random_groups[i];
 		if (groupData->group_count == 0)
 			continue;
 		writer.write_string("\t// Group " + std::to_string(i) + " - " + groupData->name + "\n");
 		writer.write_string("\tcall RandomDistReset()\n");
-		for (uint32_t a = 0; a < groupData->group_count; a++)
+		for (size_t a = 0; a < groupData->group_count; a++)
 		{
 			RandomGroup* group = &groupData->groups[a];
 			writer.write_string("\tcall RandomDistAddItem(" + std::to_string(a) + "," + std::to_string(group->rate) + ")\n");
 		}
 		writer.write_string("\tset curset=RandomDistChoose()\n");
 		
-		for (uint32_t a = 0; a < groupData->group_count; a++)
+		for (size_t a = 0; a < groupData->group_count; a++)
 		{
 			RandomGroup* group = &groupData->groups[a];
 			std::string head = "\tif";
@@ -531,7 +531,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	
 	printf("加载物品列表 %i  \n", worldData->item_table_count);
-	for (uint32_t i = 0; i < worldData->item_table_count; i++)
+	for (size_t i = 0; i < worldData->item_table_count; i++)
 	{
 		sprintf(buffer, "%06d",i);
 
@@ -560,7 +560,7 @@ void TriggerEditor::saveSctipt(const char* path)
 		writer.write_string("\n");
 		ItemTable* itemTable = &worldData->item_table[i];
 
-		for (uint32_t a = 0; a < itemTable->setting_count; a++)
+		for (size_t a = 0; a < itemTable->setting_count; a++)
 		{
 			ItemTableSetting* itemSetting = &itemTable->item_setting[a];
 
@@ -594,11 +594,11 @@ endfunction
 		writer.write_string("\n");
 	}
 
-	for (uint32_t i = 0; i < worldData->units->unit_count; i++)
+	for (size_t i = 0; i < worldData->units->unit_count; i++)
 	{
 		Unit* unit = &worldData->units->array[i];
 		uint32_t size = 0;
-		for (uint32_t a = 0; a < unit->item_setting_count; a++)
+		for (size_t a = 0; a < unit->item_setting_count; a++)
 		{
 			ItemTableSetting* itemSetting = &unit->item_setting[a];
 			size += itemSetting->info_count;
@@ -635,7 +635,7 @@ endfunction
 
 			
 
-			for (uint32_t a = 0; a < unit->item_setting_count; a++)
+			for (size_t a = 0; a < unit->item_setting_count; a++)
 			{
 				ItemTableSetting* itemSetting = &unit->item_setting[a];
 
@@ -671,7 +671,7 @@ endfunction
 		}
 	}
 
-	for (uint32_t i = 0; i < worldData->doodas->unit_count; i++)
+	for (size_t i = 0; i < worldData->doodas->unit_count; i++)
 	{
 		Unit* unit = &worldData->doodas->array[i];
 		if (unit->item_setting_count > 0) 
@@ -705,7 +705,7 @@ endfunction
 
 			
 
-			for (uint32_t a = 0; a < unit->item_setting_count; a++)
+			for (size_t a = 0; a < unit->item_setting_count; a++)
 			{
 				ItemTableSetting* itemSetting = &unit->item_setting[a];
 
@@ -744,7 +744,7 @@ endfunction
 
 	writer.write_string("function InitSounds takes nothing returns nothing\n");
 
-	for (uint32_t i = 0; i < worldData->sounds->sound_count; i++)
+	for (size_t i = 0; i < worldData->sounds->sound_count; i++)
 	{
 		Sound* sound = &worldData->sounds->array[i];
 
@@ -802,7 +802,7 @@ endfunction
 
 	writer2.buffer.clear();
 
-	for (uint32_t i = 0; i < worldData->doodas->unit_count; i++)
+	for (size_t i = 0; i < worldData->doodas->unit_count; i++)
 	{
 		Unit* unit = &worldData->doodas->array[i];
 		sprintf(buffer, "gg_dest_%.04s_%04d", unit->name, unit->index);
@@ -861,7 +861,7 @@ endfunction
 		"ITEM_TYPE_MISCELLANEOUS"
 	};
 
-	for (uint32_t i = 0; i < worldData->units->unit_count; i++)
+	for (size_t i = 0; i < worldData->units->unit_count; i++)
 	{
 		Unit* unit = &worldData->units->array[i];
 		if (unit->type == 1) //遍历地形上的单位 判断这个单位是物品
@@ -884,7 +884,7 @@ endfunction
 				{
 					//从自定义列表中获取
 					writer.write_string("\tcall RandomDistReset()\n");
-					for (uint32_t a = 0; a < unit->random_item_count; a++)
+					for (size_t a = 0; a < unit->random_item_count; a++)
 					{
 						ItemTableInfo* info = &unit->random_items[a];
 						std::string id = std::string(info->name, info->name + 0x4);
@@ -932,7 +932,7 @@ endfunction
 	writer.write_string("\tlocal real life\n");
 
 
-	for (uint32_t i = 0; i < worldData->units->unit_count; i++)
+	for (size_t i = 0; i < worldData->units->unit_count; i++)
 	{
 		Unit* unit = &worldData->units->array[i];
 
@@ -991,7 +991,7 @@ endfunction
 			writer.write_string("\tcall SetUnitAcquireRange(" + unit_reference + ", " + std::to_string(range) + ")\n");
 		}
 
-		for (uint32_t a = 0; a < unit->skill_count; a++)
+		for (size_t a = 0; a < unit->skill_count; a++)
 		{
 			UnitSkill* skill = &unit->skills[a];
 			std::string skillId = std::string(skill->name, skill->name + 0x4);
@@ -1018,7 +1018,7 @@ endfunction
 			}
 		}
 		
-		for (uint32_t a = 0; a < unit->item_count; a++)
+		for (size_t a = 0; a < unit->item_count; a++)
 		{
 			UnitItem* item = &unit->items[a];
 			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", '" + std::string(item->name,item->name + 0x4) + "', " + std::to_string(item->slot_id) + ")\n");
@@ -1027,7 +1027,7 @@ endfunction
 		std::string dropName;
 
 		uint32_t size = 0;
-		for (uint32_t a = 0; a < unit->item_setting_count; a++)
+		for (size_t a = 0; a < unit->item_setting_count; a++)
 		{
 			ItemTableSetting* itemSetting = &unit->item_setting[a];
 			size += itemSetting->info_count;
@@ -1061,7 +1061,7 @@ endfunction
 	writer.write_string("function CreateRegions takes nothing returns nothing\n");
 	writer.write_string("\tlocal weathereffect we\n\n");
 
-	for (uint32_t i = 0; i < worldData->regions->region_count; i++)
+	for (size_t i = 0; i < worldData->regions->region_count; i++)
 	{
 		Region* region = worldData->regions->array[i];
 		std::string region_name = std::string("gg_rct_") + region->name;
@@ -1113,7 +1113,7 @@ endfunction
 
 	writer.write_string("function CreateCameras takes nothing returns nothing\n");
 
-	for (uint32_t i = 0; i < worldData->cameras->camera_count; i++)
+	for (size_t i = 0; i < worldData->cameras->camera_count; i++)
 	{
 		Camera* camera = &worldData->cameras->array[i];
 		std::string camera_name = "gg_cam_" + std::string(camera->name);
@@ -1149,7 +1149,7 @@ endfunction
 
 	writer.write_string("\n");
 
-	for (uint32_t i = 0; i < m_editorData->categoriy_count; i++)
+	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
 		uint32_t trigger_count = categoriy->trigger_count;
@@ -1167,12 +1167,12 @@ endfunction
 			}
 			else 
 			{
-				writer.write_c_string_view(convert_gui_to_jass(trigger, initialization_triggers));
+				writer.write_c_string(convert_gui_to_jass(trigger, initialization_triggers));
 			}
 		}
 	}
 
-	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
 	std::ofstream file("D:\\war3\\out.txt");
 	file.write((const char*)&writer.buffer[0], writer.buffer.size());
@@ -1186,13 +1186,13 @@ endfunction
 }
 
 
-
 std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions) 
 {
 	
-	std::string trigger_name = std::string(trigger->name);
 
-	replace_string(trigger_name.begin(), trigger_name.end());
+	ActionNodePtr root(new ActionNode(trigger));
+
+	std::string trigger_name = *root->getTriggerNamePtr();
 
 	std::string trigger_variable_name = "gg_trg_" + trigger_name;
 	std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
@@ -1211,15 +1211,14 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 
 	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
 
-	
-	ActionNode root(trigger);
-
 	if (m_ydweTrigger->isEnable())
 	{
-		m_ydweTrigger->onActionsToFuncBegin(actions, trigger, &root);
+		m_ydweTrigger->onActionsToFuncBegin(actions, root);
 	}
 
 	std::vector<ActionNodePtr> list;
+	root->getChildNodeList(list);
+
 	for (auto& node : list)
 	{
 		Action* action = node->getAction();
@@ -1243,14 +1242,14 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 			events += "\tcall " + name + "(" + trigger_variable_name + ", ";
 
 
-			for (int k = 0; k < action->param_count; k++)
+			for (size_t k = 0; k < action->param_count; k++)
 			{
 				Parameter* param = action->parameters[k];
 
 
 				std::string type = param->type_name;
 
-				events += resolve_parameter(param, node, trigger_name, pre_actions);
+				events += resolve_parameter(param, node, pre_actions);
 
 				if (k < action->param_count - 1)
 					events += ", ";
@@ -1263,7 +1262,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 
 			break;
 		case Action::Type::condition:
-			conditions += "\tif (not (" + convert_action_to_jass(action, node, pre_actions, trigger_name, true) + ")) then\n";
+			conditions += "\tif (not (" + convert_action_to_jass(node, pre_actions, true) + ")) then\n";
 			conditions += "\treturn false\n";
 			conditions += "\tendif\n";
 			break;
@@ -1271,7 +1270,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 			space_stack = 1;
 			action_code += spaces[space_stack];
 
-			action_code += convert_action_to_jass(action, node, pre_actions, trigger_name, false) + "\n";
+			action_code += convert_action_to_jass(node, pre_actions, false) + "\n";
 			break;
 		}
 	}
@@ -1279,7 +1278,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 	if (m_ydweTrigger->isEnable())
 	{
 		actions += action_code;
-		m_ydweTrigger->onActionsToFuncEnd(actions,trigger,&root);
+		m_ydweTrigger->onActionsToFuncEnd(actions,root);
 	}
 	else
 	{
@@ -1305,7 +1304,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 }
 
 
-std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::string& pre_actions, const std::string& trigger_name, bool nested)
+std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::string& pre_actions, bool nested)
 {
 	Action* action = node->getAction();
 
@@ -1313,7 +1312,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 		return "";
 
 	std::string output;
-	std::string name = action->name;
+
 	bool is_loopa = false;
 
 	Parameter** parameters = action->parameters;
@@ -1327,9 +1326,9 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen (" + resolve_parameter(parameters[0], node, trigger_name, pre_actions) + ")\n";
+		output += "exitwhen (" + resolve_parameter(parameters[0], node, pre_actions) + ")\n";
 		output += spaces[space_stack];
-		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], node, trigger_name, pre_actions) + "))\n";
+		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], node, pre_actions) + "))\n";
 		output += spaces[--space_stack];
 		output += "endloop";
 		return output;
@@ -1342,9 +1341,9 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 		std::string loop_index = is_loopa ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = is_loopa ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
-		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], node, trigger_name, pre_actions) + "\n";
+		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], node, pre_actions) + "\n";
 		output += spaces[space_stack];
-		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], node, trigger_name, pre_actions) + "\n";
+		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], node, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
@@ -1355,7 +1354,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 		for (auto& child : list)
 		{
 			output += spaces[space_stack];
-			output += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
+			output += convert_action_to_jass(child, pre_actions, false) + "\n";
 		}
 		output += spaces[space_stack];
 		output += "set " + loop_index + " = " + loop_index + " + 1\n";
@@ -1366,20 +1365,20 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 
 	case "ForLoopVarMultiple"s_hash:
 	{
-		std::string variable = resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		std::string variable = resolve_parameter(parameters[0], node, pre_actions);
 		output += "set " + variable + " = ";
-		output += resolve_parameter(parameters[1], node, trigger_name, pre_actions) + "\n";
+		output += resolve_parameter(parameters[1], node, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], node, trigger_name, pre_actions) + "\n";
+		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], node, pre_actions) + "\n";
 		
 		node->getChildNodeList(list);
 
 		for (auto& child : list)
 		{
 			output += spaces[space_stack];
-			output += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
+			output += convert_action_to_jass(child, pre_actions, false) + "\n";
 		}
 		output += spaces[space_stack];
 		output += "set " + variable + " = " + variable + " + 1\n";
@@ -1394,7 +1393,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 		std::string thentext;
 		std::string elsetext;
 
-		std::string function_name = generate_function_name(trigger_name);
+		std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
 		bool firstBoolexper = true;
 		space_stack++;
@@ -1415,7 +1414,8 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 				{
 					iftext += " and ";
 				}
-				iftext += convert_action_to_jass(child, pre_actions, trigger_name, true);
+				iftext += convert_action_to_jass(child, pre_actions, true);
+				break;
 			}
 			case Action::Type::action:
 			{
@@ -1423,13 +1423,14 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 				if (action->child_flag == 1)
 				{
 					thentext += spaces[space_stack];
-					thentext += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
+					thentext += convert_action_to_jass(child, pre_actions, false) + "\n";
 				}
 				else
 				{
 					elsetext += spaces[space_stack];
-					elsetext += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
+					elsetext += convert_action_to_jass(child, pre_actions, false) + "\n";
 				}
+				break;
 			}
 			default:
 				break;
@@ -1460,10 +1461,12 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 	case "EnumDestructablesInCircleBJMultiple"s_hash:
 	case "EnumItemsInRectBJMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(trigger_name);
+		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+
+		std::string name = node->getName();
 
 		// Remove multiple
-		output += "call " + name.substr(0, name.length() - 8) + "(" + resolve_parameter(parameters[0], &node, trigger_name, pre_actions) + ", function " + function_name + ")\n";
+		output += "call " + name.substr(0, name.length() - 8) + "(" + resolve_parameter(parameters[0], node, pre_actions) + ", function " + function_name + ")\n";
 
 		std::string toto;
 
@@ -1475,15 +1478,15 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 		for (auto& child : list)
 		{
 			toto += spaces[space_stack];
-			toto += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
+			toto += convert_action_to_jass(child, pre_actions, false) + "\n";
 		}
 
 		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
 		if (m_ydweTrigger->isEnable())
 		{
-			m_ydweTrigger->onActionsToFuncBegin(pre_actions,NULL, node);
+			m_ydweTrigger->onActionsToFuncBegin(pre_actions, node);
 			pre_actions += toto;
-			m_ydweTrigger->onActionsToFuncEnd(pre_actions, NULL, node);
+			m_ydweTrigger->onActionsToFuncEnd(pre_actions, node);
 		}
 		else
 		{
@@ -1497,7 +1500,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 
 	case "AndMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(trigger_name);
+		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 		
 		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
 
@@ -1506,7 +1509,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 
 		for (auto& child : list)
 		{
-			iftext += "\tif (not (" + convert_action_to_jass(child, pre_actions, trigger_name, true) + ")) then\n";
+			iftext += "\tif (not (" + convert_action_to_jass(child, pre_actions, true) + ")) then\n";
 			iftext += "\t\treturn false\n";
 			iftext += "\tendif\n";
 		}
@@ -1519,7 +1522,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 
 	case "OrMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(trigger_name);
+		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 	
 		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
 
@@ -1527,7 +1530,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 
 		for (auto& child : list)
 		{
-			iftext += "\tif (" + convert_action_to_jass(child, pre_actions, trigger_name, true) + ") then\n";
+			iftext += "\tif (" + convert_action_to_jass(child, pre_actions, true) + ") then\n";
 			iftext += "\t\treturn true\n";
 			iftext += "\tendif\n";
 		}
@@ -1540,8 +1543,8 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 
 	case "SetVariable"s_hash:
 	{
-		const std::string first = resolve_parameter(parameters[0], &node, trigger_name, pre_actions);
-		const std::string second = resolve_parameter(parameters[1], &node, trigger_name, pre_actions);
+		const std::string first = resolve_parameter(parameters[0], node, pre_actions);
+		const std::string second = resolve_parameter(parameters[1], node, pre_actions);
 		return spaces[space_stack] + "set " + first + " = " + second;
 	}
 
@@ -1550,16 +1553,17 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::stri
 	if (m_ydweTrigger->isEnable())
 	{
 		std::string actions;
-		if (m_ydweTrigger->onActionToJass(actions, node, pre_actions, trigger_name, nested))
+		if (m_ydweTrigger->onActionToJass(actions, node, pre_actions, nested))
 		{
 			return actions;
 		}
 	}
 
-	return testt(trigger_name, name, parameters, action->param_count, node, pre_actions, !nested);
+	return testt(node, pre_actions, !nested);
 }
 
-std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNode* node, const std::string& trigger_name, std::string& pre_actions, bool add_call) const {
+std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) const 
+{
 	if (parameter == NULL)
 	{
 		return "";
@@ -1568,7 +1572,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNode* n
 	{
 		std::string output;
 
-		if (m_ydweTrigger->onParamterToJass(output, parameter, node, pre_actions, trigger_name, add_call))
+		if (m_ydweTrigger->onParamterToJass(parameter, node, output, pre_actions, add_call))
 		{
 			return output;
 		}
@@ -1577,15 +1581,8 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNode* n
 
 	if (parameter->funcParam) 
 	{
-		return testt(
-			trigger_name, 
-			parameter->funcParam->name, 
-			parameter->funcParam->parameters,
-			parameter->funcParam->param_count,
-			node,
-			pre_actions, 
-			add_call
-		);
+		ActionNodePtr childNode(new ActionNode(parameter->funcParam, parameter, node));
+		return testt(childNode,pre_actions, add_call);
 	}
 	else {
 	
@@ -1630,7 +1627,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNode* n
 				puts("s");
 			}
 			if (parameter->arrayParam) {
-				output += "[" + resolve_parameter(&parameter->arrayParam[0], node, trigger_name, pre_actions) + "]";
+				output += "[" + resolve_parameter(&parameter->arrayParam[0], node, pre_actions) + "]";
 			}
 			return output;
 		}
@@ -1674,16 +1671,19 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNode* n
 
 
 
-std::string TriggerEditor::testt(const std::string& trigger_name, const std::string& parent_name, Parameter** parameters,uint32_t size, ActionNode* node, std::string& pre_actions, bool add_call) const
+std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, bool add_call) const
 {
 	std::string output;
 
-	switch (hash_(parent_name.c_str()))
+	Action* action = node->getAction();
+	Parameter** parameters = action->parameters;
+
+	switch (hash_(action->name))
 	{
 
 	case "CommentString"s_hash:
 	{
-		return "//" + resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		return "//" + resolve_parameter(parameters[0], node, pre_actions);
 	}
 
 	case "CustomScriptCode"s_hash:
@@ -1693,26 +1693,26 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 
 	case "GetTriggerName"s_hash:
 	{
-		return "\"" + trigger_name + "\"";
+		return "\"" + *node->getTriggerNamePtr() + "\"";
 	}
 	case "OperatorString"s_hash:
 	{
-		output += "(" + resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		output += "(" + resolve_parameter(parameters[0], node, pre_actions);
 		output += " + ";
-		output += resolve_parameter(parameters[1], node, trigger_name, pre_actions) + ")";
+		output += resolve_parameter(parameters[1], node, pre_actions) + ")";
 		return output;
 	}
 
 	case "ForLoopVar"s_hash:
 	{
 		//std::string variable = "udg_" + resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
-		std::string variable = resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		std::string variable = resolve_parameter(parameters[0], node, pre_actions);
 
 		output += "set " + variable + " = ";
-		output += resolve_parameter(parameters[1], node, trigger_name, pre_actions) + "\n";
+		output += resolve_parameter(parameters[1], node, pre_actions) + "\n";
 		output += "loop\n";
-		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], node, trigger_name, pre_actions) + "\n";
-		output += resolve_parameter(parameters[3], node, trigger_name, pre_actions, true) + "\n";
+		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], node, pre_actions) + "\n";
+		output += resolve_parameter(parameters[3], node, pre_actions, true) + "\n";
 		output += "set " + variable + " = " + variable + " + 1\n";
 		output += "endloop\n";
 		return output;
@@ -1722,14 +1722,14 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	{
 		std::string thentext;
 		std::string elsetext;
-
-		std::string function_name = generate_function_name(trigger_name);
-		std::string tttt = resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		
+		std::string function_name = generate_function_name(node->getTriggerNamePtr());
+		std::string tttt = resolve_parameter(parameters[0], node, pre_actions);
 
 		output += "if (" + function_name + "()) then\n";
-		output += resolve_parameter(parameters[1], node, trigger_name, pre_actions, true) + "\n";
+		output += resolve_parameter(parameters[1], node, pre_actions, true) + "\n";
 		output += "else\n";
-		output += resolve_parameter(parameters[2], node, trigger_name, pre_actions, true) + "\n";
+		output += resolve_parameter(parameters[2], node, pre_actions, true) + "\n";
 		output += "endif";
 
 		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
@@ -1741,12 +1741,12 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	case "ForForce"s_hash:
 	case "ForGroup"s_hash:
 	{
-		std::string function_name = generate_function_name(trigger_name);
+		std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string tttt = resolve_parameter(parameters[1], node, trigger_name, pre_actions);
+		std::string tttt = resolve_parameter(parameters[1], node, pre_actions);
 
-		output += parent_name + "(";
-		output += resolve_parameter(parameters[0], node, trigger_name, pre_actions);
+		output += node->getName() + "(";
+		output += resolve_parameter(parameters[0], node, pre_actions);
 		output += ", function " + function_name;
 		output += ")";
 
@@ -1758,8 +1758,10 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 
 	case "GetBooleanAnd"s_hash:
 	{
-		std::string first_parameter = resolve_parameter(parameters[0], node, trigger_name, pre_actions);
-		std::string second_parameter = resolve_parameter(parameters[1], node, trigger_name, pre_actions);
+		auto trigger_name = node->getTriggerNamePtr();
+
+		std::string first_parameter = resolve_parameter(parameters[0], node, pre_actions);
+		std::string second_parameter = resolve_parameter(parameters[1], node, pre_actions);
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanAnd(" + function_name + "(), ";
@@ -1778,8 +1780,10 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 
 	case "GetBooleanOr"s_hash:
 	{
-		std::string first_parameter = resolve_parameter(parameters[0], node, trigger_name, pre_actions);
-		std::string second_parameter = resolve_parameter(parameters[1], node, trigger_name, pre_actions);
+		auto trigger_name = node->getTriggerNamePtr();
+
+		std::string first_parameter = resolve_parameter(parameters[0], node, pre_actions);
+		std::string second_parameter = resolve_parameter(parameters[1], node, pre_actions);
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanOr(" + function_name + "(), ";
@@ -1799,31 +1803,32 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 	case "OperatorInt"s_hash:
 	case"OperatorReal"s_hash:
 	{
-		output += "(" + resolve_parameter(parameters[0], node, trigger_name, pre_actions);
-		output += " " + resolve_parameter(parameters[1], node, trigger_name, pre_actions) + " ";
-		output += resolve_parameter(parameters[2], node, trigger_name, pre_actions) + ")";
+		output += "(" + resolve_parameter(parameters[0], node, pre_actions);
+		output += " " + resolve_parameter(parameters[1], node, pre_actions) + " ";
+		output += resolve_parameter(parameters[2], node, pre_actions) + ")";
 		return output;
 	}
 	default:
 		break;
 	}
 
-	if (parent_name.substr(0, 15) == "OperatorCompare") {
-		output += resolve_parameter(parameters[0], node, trigger_name, pre_actions);
-		output += " " + resolve_parameter(parameters[1], node, trigger_name, pre_actions) + " ";
-		output += resolve_parameter(parameters[2], node, trigger_name, pre_actions);
+	if (node->getName().substr(0, 15) == "OperatorCompare") {
+		output += resolve_parameter(parameters[0], node, pre_actions);
+		output += " " + resolve_parameter(parameters[1], node, pre_actions) + " ";
+		output += resolve_parameter(parameters[2], node, pre_actions);
 		return output;
 	}
+	size_t size = action->param_count;
 
-	for (int k = 0; k < size; k++) {
+	for (size_t k = 0; k < size; k++) {
 		Parameter* param = parameters[k];
 
 		const std::string child_type = param->type_name;
 
 		if (child_type == "boolexpr") {
-			const std::string function_name = generate_function_name(trigger_name);
+			const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-			std::string tttt = resolve_parameter(param, node, trigger_name, pre_actions);
+			std::string tttt = resolve_parameter(param, node, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
 			pre_actions += "\treturn " + tttt + "\n";
@@ -1832,7 +1837,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 			output += "function " + function_name;
 		}
 		else {
-			output += resolve_parameter(param, node, trigger_name, pre_actions);
+			output += resolve_parameter(param, node, pre_actions);
 		}
 
 		if (k < size - 1) {
@@ -1840,7 +1845,7 @@ std::string TriggerEditor::testt(const std::string& trigger_name, const std::str
 		}
 	}
 
-	return (add_call ? "call " : "") + parent_name + "(" + output + ")";
+	return (add_call ? "call " : "") + node->getName() + "(" + output + ")";
 }
 
 
@@ -1857,7 +1862,7 @@ std::string TriggerEditor::get_base_type(const std::string& type) const
 	return type;
 }
 
-std::string TriggerEditor::generate_function_name(const std::string & trigger_name) const {
+std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> trigger_name) const {
 	auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	return "Trig_" + trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
+	return "Trig_" + *trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
 }

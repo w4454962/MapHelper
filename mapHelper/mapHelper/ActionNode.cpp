@@ -15,6 +15,10 @@ ActionNode::ActionNode(Trigger* root)
 {
 	m_trigger = root;
 	m_type = Type::trigger;
+
+	m_trigger_name = std::shared_ptr<std::string>(new std::string(root->name));
+
+	replace_string(m_trigger_name->begin(), m_trigger_name->end());
 }
 
 
@@ -27,17 +31,42 @@ ActionNode::ActionNode(Action* action, ActionNodePtr parent)
 	mapPtr = NULL;
 
 	m_type = Type::action;
+
+	m_trigger_name = parent->m_trigger_name;
 }
 
+ActionNode::ActionNode(Action* action, Parameter* owner, ActionNodePtr parent)
+	:ActionNode(action,parent)
+{
+	m_parameter = owner;
+	m_type = Type::parameter;
+}
 
 Action* ActionNode::getAction()
 {
 	return m_action;
 }
 
-Trigger* ActionNode::getOwner()
+Trigger* ActionNode::getTrigger()
 {
 	return m_trigger;
+}
+
+std::shared_ptr<std::string> ActionNode::getTriggerNamePtr()
+{
+	return m_trigger_name;
+}
+
+std::string ActionNode::getName()
+{
+	if (m_type == Type::trigger && m_trigger)
+	{
+		return m_trigger->name;
+	}
+	else if (m_action)
+	{
+		return m_action->name;
+	}
 }
 
 uint32_t ActionNode::getNameId()
@@ -61,7 +90,7 @@ uint32_t ActionNode::getActionId()
 
 Action::Type ActionNode::getActionType()
 {
-	if (m_type == Type::action && m_action)
+	if (m_action)
 	{
 		return (Action::Type)m_action->table->getType(m_action);
 	}
@@ -76,7 +105,7 @@ bool ActionNode::isRootNode()
 
 ActionNodePtr ActionNode::getRootNode()
 {
-	ActionNodePtr root = ActionNodePtr(this);
+	ActionNodePtr root = shared_from_this();
 	while (root.get())
 	{
 		if (root->m_parent == NULL)
@@ -90,10 +119,11 @@ ActionNodePtr ActionNode::getRootNode()
 
 ActionNodePtr ActionNode::getBranchNode()
 {
+	ActionNodePtr branch = shared_from_this();
 	ActionNodePtr parent = m_parent;
 
 	//搜索父节点
-	while (parent)
+	while (parent.get())
 	{
 		bool isBreak = false;
 
@@ -115,29 +145,52 @@ ActionNodePtr ActionNode::getBranchNode()
 			}
 		}
 		if (isBreak) break;
+		branch = parent;
 		parent = parent->m_parent;
 	}
-	return parent;
+	return branch;
 }
 
-size_t ActionNode::getChildCount()
+size_t ActionNode::size()
 {
-	if (m_action)
+	if (m_type == Type::trigger && m_trigger)
+	{
+		return m_trigger->line_count;
+	}
+	else if (m_action)
 	{
 		return m_action->child_count;
 	}
 	return 0;
 }
+
+ActionNodePtr ActionNode::operator[](size_t n)
+{
+	Action* action = NULL;
+	if (n >= size())
+	{
+		return ActionNodePtr();
+	}
+	if (m_type == Type::trigger)
+	{
+		action = m_trigger->actions[n];
+	}
+	else if (m_type == Type::action)
+	{
+		action = m_action->child_actions[n];
+	}
+
+	return ActionNodePtr(new ActionNode(action, shared_from_this()));
+}
+
+
 void ActionNode::getChildNodeList(std::vector<ActionNodePtr>& list)
 {
-	
 	list.clear();
-
 	//如果是根节点 and 触发器对象是存在的
 	if (m_type == Type::trigger && m_trigger)
 	{
-		ActionNodePtr parent = ActionNodePtr(this);
-
+		ActionNodePtr parent = shared_from_this();
 		for (uint32_t i = 0; i < m_trigger->line_count; i++)
 		{
 			Action* action = m_trigger->actions[i];
@@ -148,9 +201,9 @@ void ActionNode::getChildNodeList(std::vector<ActionNodePtr>& list)
 		}
 	}
 	//否则是寻找该节点下的子节点
-	else if (m_type == Type::action && m_action)
+	else if (m_action)
 	{
-		ActionNodePtr parent = ActionNodePtr(this);
+		ActionNodePtr parent = shared_from_this();
 
 		for (uint32_t i = 0; i < m_action->child_count; i++)
 		{
@@ -162,7 +215,7 @@ void ActionNode::getChildNodeList(std::vector<ActionNodePtr>& list)
 	}
 }
 
-size_t ActionNode::getParamCount()
+size_t ActionNode::count()
 {
 	if (m_action)
 	{
@@ -171,14 +224,37 @@ size_t ActionNode::getParamCount()
 	return 0;
 }
 
-void ActionNode::getParamNodeList(std::vector<ParamNodePtr>& list)
+Parameter* ActionNode::operator()(size_t n)
 {
-	
-	uint32_t count = m_action->param_count;
+	if (n >= count() || !m_action)
+		return NULL;
 
-	for (uint32_t i = 0; i < count; i++)
+	return m_action->parameters[n];
+}
+
+
+
+
+HashVarTablePtr ActionNode::getLastVarTable()
+{
+	ActionNode* node = this;
+
+	HashVarTablePtr retval;
+	while (node)
 	{
-		Parameter* param = m_action->parameters[i];
-
+		if (node->mapPtr.get())
+		{
+			retval = node->mapPtr;
+			break;
+		}
+		node = node->m_parent.get();
 	}
+
+	if (retval.get() == NULL)
+	{
+		retval = HashVarTablePtr(new std::map<std::string, std::string>);
+		mapPtr = retval;
+	}
+
+	return retval;
 }
