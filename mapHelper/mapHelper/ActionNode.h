@@ -83,8 +83,6 @@ public:
 private:
 
 protected:
-	ActionNodePtr m_root;
-
 	ActionNodePtr m_parent;//父节点
 
 	uint32_t m_nameId;//动作名的哈希值id
