@@ -2,8 +2,17 @@
 
 #include "stdafx.h"
 #include "TriggerEditor.h"
+#include "EditorData.h"
+#include "ActionNode.h"
 
 //专门负责重载ydwe的功能
+
+struct LocalVar
+{
+	std::string name;
+	std::string type;
+	std::string value;
+};
 
 class YDTrigger
 {
@@ -27,10 +36,10 @@ public:
 	bool onParamterToJass(std::string& actions, Parameter* parameter, ActionNode* node, std::string& pre_actions, const std::string& trigger_name, bool nested);
 
 	//当动作生成函数开始时 写入局部变量
-	void onActionsToFuncBegin(std::string& funcCode, Trigger* trigger, ActionNode* node = NULL);
+	void onActionsToFuncBegin(std::string& funcCode, Trigger* trigger, ActionNode* node);
 	
 	//当动作生成函数结束时 清除局部变量
-	void onActionsToFuncEnd(std::string& funcCode, Trigger* trigger, ActionNode* node = NULL);
+	void onActionsToFuncEnd(std::string& funcCode, Trigger* trigger, ActionNode* node);
 
 
 	//判断触发是否休眠 true 为休眠状态
@@ -63,14 +72,9 @@ protected:
 	int m_funcStack;
 	std::map<Trigger*, bool> m_triggerHasDisable;
 
-	struct LocalVar
-	{
-		std::string name;
-		std::string type;
-		std::string value;
-	};
+
 	//局部变量表 名字,类型,默认值
-	std::vector<LocalVar> m_localTable;
+	//std::vector<LocalVar> m_localTable;
 	std::map<std::string, bool> m_localMap;
 	
 

@@ -1209,56 +1209,61 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 
 	space_stack++;
 
-	for (uint32_t i = 0; i < trigger->line_count; i++)
+	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
+
+	
+	ActionNode root(trigger);
+
+	if (m_ydweTrigger->isEnable())
 	{
-		Action* action = trigger->actions[i];
+		m_ydweTrigger->onActionsToFuncBegin(actions, trigger, &root);
+	}
 
-		if (!action->enable) 
-			continue;
-		uint32_t type = action->table->getType(action);
-
+	std::vector<ActionNodePtr> list;
+	for (auto& node : list)
+	{
+		Action* action = node->getAction();
 		std::string name = action->name;
-		ActionNode node(action, NULL);
 
-		switch (type) 
+		switch (node->getActionType())
 		{
 		case Action::Type::event:
 			if (m_ydweTrigger->isEnable())
 			{
 				//返回false 跳过注册事件
-				if (!m_ydweTrigger->onRegisterEvent(events, trigger,action, name))
+				if (!m_ydweTrigger->onRegisterEvent(events, trigger, action, name))
 					continue;
 
 			}
-			if (name == "MapInitializationEvent") 
+			if (node->getNameId() == "MapInitializationEvent"s_hash )
 			{
 				initializtions.push_back(trigger_variable_name);
 				continue;
 			}
 			events += "\tcall " + name + "(" + trigger_variable_name + ", ";
-			
 
-			for (int k = 0; k < action->param_count; k++) 
+
+			for (int k = 0; k < action->param_count; k++)
 			{
 				Parameter* param = action->parameters[k];
-				
-		
+
+
 				std::string type = param->type_name;
 
-				events += resolve_parameter(param,&node, trigger_name, pre_actions);
+				events += resolve_parameter(param, node, trigger_name, pre_actions);
 
-				if (k < action->param_count - 1) 
+				if (k < action->param_count - 1)
 					events += ", ";
 			}
 			events += ")\n";
 			if (m_ydweTrigger->isEnable())
 			{
-				m_ydweTrigger->onRegisterEvent2(events, trigger,action, name);
+				m_ydweTrigger->onRegisterEvent2(events, trigger, action, name);
 			}
 
 			break;
 		case Action::Type::condition:
-			conditions += "\tif (not (" + convert_action_to_jass(action,&node, pre_actions, trigger_name, true) + ")) then\n";
+			conditions += "\tif (not (" + convert_action_to_jass(action, node, pre_actions, trigger_name, true) + ")) then\n";
 			conditions += "\treturn false\n";
 			conditions += "\tendif\n";
 			break;
@@ -1266,18 +1271,15 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 			space_stack = 1;
 			action_code += spaces[space_stack];
 
-			action_code += convert_action_to_jass(action,&node, pre_actions, trigger_name, false) + "\n";
+			action_code += convert_action_to_jass(action, node, pre_actions, trigger_name, false) + "\n";
 			break;
 		}
 	}
 
-	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
-
 	if (m_ydweTrigger->isEnable())
 	{
-		m_ydweTrigger->onActionsToFuncBegin(actions, trigger);
 		actions += action_code;
-		m_ydweTrigger->onActionsToFuncEnd(actions,trigger);
+		m_ydweTrigger->onActionsToFuncEnd(actions,trigger,&root);
 	}
 	else
 	{
@@ -1303,8 +1305,10 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 }
 
 
-std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* parent, std::string& pre_actions, const std::string& trigger_name, bool nested)
+std::string TriggerEditor::convert_action_to_jass(ActionNodePtr& node, std::string& pre_actions, const std::string& trigger_name, bool nested)
 {
+	Action* action = node->getAction();
+
 	if (!action->enable)
 		return "";
 
@@ -1314,18 +1318,18 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 
 	Parameter** parameters = action->parameters;
 
-	ActionNode node(action, parent);
+	std::vector<ActionNodePtr> list;
 
-	switch (node.name_id)
+	switch (node->getNameId())
 	{
 	case "WaitForCondition"s_hash:
 	{
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen (" + resolve_parameter(parameters[0], &node, trigger_name, pre_actions) + ")\n";
+		output += "exitwhen (" + resolve_parameter(parameters[0], node, trigger_name, pre_actions) + ")\n";
 		output += spaces[space_stack];
-		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], &node, trigger_name, pre_actions) + "))\n";
+		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], node, trigger_name, pre_actions) + "))\n";
 		output += spaces[--space_stack];
 		output += "endloop";
 		return output;
@@ -1338,20 +1342,20 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 		std::string loop_index = is_loopa ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = is_loopa ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
-		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], &node, trigger_name, pre_actions) + "\n";
+		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], node, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
-		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], &node, trigger_name, pre_actions) + "\n";
+		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], node, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
 		output += "exitwhen " + loop_index + " > " + loop_index_end + "\n";
 		
+		node->getChildNodeList(list);
 
-		for (uint32_t i = 0; i < action->child_count; i++)
+		for (auto& child : list)
 		{
-			Action* childAction = action->child_actions[i];
 			output += spaces[space_stack];
-			output += convert_action_to_jass(childAction,&node, pre_actions, trigger_name, false) + "\n";
+			output += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
 		}
 		output += spaces[space_stack];
 		output += "set " + loop_index + " = " + loop_index + " + 1\n";
@@ -1362,19 +1366,20 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 
 	case "ForLoopVarMultiple"s_hash:
 	{
-		std::string variable = resolve_parameter(parameters[0], &node, trigger_name, pre_actions);
+		std::string variable = resolve_parameter(parameters[0], node, trigger_name, pre_actions);
 		output += "set " + variable + " = ";
-		output += resolve_parameter(parameters[1], &node, trigger_name, pre_actions) + "\n";
+		output += resolve_parameter(parameters[1], node, trigger_name, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], &node, trigger_name, pre_actions) + "\n";
+		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], node, trigger_name, pre_actions) + "\n";
 		
-		for (uint32_t i = 0; i < action->child_count; i++)
+		node->getChildNodeList(list);
+
+		for (auto& child : list)
 		{
-			Action* childAction = action->child_actions[i];
 			output += spaces[space_stack];
-			output += convert_action_to_jass(childAction,&node, pre_actions, trigger_name, false) + "\n";
+			output += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
 		}
 		output += spaces[space_stack];
 		output += "set " + variable + " = " + variable + " + 1\n";
@@ -1394,12 +1399,13 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 		bool firstBoolexper = true;
 		space_stack++;
 
-		for (uint32_t i = 0; i < action->child_count; i++)
-		{
-			Action* childAction = action->child_actions[i];
-			uint32_t childType = childAction->table->getType(childAction);
+		node->getChildNodeList(list);
 
-			if (childType == Action::Type::condition)
+		for (auto& child : list)
+		{
+			switch (child->getActionType())
+			{
+			case Action::Type::condition:
 			{
 				if (firstBoolexper)
 				{
@@ -1409,17 +1415,24 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 				{
 					iftext += " and ";
 				}
-				iftext += convert_action_to_jass(childAction,&node, pre_actions, trigger_name, true);
+				iftext += convert_action_to_jass(child, pre_actions, trigger_name, true);
 			}
-			else if (childType == Action::Type::action) {
-				if (childAction->child_flag == 1) {
+			case Action::Type::action:
+			{
+				Action* action = child->getAction();
+				if (action->child_flag == 1)
+				{
 					thentext += spaces[space_stack];
-					thentext += convert_action_to_jass(childAction, &node, pre_actions, trigger_name, false) + "\n";
+					thentext += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
 				}
-				else {
+				else
+				{
 					elsetext += spaces[space_stack];
-					elsetext += convert_action_to_jass(childAction, &node, pre_actions, trigger_name, false) + "\n";
+					elsetext += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
 				}
+			}
+			default:
+				break;
 			}
 		}
 		if (iftext.empty())
@@ -1457,18 +1470,20 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 		int stack = space_stack;
 		space_stack = 1;
 
-		for (uint32_t i = 0; i < action->child_count; i++)
+		node->getChildNodeList(list);
+
+		for (auto& child : list)
 		{
-			Action* childAction = action->child_actions[i];
 			toto += spaces[space_stack];
-			toto +=  convert_action_to_jass(childAction, &node, pre_actions, trigger_name, false) + "\n";
+			toto += convert_action_to_jass(child, pre_actions, trigger_name, false) + "\n";
 		}
+
 		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
 		if (m_ydweTrigger->isEnable())
 		{
-			m_ydweTrigger->onActionsToFuncBegin(pre_actions,NULL, &node);
+			m_ydweTrigger->onActionsToFuncBegin(pre_actions,NULL, node);
 			pre_actions += toto;
-			m_ydweTrigger->onActionsToFuncEnd(pre_actions, NULL, &node);
+			m_ydweTrigger->onActionsToFuncEnd(pre_actions, NULL, node);
 		}
 		else
 		{
@@ -1485,10 +1500,13 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 		const std::string function_name = generate_function_name(trigger_name);
 		
 		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
-		for (uint32_t i = 0; i < action->child_count; i++)
+
+		
+		node->getChildNodeList(list);
+
+		for (auto& child : list)
 		{
-			Action* childAction = action->child_actions[i];
-			iftext += "\tif (not (" + convert_action_to_jass(childAction, &node, pre_actions, trigger_name, true) + ")) then\n";
+			iftext += "\tif (not (" + convert_action_to_jass(child, pre_actions, trigger_name, true) + ")) then\n";
 			iftext += "\t\treturn false\n";
 			iftext += "\tendif\n";
 		}
@@ -1504,10 +1522,12 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 		const std::string function_name = generate_function_name(trigger_name);
 	
 		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
-		for (uint32_t i = 0; i < action->child_count; i++)
+
+		node->getChildNodeList(list);
+
+		for (auto& child : list)
 		{
-			Action* childAction = action->child_actions[i];
-			iftext += "\tif (" + convert_action_to_jass(childAction, &node, pre_actions, trigger_name, true) + ") then\n";
+			iftext += "\tif (" + convert_action_to_jass(child, pre_actions, trigger_name, true) + ") then\n";
 			iftext += "\t\treturn true\n";
 			iftext += "\tendif\n";
 		}
@@ -1530,13 +1550,13 @@ std::string TriggerEditor::convert_action_to_jass(Action* action, ActionNode* pa
 	if (m_ydweTrigger->isEnable())
 	{
 		std::string actions;
-		if (m_ydweTrigger->onActionToJass(actions, action, &node, pre_actions, trigger_name, nested))
+		if (m_ydweTrigger->onActionToJass(actions, node, pre_actions, trigger_name, nested))
 		{
 			return actions;
 		}
 	}
 
-	return testt(trigger_name, name, parameters, action->param_count, &node, pre_actions, !nested);
+	return testt(trigger_name, name, parameters, action->param_count, node, pre_actions, !nested);
 }
 
 std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNode* node, const std::string& trigger_name, std::string& pre_actions, bool add_call) const {
