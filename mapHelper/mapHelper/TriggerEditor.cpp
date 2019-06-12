@@ -1142,7 +1142,7 @@ endfunction
 	//Ð´ÈëÈ«¾Öjass
 	std::string_view globals_jass = std::string_view(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1);
 
-	writer.write_c_string_view(globals_jass);
+	writer.write_string_view(globals_jass);
 
 
 	std::vector<std::string> initialization_triggers;
@@ -1172,7 +1172,7 @@ endfunction
 		}
 	}
 
-	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
 	std::ofstream file("D:\\war3\\out.txt");
 	file.write((const char*)&writer.buffer[0], writer.buffer.size());

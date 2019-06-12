@@ -922,7 +922,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 
 	ActionNodePtr branch = node->getBranchNode();
 
-	ActionNodePtr parent = node->getParentNode();
+	ActionNodePtr parent = branch->getParentNode();
 	//根据当前设置逆天局部变量的位置 来决定生成的代码
 
 	std::string callname;
