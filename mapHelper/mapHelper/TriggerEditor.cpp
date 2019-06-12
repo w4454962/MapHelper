@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <iostream>
-
+#include <regex>
 
 TriggerEditor::TriggerEditor()
 	:m_editorData(NULL),
@@ -1134,17 +1134,34 @@ endfunction
 
 
 
+
 	TriggerData* trigger_data = worldData->triggers;
 
 	//写入全局jass
-	std::string_view globals_jass = std::string_view(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1);
+	std::string globals_jass = std::string(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1);
 
-	writer.write_string_view(globals_jass);
+	writer.write_string(globals_jass);
+
+
+	std::regex reg("function\\s+(InitTrig_\\w+)\\s+takes");
+
+
+	auto words_begin = std::sregex_iterator(globals_jass.begin(), globals_jass.end(), reg);
+	auto words_end = std::sregex_iterator();
+	//正则表达式匹配 全局j文件中 符合初始化触发器名字的函数
+	for (; words_begin != words_end; ++words_begin)
+	{
+		m_initFuncTable[words_begin->str(1)] = true;
+	}
 
 
 	std::vector<std::string> initialization_triggers;
 
 	writer.write_string("\n");
+
+
+	std::string inits;
+
 
 	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
@@ -1158,16 +1175,59 @@ endfunction
 			{
 				continue;
 			}
-			if (trigger->custom_jass_size > 0) 
+
+			if (trigger->is_custom_srcipt)
 			{
-				writer.write_string_view(std::string_view(trigger->custom_jass_script, trigger->custom_jass_size));
+
+				std::string script = std::string(trigger->custom_jass_script, trigger->custom_jass_size);
+				writer.write_string(script);
+
+				auto begin = std::sregex_iterator(script.begin(), script.end(), reg);
+				for (; begin != words_end; ++begin)
+				{
+					m_initFuncTable[begin->str(1)] = true;
+				}
 			}
 			else 
 			{
 				writer.write_string_view(convert_gui_to_jass(trigger, initialization_triggers));
 			}
+
 		}
 	}
+
+
+	writer.write_string(seperator);
+
+	writer.write_string("function InitCustomTriggers takes nothing returns nothing\n");
+
+	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
+	{
+		Categoriy* categoriy = m_editorData->categories[i];
+		uint32_t trigger_count = categoriy->trigger_count;
+		for (uint32_t n = 0; n < trigger_count; n++)
+		{
+			Trigger* trigger = categoriy->triggers[n];
+			if (trigger->is_comment || !trigger->is_enable)
+			{
+				continue;
+			}
+			if (m_ydweTrigger->isEnable() && m_ydweTrigger->hasDisableRegister(trigger))
+			{
+				continue;
+			}
+
+			std::string name = "InitTrig_" + std::string(trigger->name);
+			replace_string(name.begin(), name.end());
+			if (m_initFuncTable.find(name) == m_initFuncTable.end())
+			{
+				continue;
+			}
+			writer.write_string("\tcall " + name + "()\n");
+
+		}
+	}
+	writer.write_string("endfunction\n");
 
 	writer.write_string(seperator);
 	writer.write_string("function RunInitializationTriggers takes nothing returns nothing\n");
@@ -1175,8 +1235,6 @@ endfunction
 		writer.write_string("\tcall ConditionalTriggerExecute(" + i + ")\n");
 	}
 	writer.write_string("endfunction\n");
-
-
 
 
 	writer.write_string("function InitCustomPlayerSlots takes nothing returns nothing\n");
@@ -1190,7 +1248,8 @@ endfunction
 		std::string id = std::to_string(i);
 		std::string player = "Player(" + id + "), ";
 		writer.write_string("\tcall SetPlayerStartLocation(" + player + id + ")\n");
-		if (player_data->is_lock || player_data->race == 0) {
+		if (player_data->is_lock || player_data->race == 0) 
+		{
 			writer.write_string("\tcall ForcePlayerStartLocation(" + player + id + ")\n");
 		}
 
@@ -1203,7 +1262,8 @@ endfunction
 		{
 			PlayerData* data = &worldData->players[a];
 
-			if (player_data->controller_id == 0 && data->controller_id == 1) {
+			if (player_data->controller_id == 0 && data->controller_id == 1) 
+			{
 				writer.write_string("\tcall SetPlayerAlliance(" + player + "Player(" + std::to_string(a) + "), ALLIANCE_RESCUABLE, true)\n");
 			}
 		}
@@ -1213,7 +1273,64 @@ endfunction
 
 	writer.write_string("endfunction\n\n");
 
+	writer.write_string("function InitCustomTeams takes nothing returns nothing\n");
 
+	for (size_t i = 0; i < worldData->steam_count; i++) {
+		SteamData* data = &worldData->steams[i];
+		std::string index = std::to_string(i);
+
+		uint32_t force_flags = data->force_flags;
+
+		bool allied = force_flags & 0b00000001;
+		bool allied_victory = force_flags & 0b00000010;
+		bool share_vision = force_flags & 0b00001000;
+		bool share_unit_control = force_flags & 0b00010000;
+		bool share_advanced_unit_control = force_flags & 0b00100000;
+
+		std::string post_state;
+		writer.write_string("\t// Force: " + std::string(data->name) + "\n");
+
+		for (size_t a = 0; a < worldData->player_count; a++) {
+			PlayerData* player = &worldData->players[a];
+
+			if (data->player_masks & (1 << a)) {
+				std::string id = std::to_string(a);
+
+				writer.write_string("\tcall SetPlayerTeam(Player(" + id + "), " + index + ")\n");
+
+				if (allied_victory) {
+					writer.write_string("\tcall SetPlayerState(Player(" + id + "), PLAYER_STATE_ALLIED_VICTORY, 1)\n");
+				}
+
+				for (size_t b = 0; b < worldData->player_count; b++) {
+					PlayerData* p = &worldData->players[b];
+					if (data->player_masks & (1 << b) && a != b) {
+						std::string id2 = std::to_string(b);
+						if (allied) {
+							post_state += "\tcall SetPlayerAllianceStateAllyBJ(Player(" + id + "), Player(" + id2 + "), true)\n";
+						}
+						if (share_vision) {
+							post_state += "\tcall SetPlayerAllianceStateVisionBJ(Player(" + id + "), Player(" + id2 + "), true)\n";
+						}
+						if (share_unit_control) {
+							post_state += "\tcall SetPlayerAllianceStateControlBJ(Player(" + id + "), Player(" + id2 + "), true)\n";
+						}
+						if (share_advanced_unit_control) {
+							post_state += "\tcall SetPlayerAllianceStateFullControlBJ(Player(" + id + "), Player(" + id2 + "), true)\n";
+						}
+					}
+				}
+			}
+		}
+
+		if (!post_state.empty()) {
+			
+			writer.write_string(post_state);
+		}
+
+		writer.write_string("\n");
+	}
+	writer.write_string("endfunction\n");
 
 	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
@@ -1224,7 +1341,7 @@ endfunction
 	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 
-
+	m_initFuncTable.clear();
 
 }
 
@@ -1249,8 +1366,14 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 
 	events += "function InitTrig_" + trigger_name + " takes nothing returns nothing\n";
 	events += "\tset " + trigger_variable_name + " = CreateTrigger()\n";
+	if (!trigger->is_disable_init)
+	{
+		events += "\tcall DisableTrigger(" + trigger_variable_name + ")\n";
+	}
 
 	space_stack++;
+
+	m_initFuncTable["InitTrig_" + trigger_name] = true;
 
 	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
 

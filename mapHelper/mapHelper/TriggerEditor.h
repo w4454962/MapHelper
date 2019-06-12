@@ -52,6 +52,7 @@ protected:
 	//变量类型默认的值
 	std::unordered_map<std::string, TriggerType*> m_typesTable;
 
+	std::unordered_map<std::string, bool> m_initFuncTable;
 public:
 	std::string spaces[200];
 	int space_stack;
