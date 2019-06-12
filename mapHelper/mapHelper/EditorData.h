@@ -348,9 +348,25 @@ struct CameraData
 	uint32_t camera_count; //0x144
 	Camera* array;//0x148
 };
+
+struct PlayerData
+{
+	uint32_t unknow1;//0x0
+	uint32_t controller_id;//0x4 控制者id  0无 1玩家 2电脑 3中立 4可营救的
+	uint32_t race;//0x8 种族 
+	uint32_t is_lock;//0xc 是否锁定开始点
+	const char name[0x20];//0x10
+	char unknow2[0x4c];//0x30
+	uint32_t low_level;//0x7c 低优先级  & 玩家id的2次幂 判断该玩家是否是低优先级
+	uint32_t height_level;//0x80 高优先级  & 玩家id的2次幂 判断该玩家是否是高优先级
+}; //size 80
+
 struct EditorData
 {
-	char unknow1[0x38c4];// 0x0
+	char unknow1[0x3884];// 0x0
+	uint32_t player_count;//0x3884
+	PlayerData* players;//0x3888
+	char unknow11[0x38];//0x388c
 	uint32_t random_group_count;//0x38c4随机组数量
 	RandomGroupData* random_groups;//0x38c8//随机组
 	char unknow2[0x8];//0x38cc

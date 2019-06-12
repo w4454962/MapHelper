@@ -370,7 +370,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	}
 	
 	writer.write_string("globals\n");
-	printf("开始写变量\n");
+
 	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
 		VariableData* var = &data->variables->array[i];
@@ -422,7 +422,6 @@ void TriggerEditor::saveSctipt(const char* path)
 	}
 
 	//开始初始化全局变量
-	printf("开始初始化变量\n");
 	writer.write_string("function InitGlobals takes nothing returns nothing\n");
 	writer.write_string("\tlocal integer i = 0\n");
 
@@ -480,7 +479,6 @@ void TriggerEditor::saveSctipt(const char* path)
 	writer.write_string("endfunction\n\n");
 
 
-	printf("开始初始化随机组\n");
 	writer.write_string("function InitRandomGroups takes nothing returns nothing\n");
 	writer.write_string("\tlocal integer curset\n");
 
@@ -530,7 +528,6 @@ void TriggerEditor::saveSctipt(const char* path)
 	
 
 	
-	printf("加载物品列表 %i  \n", worldData->item_table_count);
 	for (size_t i = 0; i < worldData->item_table_count; i++)
 	{
 		sprintf(buffer, "%06d",i);
@@ -1171,6 +1168,52 @@ endfunction
 			}
 		}
 	}
+
+	writer.write_string(seperator);
+	writer.write_string("function RunInitializationTriggers takes nothing returns nothing\n");
+	for (const auto& i : initialization_triggers) {
+		writer.write_string("\tcall ConditionalTriggerExecute(" + i + ")\n");
+	}
+	writer.write_string("endfunction\n");
+
+
+
+
+	writer.write_string("function InitCustomPlayerSlots takes nothing returns nothing\n");
+
+	const std::vector<std::string> players = { "MAP_CONTROL_USER", "MAP_CONTROL_COMPUTER", "MAP_CONTROL_NEUTRAL", "MAP_CONTROL_RESCUABLE" };
+	const std::vector<std::string> races = { "RACE_PREF_RANDOM", "RACE_PREF_HUMAN", "RACE_PREF_ORC", "RACE_PREF_UNDEAD", "RACE_PREF_NIGHTELF" };
+
+	for (size_t i = 0; i < worldData->player_count; i++)
+	{
+		PlayerData* player_data = &worldData->players[i];
+		std::string id = std::to_string(i);
+		std::string player = "Player(" + id + "), ";
+		writer.write_string("\tcall SetPlayerStartLocation(" + player + id + ")\n");
+		if (player_data->is_lock || player_data->race == 0) {
+			writer.write_string("\tcall ForcePlayerStartLocation(" + player + id + ")\n");
+		}
+
+		writer.write_string("\tcall SetPlayerColor(" + player + "ConvertPlayerColor(" + id + "))\n");
+		writer.write_string("\tcall SetPlayerRacePreference(" + player + races[static_cast<int>(player_data->race)] + ")\n");
+		writer.write_string("\tcall SetPlayerRaceSelectable(" + player + "true" + ")\n");
+		writer.write_string("\tcall SetPlayerController(" + player + players[static_cast<int>(player_data->controller_id)] + ")\n");
+
+		for (size_t a = 0; a < worldData->player_count; a++)
+		{
+			PlayerData* data = &worldData->players[a];
+
+			if (player_data->controller_id == 0 && data->controller_id == 1) {
+				writer.write_string("\tcall SetPlayerAlliance(" + player + "Player(" + std::to_string(a) + "), ALLIANCE_RESCUABLE, true)\n");
+			}
+		}
+
+		writer.write_string("\n");
+	}
+
+	writer.write_string("endfunction\n\n");
+
+
 
 	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
