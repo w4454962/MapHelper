@@ -48,8 +48,7 @@ public:
 	bool isEnable();
 private:
 
-	void addLocalVar(std::string name,std::string type, std::string value = std::string());
-
+	
 	std::string setLocal(ActionNodePtr node, const std::string& name, const std::string& type, const std::string& value, bool add = false);
 	std::string getLocal(ActionNodePtr node, const std::string& name, const std::string& type);
 
@@ -61,25 +60,9 @@ protected:
 	bool m_bEnable;
 	bool m_isInYdweEnumUnit;
 	bool m_hasAnyPlayer;
-	bool m_isInMainProc;
-
-	bool m_isFuncBegin;
-
-	bool m_hasYdweLocal;
 
 	int m_funcStack;
 	std::map<Trigger*, bool> m_triggerHasDisable;
-
-
-	//局部变量表 名字,类型,默认值
-	//std::vector<LocalVar> m_localTable;
-	std::map<std::string, bool> m_localMap;
-	
-
-
-	//哈希局部变量表 名字,类型
-	std::map<std::string, std::string> m_HashLocalTable;
-
 
 
 };

@@ -10,7 +10,7 @@
 
 typedef std::shared_ptr<class ActionNode> ActionNodePtr;
 
-typedef std::shared_ptr<std::map<std::string, std::string>> HashVarTablePtr;
+typedef std::shared_ptr<std::map<std::string, std::string>> VarTablePtr;
 
 class ActionNode :public std::enable_shared_from_this<ActionNode>
 {
@@ -78,8 +78,12 @@ public:
 
 	Action::Type getActionType();
 
-	HashVarTablePtr getLastVarTable();
+	VarTablePtr getLastVarTable();
 
+	VarTablePtr getLocalTable();
+
+
+	bool m_haveHashLocal;
 private:
 
 protected:
@@ -98,8 +102,10 @@ protected:
 	Type m_type;
 
 	//用来记录多层次逆天计时器的局部变量 以便再上一层函数中申明
-	std::shared_ptr<std::map<std::string, std::string>> mapPtr;
+	std::shared_ptr<std::map<std::string, std::string>> m_hashVarTablePtr;
 
+	//记录局部变量的map指针
+	std::shared_ptr<std::map<std::string, std::string>> m_localTablePtr;
 };
 
 

@@ -1163,11 +1163,11 @@ endfunction
 			}
 			if (trigger->custom_jass_size > 0) 
 			{
-				writer.write_c_string_view(std::string_view(trigger->custom_jass_script, trigger->custom_jass_size));
+				writer.write_string_view(std::string_view(trigger->custom_jass_script, trigger->custom_jass_size));
 			}
 			else 
 			{
-				writer.write_c_string(convert_gui_to_jass(trigger, initialization_triggers));
+				writer.write_string_view(convert_gui_to_jass(trigger, initialization_triggers));
 			}
 		}
 	}
@@ -1396,6 +1396,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 		std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
 		bool firstBoolexper = true;
+
 		space_stack++;
 
 		node->getChildNodeList(list);
@@ -1545,7 +1546,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 	{
 		const std::string first = resolve_parameter(parameters[0], node, pre_actions);
 		const std::string second = resolve_parameter(parameters[1], node, pre_actions);
-		return spaces[space_stack] + "set " + first + " = " + second;
+		return "set " + first + " = " + second;
 	}
 
 	}

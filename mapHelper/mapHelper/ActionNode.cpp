@@ -6,7 +6,8 @@ ActionNode::ActionNode()
 	m_parent(0),
 	m_nameId(0),
 	m_trigger(0),
-	m_parameter(0)
+	m_parameter(0),
+	m_haveHashLocal(false)
 {}
 
 
@@ -28,7 +29,6 @@ ActionNode::ActionNode(Action* action, ActionNodePtr parent)
 	m_parent = parent;
 	m_nameId = action != NULL ? hash_(action->name) : 0;
 	m_trigger = parent.get() ? parent->m_trigger : 0;
-	mapPtr = NULL;
 
 	m_type = Type::action;
 
@@ -235,26 +235,35 @@ Parameter* ActionNode::operator()(size_t n)
 
 
 
-HashVarTablePtr ActionNode::getLastVarTable()
+VarTablePtr ActionNode::getLastVarTable()
 {
 	ActionNode* node = this;
 
-	HashVarTablePtr retval;
+	VarTablePtr retval;
 	while (node)
 	{
-		if (node->mapPtr.get())
+		if (node->m_hashVarTablePtr.get())
 		{
-			retval = node->mapPtr;
+			retval = node->m_hashVarTablePtr;
 			break;
 		}
 		node = node->m_parent.get();
 	}
 
-	if (retval.get() == NULL)
+	if (retval.get() == nullptr)
 	{
-		retval = HashVarTablePtr(new std::map<std::string, std::string>);
-		mapPtr = retval;
+		retval = VarTablePtr(new std::map<std::string, std::string>);
+		m_hashVarTablePtr = retval;
 	}
 
 	return retval;
+}
+
+VarTablePtr ActionNode::getLocalTable()
+{
+	if (m_localTablePtr.get() == nullptr)
+	{
+		m_localTablePtr = VarTablePtr(new std::map<std::string, std::string>);
+	}
+	return m_localTablePtr;
 }

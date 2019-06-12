@@ -305,7 +305,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		
 		for (auto& child : list)
 		{
-			if (child->getNameId() != 0)//如果是动作区
+			if (child->getActionId() != 0)//如果是动作区
 			{
 				Action* childAction = child->getAction();
 
@@ -750,11 +750,19 @@ bool YDTrigger::seachHashLocal(Parameter** parameters, uint32_t count, std::map<
 }
 void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 {
+	bool isInMainProc = false;
 
 	bool isSeachHashLocal = node->isRootNode();
 
-	
+	auto localTable = node->getLocalTable();
 
+	std::function<void(std::string, std::string)> addLocalVar = [&](std::string name, std::string type)
+	{
+		if (localTable->find(name) == localTable->end())
+		{
+			localTable->emplace(name, type);
+		}
+	};
 
 	//搜索需要注册的局部变量
 	std::function<void(Action**, uint32_t,Action*,bool,bool)> seachLocal = [&](Action** actions, uint32_t count,Action* parent_action,bool isSeachChild,bool isTimer)
@@ -777,7 +785,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 				}
 		
 				//搜索参数中是否有引用到逆天局部变量
-				m_isInMainProc = seachHashLocal(action->parameters, action->param_count);
+				isInMainProc = isInMainProc | seachHashLocal(action->parameters, action->param_count);
 			}
 
 #define next(b) seachLocal(action->child_actions, action->child_count,action,b,isTimer);
@@ -821,6 +829,11 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 				next(false);
 				break;
 			}
+			case "YDWERegisterTriggerMultiple"s_hash:
+			{
+				addLocalVar("ydl_trigger", "trigger");
+				break;
+			}
 			case "YDWEExecuteTriggerMultiple"s_hash:
 			{
 				addLocalVar("ydl_triggerstep", "integer");
@@ -834,7 +847,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 				//只搜索计时器中的参数区里的设置逆天局部变量
 				if (isSeachHashLocal && (!isTimer || (isTimer && action->child_flag == 0)))
 				{
-					m_isInMainProc = true;
+					isInMainProc = true;
 				}
 				break;
 			}
@@ -858,57 +871,42 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 		seachLocal(action->child_actions,action->child_count,action,true,false);
 	}
 
-	//for (auto& i : m_localTable)
-	//{
-	//	funcCode += "\tlocal " + i.type + " " + i.name;
-	//	if (i.value.empty())
-	//	{
-	//		funcCode += "\n";
-	//	}
-	//	else
-	//	{
-	//		funcCode += " = " + i.value + "\n";
-	//	}
-	//}
-	//
-	//if (trigger && m_isInMainProc)
-	//{
-	//	funcCode += "\tYDLocalInitialize()\n";
-	//}
+	for (auto&[name, type] : *localTable)
+	{
+		funcCode += "\tlocal " + type+ " " + name + "\n";
+	}
+
+	if (node->isRootNode() && isInMainProc)
+	{
+		funcCode += "\tYDLocalInitialize()\n";
+	}
+	node->m_haveHashLocal = isInMainProc;
 	
 }
 
-void YDTrigger::onActionsToFuncEnd(std::string& funcCode, ActionNodePtr parent)
+void YDTrigger::onActionsToFuncEnd(std::string& funcCode, ActionNodePtr node)
 {
 
-	//if (trigger && m_isInMainProc)
-	//{
-	//	funcCode += "\tcall YDLocal1Release()\n";
-	//}
-	//for (auto& i : m_localTable)
-	//{
-	//	switch (hash_(i.type.c_str()))
-	//	{
-	//	case "unit"s_hash:
-	//	case "group"s_hash:
-	//	case "timer"s_hash:
-	//	case "trigger"s_hash:
-	//	case "force"s_hash:
-	//	{
-	//		funcCode += "\tset " + i.name + " = null\n";
-	//		break;
-	//	}
-	//	}
-	//}
-	//
-	//if (trigger)
-	//{
-	//	m_localTable.clear();
-	//	m_localMap.clear();
-	//	m_isInMainProc = false;
-	//}
-
-
+	if (node->isRootNode() && node->m_haveHashLocal)
+	{
+		funcCode += "\tcall YDLocal1Release()\n";
+	}
+	auto localTable = node->getLocalTable();
+	for (auto&[name,type] : *localTable)
+	{
+		switch (hash_(type.c_str()))
+		{
+		case "unit"s_hash:
+		case "group"s_hash:
+		case "timer"s_hash:
+		case "trigger"s_hash:
+		case "force"s_hash:
+		{
+			funcCode += "\tset " + name + " = null\n";
+			break;
+		}
+		}
+	}
 }
 
 bool YDTrigger::hasDisableRegister(Trigger* trigger)
@@ -917,14 +915,6 @@ bool YDTrigger::hasDisableRegister(Trigger* trigger)
 	return it != m_triggerHasDisable.end();
 }
 
-void YDTrigger::addLocalVar(std::string name, std::string type, std::string value)
-{
-	if (m_localMap.find(name) != m_localMap.end())
-		return;
-
-	//m_localTable.push_back({ name,type,value });
-	m_localMap[name] = true;
-}
 
 
 std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, const std::string& type, const std::string& value,bool add)
@@ -942,7 +932,6 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	{
 		callname = "YDLocal1Set";
 
-		m_isInMainProc = true;
 	}
 	else
 	{
@@ -1015,9 +1004,10 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 	//根据当前设置逆天局部变量的位置 来决定生成的代码
 	std::string callname;
 	std::string handle;
-	if (parent.get() == NULL || parent->isRootNode())//如果是在触发中
+	if (parent.get() == NULL || branch->isRootNode())//如果是在触发中
 	{
-		if (m_isInMainProc)
+		auto varTable = branch->getLastVarTable();
+		if (varTable->find(name) != varTable->end())
 		{
 			callname = "YDLocal1Get";
 		}
@@ -1091,7 +1081,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	std::string callname;
 	std::string handle;
 
-	if (parent.get() == NULL || parent->isRootNode())//如果是在触发中
+	if (parent.get() == NULL || branch->isRootNode())//如果是在触发中
 	{
 		callname = "YDLocal1ArraySet";
 	}
@@ -1172,9 +1162,10 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 
 	std::string callname;
 	std::string handle;
-	if (parent.get() == NULL || parent->isRootNode())//如果是在触发中
+	if (parent.get() == NULL || branch->isRootNode())//如果是在触发中
 	{
-		if (m_isInMainProc)
+		auto varTable = branch->getLastVarTable();
+		if (varTable->find(name) != varTable->end())
 		{
 			callname = "YDLocal1ArrayGet";
 		}
