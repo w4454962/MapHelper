@@ -1148,7 +1148,7 @@ endfunction
 
 	auto words_begin = std::sregex_iterator(globals_jass.begin(), globals_jass.end(), reg);
 	auto words_end = std::sregex_iterator();
-	//正则表达式匹配 全局j文件中 符合初始化触发器名字的函数
+	//正则表达式匹配 全局jass中 符合初始化触发器名字的函数
 	for (; words_begin != words_end; ++words_begin)
 	{
 		m_initFuncTable[words_begin->str(1)] = true;
@@ -1329,6 +1329,34 @@ endfunction
 		}
 
 		writer.write_string("\n");
+	}
+	writer.write_string("endfunction\n");
+
+
+	writer.write_string("function InitAllyPriorities takes nothing returns nothing\n");
+
+
+
+	for (size_t i = 0; i < worldData->player_count; i++) {
+		PlayerData* player = &worldData->players[i];
+
+		std::string player_text;
+
+		int current_index = 0;
+		for (size_t j = 0; j < worldData->player_count; j++) {
+			PlayerData* target = &worldData->players[j];
+			if (player->low_level & (1 << j) && i != j) {
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(i) + ", " + std::to_string(current_index) + ", " + std::to_string(j) + ", MAP_LOC_PRIO_LOW)\n";
+				current_index++;
+			}
+			else if (player->height_level & (1 << j) && i != j) {
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(i) + ", " + std::to_string(current_index) + ", " + std::to_string(j) + ", MAP_LOC_PRIO_HIGH)\n";
+				current_index++;
+			}
+		}
+
+		player_text = "\tcall SetStartLocPrioCount(" + std::to_string(i) + ", " + std::to_string(current_index) + ")\n" + player_text;
+		writer.write_string(player_text);
 	}
 	writer.write_string("endfunction\n");
 
