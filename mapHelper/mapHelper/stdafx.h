@@ -40,7 +40,7 @@ namespace fs = std::filesystem;
 #pragma  warning( disable: 4307 4455 )
 
 std::string string_replaced(const std::string& source, const std::string& from, const std::string& to);
-void replace_string(std::string::iterator begin, std::string::iterator end);
+void convert_name(std::string& name);
 
 
 typedef std::uint32_t hash_t;

@@ -809,8 +809,8 @@ endfunction
 		if (variableTable.find(id) == variableTable.end()) 
 			continue;
 		
-		sprintf(buffer, "%.4s,%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle, unit->sacle_x, unit->variation);
-		writer.write_string("\tset " + id + " = CreateDestructable('" + std::string(buffer) + ")\n");
+		sprintf(buffer, "'%.4s',%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle, unit->sacle_x, unit->variation);
+		writer.write_string("\tset " + id + " = CreateDestructable(" + std::string(buffer) + ")\n");
 
 		if (unit->doodas_life != 100) {
 			sprintf(buffer, "%.2f", unit->doodas_life / 100.f);
@@ -1063,7 +1063,7 @@ endfunction
 		Region* region = worldData->regions->array[i];
 		std::string region_name = std::string("gg_rct_") + region->name;
 
-		replace_string(region_name.begin(), region_name.end());
+		convert_name(region_name);
 
 
 		int left = region->left * 32 + region->info->minX;
@@ -1115,7 +1115,7 @@ endfunction
 		Camera* camera = &worldData->cameras->array[i];
 		std::string camera_name = "gg_cam_" + std::string(camera->name);
 		
-		replace_string(camera_name.begin(), camera_name.end());
+		convert_name(camera_name);
 
 		writer.write_string("\tset " + camera_name + " = CreateCameraSetup()\n");
 		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(camera->z_offset)  + ", 0.0)\n");
@@ -1178,8 +1178,8 @@ endfunction
 
 			if (trigger->is_custom_srcipt)
 			{
-
-				std::string script = std::string(trigger->custom_jass_script, trigger->custom_jass_size);
+				std::string_view view = std::string_view(trigger->custom_jass_script);
+				const std::string& script = std::string(view.begin(), view.end());
 				writer.write_string(script);
 
 				auto begin = std::sregex_iterator(script.begin(), script.end(), reg);
@@ -1190,7 +1190,7 @@ endfunction
 			}
 			else 
 			{
-				writer.write_string_view(convert_gui_to_jass(trigger, initialization_triggers));
+				writer.write_string_view(convertTrigger(trigger, initialization_triggers));
 			}
 
 		}
@@ -1218,7 +1218,7 @@ endfunction
 			}
 
 			std::string name = "InitTrig_" + std::string(trigger->name);
-			replace_string(name.begin(), name.end());
+			convert_name(name);
 			if (m_initFuncTable.find(name) == m_initFuncTable.end())
 			{
 				continue;
@@ -1360,11 +1360,104 @@ endfunction
 	}
 	writer.write_string("endfunction\n");
 
-	std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
-	std::ofstream file("D:\\war3\\out.txt");
-	file.write((const char*)&writer.buffer[0], writer.buffer.size());
-	file.close();
+
+
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
+	writer.write_string("//*  Main Initialization\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
+
+	writer.write_string("function main takes nothing returns nothing\n");
+	
+	std::string soto = "\tcall SetCameraBounds(" +
+		std::to_string(worldData->camera_left_bottom_x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
+		std::to_string(worldData->camera_left_bottom_y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM), " +
+	
+		std::to_string(worldData->camera_right_top_x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), " +
+		std::to_string(worldData->camera_right_top_y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
+	
+		std::to_string(worldData->camera_left_top_x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
+		std::to_string(worldData->camera_left_top_y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
+	
+		std::to_string(worldData->camera_right_bottom_x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), " +
+		std::to_string(worldData->camera_right_bottom_y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM))\n";
+	
+	writer.write_string(soto);
+	
+	const std::string tileset = std::string((char*)&worldData->tileset,1);
+	
+	const std::string terrain_lights = string_replaced(worldEditor->getConfigData("TerrainLights", tileset), "\\", "\\\\");
+	const std::string unit_lights = string_replaced(worldEditor->getConfigData("UnitLights",tileset), "\\", "\\\\");
+	
+	writer.write_string("\tcall SetDayNightModels(\"" + terrain_lights + "\", \"" + unit_lights + "\")\n");
+	
+	const std::string sound_environment = worldEditor->getConfigData("SoundEnvironment",tileset);
+	writer.write_string("\tcall NewSoundEnvironment(\"" + sound_environment + "\")\n");
+	
+	const std::string ambient_day = worldEditor->getConfigData("DayAmbience", tileset);
+	writer.write_string("\tcall SetAmbientDaySound(\"" + ambient_day + "\")\n");
+	
+	const std::string ambient_night = worldEditor->getConfigData("NightAmbience", tileset);
+	writer.write_string("\tcall SetAmbientNightSound(\"" + ambient_night + "\")\n");
+	
+	writer.write_string("\tcall SetMapMusic(\"Music\", true, 0)\n");
+	writer.write_string("\tcall InitSounds()\n");
+	writer.write_string("\tcall InitRandomGroups()\n");
+	writer.write_string("\tcall CreateRegions()\n");
+	writer.write_string("\tcall CreateCameras()\n");
+	writer.write_string("\tcall CreateDestructables()\n");
+	writer.write_string("\tcall CreateItems()\n");
+	writer.write_string("\tcall CreateUnits()\n");
+	writer.write_string("\tcall InitBlizzard()\n");
+	writer.write_string("\tcall InitGlobals()\n");
+	writer.write_string("\tcall InitCustomTriggers()\n");
+	writer.write_string("\tcall RunInitializationTriggers()\n");
+	
+	writer.write_string("endfunction\n");
+
+
+
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
+	writer.write_string("//*  Map Configuration\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
+
+	writer.write_string("function config takes nothing returns nothing\n");
+
+	writer.write_string("\tcall SetMapName(\"" + std::string(worldData->map_name) + "\")\n");
+	writer.write_string("\tcall SetMapDescription(\"" + std::string(worldData->description) + "\")\n");
+	writer.write_string("\tcall SetPlayers(" + std::to_string(worldData->player_count) + ")\n");
+	writer.write_string("\tcall SetTeams(" + std::to_string(worldData->steam_count) + ")\n");
+	writer.write_string("\tcall SetGamePlacement(MAP_PLACEMENT_TEAMS_TOGETHER)\n");
+
+	writer.write_string("\n");
+
+	for (size_t i = 0; i < worldData->units->unit_count; i++)
+	{
+		Unit* unit = &worldData->units->array[i];
+		if (strncmp(unit->name,"sloc",4) == 0) 
+		{
+			writer.write_string("\tcall DefineStartLocation(" + std::to_string(unit->player_id) + ", " + std::to_string(unit->x) + ", " + std::to_string(unit->y) + ")\n");
+		}
+	}
+
+	writer.write_string("\n");
+
+	writer.write_string("\tcall InitCustomPlayerSlots()\n");
+	writer.write_string("\tcall InitCustomTeams()\n");
+	writer.write_string("\tcall InitAllyPriorities()\n");
+
+	writer.write_string("endfunction\n");
+
+	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+
+	std::ofstream out(std::string(path) + ".j", std::ios::binary);
+	out.write((const char*)&writer.buffer[0], writer.buffer.size());
+	out.close();
+
 
 	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
@@ -1374,7 +1467,7 @@ endfunction
 }
 
 
-std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions) 
+std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::string>& initializtions) 
 {
 	
 
@@ -1443,7 +1536,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 
 				std::string type = param->type_name;
 
-				events += resolve_parameter(param, node, pre_actions);
+				events += convertParameter(param, node, pre_actions);
 
 				if (k < action->param_count - 1)
 					events += ", ";
@@ -1456,7 +1549,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 
 			break;
 		case Action::Type::condition:
-			conditions += "\tif (not (" + convert_action_to_jass(node, pre_actions, true) + ")) then\n";
+			conditions += "\tif (not (" + convertAction(node, pre_actions, true) + ")) then\n";
 			conditions += "\treturn false\n";
 			conditions += "\tendif\n";
 			break;
@@ -1464,7 +1557,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 			space_stack = 1;
 			action_code += spaces[space_stack];
 
-			action_code += convert_action_to_jass(node, pre_actions, false) + "\n";
+			action_code += convertAction(node, pre_actions, false) + "\n";
 			break;
 		}
 	}
@@ -1498,7 +1591,7 @@ std::string TriggerEditor::convert_gui_to_jass(Trigger* trigger, std::vector<std
 }
 
 
-std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::string& pre_actions, bool nested)
+std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_actions, bool nested)
 {
 	Action* action = node->getAction();
 
@@ -1520,9 +1613,9 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen (" + resolve_parameter(parameters[0], node, pre_actions) + ")\n";
+		output += "exitwhen (" + convertParameter(parameters[0], node, pre_actions) + ")\n";
 		output += spaces[space_stack];
-		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(parameters[1], node, pre_actions) + "))\n";
+		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + convertParameter(parameters[1], node, pre_actions) + "))\n";
 		output += spaces[--space_stack];
 		output += "endloop";
 		return output;
@@ -1535,9 +1628,9 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 		std::string loop_index = is_loopa ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = is_loopa ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
-		output += "set " + loop_index + "=" + resolve_parameter(parameters[0], node, pre_actions) + "\n";
+		output += "set " + loop_index + "=" + convertParameter(parameters[0], node, pre_actions) + "\n";
 		output += spaces[space_stack];
-		output += "set " + loop_index_end + "=" + resolve_parameter(parameters[1], node, pre_actions) + "\n";
+		output += "set " + loop_index_end + "=" + convertParameter(parameters[1], node, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
@@ -1548,7 +1641,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 		for (auto& child : list)
 		{
 			output += spaces[space_stack];
-			output += convert_action_to_jass(child, pre_actions, false) + "\n";
+			output += convertAction(child, pre_actions, false) + "\n";
 		}
 		output += spaces[space_stack];
 		output += "set " + loop_index + " = " + loop_index + " + 1\n";
@@ -1559,20 +1652,20 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 
 	case "ForLoopVarMultiple"s_hash:
 	{
-		std::string variable = resolve_parameter(parameters[0], node, pre_actions);
+		std::string variable = convertParameter(parameters[0], node, pre_actions);
 		output += "set " + variable + " = ";
-		output += resolve_parameter(parameters[1], node, pre_actions) + "\n";
+		output += convertParameter(parameters[1], node, pre_actions) + "\n";
 		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
-		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], node, pre_actions) + "\n";
+		output += "exitwhen " + variable + " > " + convertParameter(parameters[2], node, pre_actions) + "\n";
 		
 		node->getChildNodeList(list);
 
 		for (auto& child : list)
 		{
 			output += spaces[space_stack];
-			output += convert_action_to_jass(child, pre_actions, false) + "\n";
+			output += convertAction(child, pre_actions, false) + "\n";
 		}
 		output += spaces[space_stack];
 		output += "set " + variable + " = " + variable + " + 1\n";
@@ -1609,7 +1702,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 				{
 					iftext += " and ";
 				}
-				iftext += convert_action_to_jass(child, pre_actions, true);
+				iftext += convertAction(child, pre_actions, true);
 				break;
 			}
 			case Action::Type::action:
@@ -1618,12 +1711,12 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 				if (action->child_flag == 1)
 				{
 					thentext += spaces[space_stack];
-					thentext += convert_action_to_jass(child, pre_actions, false) + "\n";
+					thentext += convertAction(child, pre_actions, false) + "\n";
 				}
 				else
 				{
 					elsetext += spaces[space_stack];
-					elsetext += convert_action_to_jass(child, pre_actions, false) + "\n";
+					elsetext += convertAction(child, pre_actions, false) + "\n";
 				}
 				break;
 			}
@@ -1661,7 +1754,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 		std::string name = node->getName();
 
 		// Remove multiple
-		output += "call " + name.substr(0, name.length() - 8) + "(" + resolve_parameter(parameters[0], node, pre_actions) + ", function " + function_name + ")\n";
+		output += "call " + name.substr(0, name.length() - 8) + "(" + convertParameter(parameters[0], node, pre_actions) + ", function " + function_name + ")\n";
 
 		std::string toto;
 
@@ -1673,7 +1766,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 		for (auto& child : list)
 		{
 			toto += spaces[space_stack];
-			toto += convert_action_to_jass(child, pre_actions, false) + "\n";
+			toto += convertAction(child, pre_actions, false) + "\n";
 		}
 
 		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
@@ -1704,7 +1797,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 
 		for (auto& child : list)
 		{
-			iftext += "\tif (not (" + convert_action_to_jass(child, pre_actions, true) + ")) then\n";
+			iftext += "\tif (not (" + convertAction(child, pre_actions, true) + ")) then\n";
 			iftext += "\t\treturn false\n";
 			iftext += "\tendif\n";
 		}
@@ -1725,7 +1818,7 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 
 		for (auto& child : list)
 		{
-			iftext += "\tif (" + convert_action_to_jass(child, pre_actions, true) + ") then\n";
+			iftext += "\tif (" + convertAction(child, pre_actions, true) + ") then\n";
 			iftext += "\t\treturn true\n";
 			iftext += "\tendif\n";
 		}
@@ -1738,8 +1831,8 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 
 	case "SetVariable"s_hash:
 	{
-		const std::string first = resolve_parameter(parameters[0], node, pre_actions);
-		const std::string second = resolve_parameter(parameters[1], node, pre_actions);
+		const std::string first = convertParameter(parameters[0], node, pre_actions);
+		const std::string second = convertParameter(parameters[1], node, pre_actions);
 		return "set " + first + " = " + second;
 	}
 
@@ -1754,10 +1847,10 @@ std::string TriggerEditor::convert_action_to_jass(ActionNodePtr node, std::strin
 		}
 	}
 
-	return testt(node, pre_actions, !nested);
+	return convertCall(node, pre_actions, !nested);
 }
 
-std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) const 
+std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) const 
 {
 	if (parameter == NULL)
 	{
@@ -1777,7 +1870,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNodePtr
 	if (parameter->funcParam) 
 	{
 		ActionNodePtr childNode(new ActionNode(parameter->funcParam, parameter, node));
-		return testt(childNode,pre_actions, add_call);
+		return convertCall(childNode,pre_actions, add_call);
 	}
 	else {
 	
@@ -1803,7 +1896,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNodePtr
 					return string_replaced(value, "`", "\"");
 				}
 			}
-			return WorldEditor::getInstance()->getTriggerConfigData("TriggerParams", value, 2);
+			return WorldEditor::getInstance()->getConfigData("TriggerParams", value, 2);
 		}
 		case Parameter::Type::function:
 			return value + "()";
@@ -1822,7 +1915,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNodePtr
 				puts("s");
 			}
 			if (parameter->arrayParam) {
-				output += "[" + resolve_parameter(&parameter->arrayParam[0], node, pre_actions) + "]";
+				output += "[" + convertParameter(&parameter->arrayParam[0], node, pre_actions) + "]";
 			}
 			return output;
 		}
@@ -1839,7 +1932,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNodePtr
 			if (is_import_path) {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
 			}
-			else if (get_base_type(type) == "string") 
+			else if (getBaseType(type) == "string") 
 			{
 				return "\"" + value + "\"";
 			}
@@ -1866,7 +1959,7 @@ std::string TriggerEditor::resolve_parameter(Parameter* parameter, ActionNodePtr
 
 
 
-std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, bool add_call) const
+std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call) const
 {
 	std::string output;
 
@@ -1878,7 +1971,7 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 
 	case "CommentString"s_hash:
 	{
-		return "//" + resolve_parameter(parameters[0], node, pre_actions);
+		return "//" + convertParameter(parameters[0], node, pre_actions);
 	}
 
 	case "CustomScriptCode"s_hash:
@@ -1892,22 +1985,22 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 	}
 	case "OperatorString"s_hash:
 	{
-		output += "(" + resolve_parameter(parameters[0], node, pre_actions);
+		output += "(" + convertParameter(parameters[0], node, pre_actions);
 		output += " + ";
-		output += resolve_parameter(parameters[1], node, pre_actions) + ")";
+		output += convertParameter(parameters[1], node, pre_actions) + ")";
 		return output;
 	}
 
 	case "ForLoopVar"s_hash:
 	{
-		//std::string variable = "udg_" + resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
-		std::string variable = resolve_parameter(parameters[0], node, pre_actions);
+		//std::string variable = "udg_" + convertParameter(parameters[0], trigger_name, pre_actions, "integer");
+		std::string variable = convertParameter(parameters[0], node, pre_actions);
 
 		output += "set " + variable + " = ";
-		output += resolve_parameter(parameters[1], node, pre_actions) + "\n";
+		output += convertParameter(parameters[1], node, pre_actions) + "\n";
 		output += "loop\n";
-		output += "exitwhen " + variable + " > " + resolve_parameter(parameters[2], node, pre_actions) + "\n";
-		output += resolve_parameter(parameters[3], node, pre_actions, true) + "\n";
+		output += "exitwhen " + variable + " > " + convertParameter(parameters[2], node, pre_actions) + "\n";
+		output += convertParameter(parameters[3], node, pre_actions, true) + "\n";
 		output += "set " + variable + " = " + variable + " + 1\n";
 		output += "endloop\n";
 		return output;
@@ -1919,12 +2012,12 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 		std::string elsetext;
 		
 		std::string function_name = generate_function_name(node->getTriggerNamePtr());
-		std::string tttt = resolve_parameter(parameters[0], node, pre_actions);
+		std::string tttt = convertParameter(parameters[0], node, pre_actions);
 
 		output += "if (" + function_name + "()) then\n";
-		output += resolve_parameter(parameters[1], node, pre_actions, true) + "\n";
+		output += convertParameter(parameters[1], node, pre_actions, true) + "\n";
 		output += "else\n";
-		output += resolve_parameter(parameters[2], node, pre_actions, true) + "\n";
+		output += convertParameter(parameters[2], node, pre_actions, true) + "\n";
 		output += "endif";
 
 		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
@@ -1938,10 +2031,10 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 	{
 		std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string tttt = resolve_parameter(parameters[1], node, pre_actions);
+		std::string tttt = convertParameter(parameters[1], node, pre_actions);
 
 		output += node->getName() + "(";
-		output += resolve_parameter(parameters[0], node, pre_actions);
+		output += convertParameter(parameters[0], node, pre_actions);
 		output += ", function " + function_name;
 		output += ")";
 
@@ -1955,8 +2048,8 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 	{
 		auto trigger_name = node->getTriggerNamePtr();
 
-		std::string first_parameter = resolve_parameter(parameters[0], node, pre_actions);
-		std::string second_parameter = resolve_parameter(parameters[1], node, pre_actions);
+		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
+		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanAnd(" + function_name + "(), ";
@@ -1977,8 +2070,8 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 	{
 		auto trigger_name = node->getTriggerNamePtr();
 
-		std::string first_parameter = resolve_parameter(parameters[0], node, pre_actions);
-		std::string second_parameter = resolve_parameter(parameters[1], node, pre_actions);
+		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
+		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanOr(" + function_name + "(), ";
@@ -1998,9 +2091,9 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 	case "OperatorInt"s_hash:
 	case"OperatorReal"s_hash:
 	{
-		output += "(" + resolve_parameter(parameters[0], node, pre_actions);
-		output += " " + resolve_parameter(parameters[1], node, pre_actions) + " ";
-		output += resolve_parameter(parameters[2], node, pre_actions) + ")";
+		output += "(" + convertParameter(parameters[0], node, pre_actions);
+		output += " " + convertParameter(parameters[1], node, pre_actions) + " ";
+		output += convertParameter(parameters[2], node, pre_actions) + ")";
 		return output;
 	}
 	default:
@@ -2008,9 +2101,9 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 	}
 
 	if (node->getName().substr(0, 15) == "OperatorCompare") {
-		output += resolve_parameter(parameters[0], node, pre_actions);
-		output += " " + resolve_parameter(parameters[1], node, pre_actions) + " ";
-		output += resolve_parameter(parameters[2], node, pre_actions);
+		output += convertParameter(parameters[0], node, pre_actions);
+		output += " " + convertParameter(parameters[1], node, pre_actions) + " ";
+		output += convertParameter(parameters[2], node, pre_actions);
 		return output;
 	}
 	size_t size = action->param_count;
@@ -2023,7 +2116,7 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 		if (child_type == "boolexpr") {
 			const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-			std::string tttt = resolve_parameter(param, node, pre_actions);
+			std::string tttt = convertParameter(param, node, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
 			pre_actions += "\treturn " + tttt + "\n";
@@ -2032,7 +2125,7 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 			output += "function " + function_name;
 		}
 		else {
-			output += resolve_parameter(param, node, pre_actions);
+			output += convertParameter(param, node, pre_actions);
 		}
 
 		if (k < size - 1) {
@@ -2044,7 +2137,7 @@ std::string TriggerEditor::testt(ActionNodePtr node, std::string& pre_actions, b
 }
 
 
-std::string TriggerEditor::get_base_type(const std::string& type) const
+std::string TriggerEditor::getBaseType(const std::string& type) const
 {
 	auto it = m_typesTable.find(type);
 	if (it != m_typesTable.end())

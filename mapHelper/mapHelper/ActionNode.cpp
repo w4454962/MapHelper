@@ -17,9 +17,11 @@ ActionNode::ActionNode(Trigger* root)
 	m_trigger = root;
 	m_type = Type::trigger;
 
-	m_trigger_name = std::shared_ptr<std::string>(new std::string(root->name));
+	std::string name = std::string(root->name);
+	convert_name(name);
+	m_trigger_name = std::shared_ptr<std::string>(new std::string(name));
 
-	replace_string(m_trigger_name->begin(), m_trigger_name->end());
+	
 }
 
 

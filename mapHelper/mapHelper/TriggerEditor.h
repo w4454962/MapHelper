@@ -22,13 +22,13 @@ public:
 
 	
 
-	std::string convert_gui_to_jass(Trigger* trigger, std::vector<std::string>& initializtions);
-	std::string convert_action_to_jass(ActionNodePtr node, std::string& pre_actions, bool nested);
+	std::string convertTrigger(Trigger* trigger, std::vector<std::string>& initializtions);
+	std::string convertAction(ActionNodePtr node, std::string& pre_actions, bool nested);
 
-	std::string resolve_parameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call = false) const;
-	std::string testt(ActionNodePtr node, std::string& pre_actions, bool add_call) const;
+	std::string convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call = false) const;
+	std::string convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call) const;
 	
-	std::string get_base_type(const std::string& type) const;
+	std::string getBaseType(const std::string& type) const;
 	std::string generate_function_name(std::shared_ptr<std::string> trigger_name) const;
 
 private:

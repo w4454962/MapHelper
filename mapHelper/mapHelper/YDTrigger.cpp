@@ -120,18 +120,18 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		std::string variable = std::string("ydul_") + action->parameters[0]->value;
 		output += editor->spaces[stack];
 		output += "set " + variable + " = ";
-		output += editor->resolve_parameter(parameters[1], node, pre_actions) + "\n";
+		output += editor->convertParameter(parameters[1], node, pre_actions) + "\n";
 		output += editor->spaces[stack];
 		output += "loop\n";
 		output += editor->spaces[++stack];
-		output += "exitwhen " + variable + " > " + editor->resolve_parameter(parameters[2], node, pre_actions) + "\n";
+		output += "exitwhen " + variable + " > " + editor->convertParameter(parameters[2], node, pre_actions) + "\n";
 	
 		node->getChildNodeList(list);
 		for (auto& child : list)
 		{
 			output += editor->spaces[stack];
 			//循环里的子动作 沿用外面相同的父节点
-			output += editor->convert_action_to_jass(child, pre_actions, false) + "\n";
+			output += editor->convertAction(child, pre_actions, false) + "\n";
 		}
 
 		output += editor->spaces[stack];
@@ -171,7 +171,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		{
 			output += editor->spaces[stack];
 			//循环里的子动作 沿用外面相同的父节点
-			output += editor->convert_action_to_jass(child, pre_actions, false) + "\n";
+			output += editor->convertAction(child, pre_actions, false) + "\n";
 		}
 		output += editor->spaces[--stack];
 		output += "endloop\n";
@@ -186,13 +186,13 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += "call YDUserDataSet(";
 		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 		output += ",";
-		output += editor->resolve_parameter(parameters[1], node, pre_actions);
+		output += editor->convertParameter(parameters[1], node, pre_actions);
 		output += ",\"";
 		output += parameters[2]->value;
 		output += "\",";
 		output += parameters[3]->value + 11;
 		output += ",";
-		output += editor->resolve_parameter(parameters[4], node, pre_actions);
+		output += editor->convertParameter(parameters[4], node, pre_actions);
 		output += ")\n";
 		return true;
 	}
@@ -201,7 +201,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += "call YDUserDataClear(";
 		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 		output += ",";
-		output += editor->resolve_parameter(parameters[1], node, pre_actions);
+		output += editor->convertParameter(parameters[1], node, pre_actions);
 		output += ",\"";
 		output += parameters[3]->value;
 		output += "\",";
@@ -215,7 +215,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += "call YDUserDataClearTable(";
 		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 		output += ",";
-		output += editor->resolve_parameter(parameters[1], node, pre_actions);
+		output += editor->convertParameter(parameters[1], node, pre_actions);
 		output += ")\n";
 		return true;
 	}
@@ -223,7 +223,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "YDWEExecuteTriggerMultiple"s_hash:
 	{
 		output += "set ydl_trigger = ";
-		output += editor->resolve_parameter(parameters[0], node, pre_actions);
+		output += editor->convertParameter(parameters[0], node, pre_actions);
 		output += "\n" + editor->spaces[stack];
 		output += "YDLocalExecuteTrigger(ydl_trigger)\n";
 	
@@ -231,11 +231,11 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		for (auto& child : list)
 		{
 			output += editor->spaces[stack];
-			output += editor->convert_action_to_jass(child, pre_actions, false) + "\n";
+			output += editor->convertAction(child, pre_actions, false) + "\n";
 		}
 		output += editor->spaces[stack];
 		output += "call YDTriggerExecuteTrigger(ydl_trigger,";
-		output += editor->resolve_parameter(parameters[1], node, pre_actions);
+		output += editor->convertParameter(parameters[1], node, pre_actions);
 		output += ")\n";
 		return true;
 		
@@ -264,7 +264,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		std::string action_text;
 
 		param_text += "set ydl_timer = ";
-		param_text += editor->resolve_parameter(parameters[0], node, pre_actions) + "\n";
+		param_text += editor->convertParameter(parameters[0], node, pre_actions) + "\n";
 
 
 		std::map<std::string, std::string> hashVarTable;
@@ -295,7 +295,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				}
 				}
 				param_text += editor->spaces[stack];
-				param_text += editor->convert_action_to_jass(child, pre_actions, false) + "\n";
+				param_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
@@ -311,7 +311,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
 				action_text += editor->spaces[stack];
-				action_text += editor->convert_action_to_jass(child, pre_actions, false) + "\n";
+				action_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
@@ -360,9 +360,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		output += editor->spaces[stack];
 		output += "call TimerStart(ydl_timer,";
-		output += editor->resolve_parameter(parameters[1], node, pre_actions);
+		output += editor->convertParameter(parameters[1], node, pre_actions);
 		output += ",";
-		output += editor->resolve_parameter(parameters[2], node, pre_actions);
+		output += editor->convertParameter(parameters[2], node, pre_actions);
 		output += ",function ";
 		output += func_name;
 		output += ")";
@@ -378,7 +378,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		std::string action_text;
 
 		param_text += "set ydl_trigger = ";
-		param_text += editor->resolve_parameter(parameters[0], node, pre_actions) + "\n";
+		param_text += editor->convertParameter(parameters[0], node, pre_actions) + "\n";
 
 
 		std::map<std::string, std::string> hashVarTable;
@@ -410,7 +410,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				}
 				}
 				param_text += editor->spaces[stack];
-				param_text += editor->convert_action_to_jass(child, pre_actions, false) + "\n";
+				param_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
@@ -425,7 +425,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 			{
 				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
 				action_text += editor->spaces[stack];
-				action_text += editor->convert_action_to_jass(child, pre_actions, false) + "\n";
+				action_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
@@ -487,7 +487,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		std::string var_name = parameters[1]->value;
 		std::string var_type= parameters[0]->value + 11;
 
-		std::string var_value = editor->resolve_parameter(parameters[2], node, pre_actions);
+		std::string var_value = editor->convertParameter(parameters[2], node, pre_actions);
 	
 		output +=setLocal(node,var_name, var_type, var_value);
 		return true;
@@ -498,8 +498,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		std::string var_name = parameters[1]->value;
 		std::string var_type = parameters[0]->value + 11;
 
-		std::string index = editor->resolve_parameter(parameters[2], node, pre_actions);
-		std::string var_value = editor->resolve_parameter(parameters[3], node, pre_actions);
+		std::string index = editor->convertParameter(parameters[2], node, pre_actions);
+		std::string var_value = editor->convertParameter(parameters[3], node, pre_actions);
 
 		output += setLocalArray(node, var_name, var_type,index, var_value);
 		return true;
@@ -532,7 +532,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	{
 
 		
-		output += editor->testt(node, pre_actions, !nested);
+		output += editor->convertCall(node, pre_actions, !nested);
 
 
 		ActionNodePtr branch = node->getBranchNode();
@@ -578,9 +578,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				ptr = ptr + 7;
 			
 			std::string func_name = std::string("InitTrig_") + ptr;
-			replace_string(func_name.begin(), func_name.end());
+			convert_name(func_name);
 
-			std::string ret = editor->resolve_parameter(parameters[1], node, pre_actions);
+			std::string ret = editor->convertParameter(parameters[1], node, pre_actions);
 			if (ret.compare("true") == 0)
 			{
 				output += "call ExecuteFunc(\"" + func_name + "\")\n";
@@ -615,7 +615,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			output += "YDUserDataGet(";
 			output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 			output += ",";
-			output += editor->resolve_parameter(parameters[1], node, pre_actions);
+			output += editor->convertParameter(parameters[1], node, pre_actions);
 			output += ",\"";
 			output += parameters[2]->value;
 			output += "\",";
@@ -628,7 +628,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			output += "YDUserDataHas(";
 			output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
 			output += ",";
-			output += editor->resolve_parameter(parameters[1], node, pre_actions);
+			output += editor->convertParameter(parameters[1], node, pre_actions);
 			output += ",\"";
 			output += parameters[3]->value;
 			output += "\",";
@@ -677,7 +677,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 		{
 			std::string var_name = parameters[0]->value;
 			std::string var_type = paramter->type_name;
-			std::string index = editor->resolve_parameter(parameters[1], node, pre_actions);
+			std::string index = editor->convertParameter(parameters[1], node, pre_actions);
 	
 			output += getLocalArray(node, var_name, var_type,index);
 			return true;

@@ -370,7 +370,27 @@ struct SteamData
 
 struct EditorData
 {
-	char unknow1[0x3884];// 0x0
+	uint32_t map_version;//0x0 地图版本
+	uint32_t map_save_count;//0x4 地图保存次数
+	const char map_name[0x6D];// 0x8  地图名字
+	const char suggested_players[0x31];//0x75 建议玩家数
+	const char author[0x61];//0xa6 作者名
+	const char description[0x301];//0x107 地图说明
+	char unknow13[0x18];//0x408
+
+	//镜头区域的坐标
+	float camera_left_bottom_x;//0x420
+	float camera_left_bottom_y;//0x424
+	float camera_right_top_x;//0x428
+	float camera_right_top_y;//0x42c
+	float camera_left_top_x;//0x430
+	float camera_left_top_y;//0x434
+	float camera_right_bottom_x;//0x438
+	float camera_right_bottom_y;//0x43c
+
+	uint32_t unknow14;//0x440
+	uint8_t tileset;//0x444 
+	char unknow1[0x343f];// 0x445
 	uint32_t player_count;//0x3884
 	PlayerData* players;//0x3888
 	char unknow11[0x8];//0x388c

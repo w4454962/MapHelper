@@ -86,7 +86,7 @@ int WorldEditor::getSoundDuration(const char* path)
 	return param[1];
 }
 
-std::string WorldEditor::getTriggerConfigData(const std::string& parentKey, const std::string& childKey, int index)
+std::string WorldEditor::getConfigData(const std::string& parentKey, const std::string& childKey, int index)
 {
 	char buffer[0x100];
 	bool result = fast_call<uint32_t>(getAddress(0x004D1EC0), parentKey.c_str(), childKey.c_str(),buffer, 0x100, index);
@@ -96,6 +96,7 @@ std::string WorldEditor::getTriggerConfigData(const std::string& parentKey, cons
 	}
 	return std::string();
 }
+
 
 bool WorldEditor::getSkillObjectData(uint32_t id,uint32_t level,std::string text, std::string& value)
 {
@@ -151,14 +152,14 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		triggerEditor->saveScriptTriggers(getTempSavePath());
 		triggerEditor->saveSctipt(getTempSavePath());
 	
-	
 	}
 	else
 	{
 		saveTrigger();
+		saveScript();
 	}
 
-	saveScript();
+
 	saveArchive();
 
 		

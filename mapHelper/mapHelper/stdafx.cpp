@@ -31,12 +31,18 @@ std::string string_replaced(const std::string& source, const std::string& from, 
 	return new_string;
 }
 
-void replace_string(std::string::iterator begin, std::string::iterator end)
+void convert_name(std::string& name)
 {
-	for (; begin != end; ++begin)
+	auto begin = name.begin();
+	for (; begin != name.end(); ++begin)
 	{
 		uint8_t c = *begin;
 		if (!isalnum(c) && c != '_')
 			*begin = '_';
+	}
+	//如果末尾是以下划线结尾的 要加上u
+	if (name.length() > 0 && name[name.length() - 1] == '_')
+	{
+		name += 'u';
 	}
 }
