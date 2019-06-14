@@ -240,23 +240,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		return true;
 		
 	}
-	case "YDWERegisterTriggerFlush"s_hash:
-	{
-		ActionNodePtr parent = node->getParentNode();
-
-		if (parent.get() && parent->getNameId() == "YDWEExecuteTriggerMultiple"s_hash)
-		{
-			output += "call YDLocal4Release()\n";
-			output += editor->spaces[stack];
-			output += "call call DestroyTrigger(GetTriggeringTrigger())\n";
-			return true;
-		}
-		else
-		{
-			output += "不要在逆天触发器的动作外使用<清除逆天触发器>";
-			return true;
-		}
-	}
+	
 	case "YDWETimerStartMultiple"s_hash:
 	{
 
@@ -395,7 +379,24 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		{
 			Action* childAction = child->getAction();
 
-			if (child->getActionId() < 2)//如果是事件区 or 参数区
+			//如果是事件 则单独处理
+			if (child->getActionType() == Action::Type::event)
+			{
+				if (child->getNameId() == "MapInitializationEvent"s_hash)
+				{
+					continue;
+				}
+				param_text += editor->spaces[stack];
+				param_text += "call " + child->getName() + "(ydl_trigger";
+
+				for (size_t k = 0; k < childAction->param_count; k++)
+				{
+					param_text += ", ";
+					param_text += editor->convertParameter(childAction->parameters[k], child, pre_actions);
+				}
+				param_text += ")\n";
+			}
+			else if (child->getActionId() == 1)//如果是参数区
 			{
 				switch (child->getNameId())
 				{
@@ -509,10 +510,18 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 	case "YDWETimerStartFlush"s_hash:
 	{
-		ActionNodePtr branch = node->getBranchNode();
-
-		ActionNodePtr parent = branch->getParentNode();
-		if (parent.get() && parent->getNameId() == "YDWETimerStartMultiple"s_hash)
+		ActionNodePtr ptr = node->getParentNode();
+		bool isInTimer = false;
+		while (ptr.get())
+		{
+			if (ptr->getNameId() == "YDWETimerStartMultiple"s_hash)
+			{
+				isInTimer = true;
+				break;
+			}
+			ptr = ptr->getParentNode();
+		}
+		if (isInTimer)
 		{
 			output += "call YDLocal3Release()\n";
 			output += editor->spaces[stack];
@@ -525,7 +534,34 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 			return true;
 		}
 	}
+	case "YDWERegisterTriggerFlush"s_hash:
+	{
+		ActionNodePtr parent = node->getParentNode();
 
+		ActionNodePtr ptr = node->getParentNode();
+		bool isInTrigger = false;
+		while (ptr.get())
+		{
+			if (ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+			{
+				isInTrigger = true;
+				break;
+			}
+			ptr = ptr->getParentNode();
+		}
+		if (isInTrigger)
+		{
+			output += "call YDLocal4Release()\n";
+			output += editor->spaces[stack];
+			output += "call DestroyTrigger(GetTriggeringTrigger())\n";
+			return true;
+		}
+		else
+		{
+			output += "不要在逆天触发器的动作外使用<清除逆天触发器>";
+			return true;
+		}
+	}
 	
 	case "TriggerSleepAction"s_hash:
 	case "PolledWait"s_hash:
@@ -562,6 +598,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		return true;
 	}
 
+	case "CustomScriptCode"s_hash:
 	case "YDWECustomScriptCode"s_hash:
 	{
 		output += parameters[0]->value;
@@ -634,6 +671,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			output += "\",";
 			output += parameters[2]->value + 11;
 			output += ")";
+			return true;
 		}
 		case "GetEnumUnit"s_hash:
 		{
@@ -682,9 +720,11 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			output += getLocalArray(node, var_name, var_type,index);
 			return true;
 		}
+		case "CustomScriptCode"s_hash:
 		case "YDWECustomScriptCode"s_hash:
 		{
-			return parameters[0]->value;
+			output += parameters[0]->value;
+			return true;
 		}
 		}
 	}
@@ -729,6 +769,15 @@ bool YDTrigger::seachHashLocal(Parameter** parameters, uint32_t count, std::map<
 				else
 				{
 					return true; //搜索到了就退出递归
+				}
+				break;
+			}
+			case "YDWESetAnyTypeLocalVariable"s_hash:
+			case "YDWESetAnyTypeLocalArray"s_hash:
+			{
+				if (!mapPtr)
+				{
+					return true;//搜索到了就退出递归
 				}
 			}
 			}
@@ -785,12 +834,22 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 				}
 		
 				//搜索参数中是否有引用到逆天局部变量
-				isInMainProc = isInMainProc | seachHashLocal(action->parameters, action->param_count);
+				uint32_t count = action->param_count;
+
+				isInMainProc = isInMainProc || seachHashLocal(action->parameters,count );
+		
 			}
 
 #define next(b) seachLocal(action->child_actions, action->child_count,action,b,isTimer);
 			switch (hash)
 			{
+
+			case "IfThenElse"s_hash:
+			{
+				seachLocal(&action->parameters[1]->funcParam, 1, action, true, isTimer);
+				seachLocal(&action->parameters[2]->funcParam, 1, action, true, isTimer);
+				break;
+			}
 			case "IfThenElseMultiple"s_hash:
 			case "ForLoopAMultiple"s_hash:
 			case "ForLoopBMultiple"s_hash:

@@ -381,7 +381,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 		if (var->is_array)
 		{
-			writer.write_string("\t" + type + " array udg_" + name + "\n");
+			writer.write_string("\t" + getBaseType(type) + " array udg_" + name + "\n");
 		}
 		else
 		{
@@ -397,7 +397,7 @@ void TriggerEditor::saveSctipt(const char* path)
 				if (value.length() == 0)
 					value = "null";
 			}
-			writer.write_string("\t" + type + " " + name + " = " + value + "\n");
+			writer.write_string("\t" + getBaseType(type) + " " + name + " = " + value + "\n");
 		}
 	}
 
@@ -749,6 +749,14 @@ endfunction
 
 		// Replace spaces by underscores
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
+
+		auto it = variableTable.find(sound_name);
+		if (it != variableTable.end() && getBaseType(it->second->type) == "string")
+		{
+			writer.write_string("\tset " + sound_name + " = \"" + string_replaced(sound->file, "\\", "\\\\") + "\"\n");
+			continue;
+		}
+	
 		writer.write_string("\tset " + sound_name + " = CreateSound(\"" +
 			string_replaced(sound->file, "\\", "\\\\") + "\", " +
 			(sound->flag & 1 ? "true" : "false") + ", " +
@@ -1526,8 +1534,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::str
 				initializtions.push_back(trigger_variable_name);
 				continue;
 			}
-			events += "\tcall " + name + "(" + trigger_variable_name + ", ";
-
+			events += "\tcall " + name + "(" + trigger_variable_name;
 
 			for (size_t k = 0; k < action->param_count; k++)
 			{
@@ -1536,10 +1543,8 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::str
 
 				std::string type = param->type_name;
 
+				events += ", ";
 				events += convertParameter(param, node, pre_actions);
-
-				if (k < action->param_count - 1)
-					events += ", ";
 			}
 			events += ")\n";
 			if (m_ydweTrigger->isEnable())
@@ -1608,9 +1613,9 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 	switch (node->getNameId())
 	{
+
 	case "WaitForCondition"s_hash:
 	{
-		output += spaces[space_stack];
 		output += "loop\n";
 		output += spaces[++space_stack];
 		output += "exitwhen (" + convertParameter(parameters[0], node, pre_actions) + ")\n";
@@ -1850,7 +1855,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	return convertCall(node, pre_actions, !nested);
 }
 
-std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) const 
+std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) 
 {
 	if (parameter == NULL)
 	{
@@ -1883,20 +1888,13 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			return "";
 		case Parameter::Type::preset: 
 		{
-			
-			auto it = m_typesTable.find(parameter->type_name);
-			if (it != m_typesTable.end())
-			{
-				TriggerType* type_data = it->second;
-				std::string base_type = type_data->base_type;
-				std::string default_value = type_data->value;
+			auto world = WorldEditor::getInstance();
+			const std::string preset_type = world->getConfigData("TriggerParams", value, 1);
 
-				if (base_type == "string")
-				{
-					return string_replaced(value, "`", "\"");
-				}
+			if (getBaseType(preset_type) == "string") {
+				return string_replaced(world->getConfigData("TriggerParams",value, 2), "`", "\"");
 			}
-			return WorldEditor::getInstance()->getConfigData("TriggerParams", value, 2);
+			return world->getConfigData("TriggerParams", value, 2);
 		}
 		case Parameter::Type::function:
 			return value + "()";
@@ -1929,12 +1927,8 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			if (it != m_typesTable.end())
 				is_import_path = it->second->is_import_path;;
 
-			if (is_import_path) {
+			if (is_import_path || getBaseType(type) == "string") {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
-			}
-			else if (getBaseType(type) == "string") 
-			{
-				return "\"" + value + "\"";
 			}
 			else if (type == "abilcode" || // ToDo this seems like a hack?
 				type == "buffcode" ||
@@ -1959,7 +1953,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 
 
 
-std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call) const
+std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call)
 {
 	std::string output;
 
@@ -2015,9 +2009,16 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		std::string tttt = convertParameter(parameters[0], node, pre_actions);
 
 		output += "if (" + function_name + "()) then\n";
-		output += convertParameter(parameters[1], node, pre_actions, true) + "\n";
+		ActionNodePtr child_then(new ActionNode(parameters[1]->funcParam, node));
+		ActionNodePtr child_else(new ActionNode(parameters[2]->funcParam, node));
+
+		output += spaces[space_stack + 1];
+		output += convertAction(child_then, pre_actions, true) + "\n";
+		output += spaces[space_stack];
 		output += "else\n";
-		output += convertParameter(parameters[2], node, pre_actions, true) + "\n";
+		output += spaces[space_stack + 1];
+		output += convertAction(child_else, pre_actions, true) + "\n";
+		output += spaces[space_stack];
 		output += "endif";
 
 		pre_actions += "function " + function_name + " takes nothing returns boolean\n";

@@ -25,8 +25,8 @@ public:
 	std::string convertTrigger(Trigger* trigger, std::vector<std::string>& initializtions);
 	std::string convertAction(ActionNodePtr node, std::string& pre_actions, bool nested);
 
-	std::string convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call = false) const;
-	std::string convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call) const;
+	std::string convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call = false);
+	std::string convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call);
 	
 	std::string getBaseType(const std::string& type) const;
 	std::string generate_function_name(std::shared_ptr<std::string> trigger_name) const;
