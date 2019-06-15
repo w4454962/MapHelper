@@ -1525,7 +1525,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::str
 			if (m_ydweTrigger->isEnable())
 			{
 				//返回false 跳过注册事件
-				if (!m_ydweTrigger->onRegisterEvent(events, trigger, action, name))
+				if (!m_ydweTrigger->onRegisterEvent(events,node))
 					continue;
 
 			}
@@ -1549,7 +1549,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::str
 			events += ")\n";
 			if (m_ydweTrigger->isEnable())
 			{
-				m_ydweTrigger->onRegisterEvent2(events, trigger, action, name);
+				m_ydweTrigger->onRegisterEvent2(events,node);
 			}
 
 			break;
@@ -1685,7 +1685,6 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		std::string thentext;
 		std::string elsetext;
 
-		std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
 		bool firstBoolexper = true;
 
@@ -1793,45 +1792,48 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 	case "AndMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
-		
-		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
+		std::string iftext;
 
-		
 		node->getChildNodeList(list);
 
+		int i = 0;
 		for (auto& child : list)
 		{
-			iftext += "\tif (not (" + convertAction(child, pre_actions, true) + ")) then\n";
-			iftext += "\t\treturn false\n";
-			iftext += "\tendif\n";
+			iftext += convertAction(child, pre_actions, true);
+			if (++i < list.size())
+			{
+				iftext += " and ";
+			}
 		}
-		iftext += "\treturn true\n";
-		iftext += "endfunction\n";
-		pre_actions += iftext;
-
-		return function_name + "()";
+		if (i == 0)
+		{
+			return "true";
+		}
+		
+		return iftext;
 	}
 
 	case "OrMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
-	
-		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
+		std::string iftext;
 
 		node->getChildNodeList(list);
 
+		int i = 0;
 		for (auto& child : list)
 		{
-			iftext += "\tif (" + convertAction(child, pre_actions, true) + ") then\n";
-			iftext += "\t\treturn true\n";
-			iftext += "\tendif\n";
+			iftext += convertAction(child, pre_actions, true);
+			if (++i < list.size())
+			{
+				iftext += " or ";
+			}
 		}
-		iftext += "\treturn false\n";
-		iftext += "endfunction\n";
-		pre_actions += iftext;
+		if (i == 0)
+		{
+			return "true";
+		}
 
-		return function_name + "()";
+		return iftext;
 	}
 
 	case "SetVariable"s_hash:
@@ -2005,25 +2007,20 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		std::string thentext;
 		std::string elsetext;
 		
-		std::string function_name = generate_function_name(node->getTriggerNamePtr());
-		std::string tttt = convertParameter(parameters[0], node, pre_actions);
 
-		output += "if (" + function_name + "()) then\n";
+		output += "if (" + convertParameter(parameters[0], node, pre_actions) + ") then\n";
 		ActionNodePtr child_then(new ActionNode(parameters[1]->funcParam, node));
 		ActionNodePtr child_else(new ActionNode(parameters[2]->funcParam, node));
 
 		output += spaces[space_stack + 1];
-		output += convertAction(child_then, pre_actions, true) + "\n";
+		output += convertAction(child_then, pre_actions, false) + "\n";
 		output += spaces[space_stack];
 		output += "else\n";
 		output += spaces[space_stack + 1];
-		output += convertAction(child_else, pre_actions, true) + "\n";
+		output += convertAction(child_else, pre_actions, false) + "\n";
 		output += spaces[space_stack];
 		output += "endif";
 
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
-		pre_actions += "return " + tttt + "\n";
-		pre_actions += "endfunction\n";
 		return output;
 	}
 
@@ -2047,46 +2044,20 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 	case "GetBooleanAnd"s_hash:
 	{
-		auto trigger_name = node->getTriggerNamePtr();
 
 		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
 		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
 
-		std::string function_name = generate_function_name(trigger_name);
-		output += "GetBooleanAnd(" + function_name + "(), ";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
-		pre_actions += "\t return ( " + first_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
-
-		function_name = generate_function_name(trigger_name);
-		output += function_name + "())";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
-		pre_actions += "\t return ( " + second_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
-
-		return (add_call ? "call " : "") + output;
+		return "(" + first_parameter + " and " + second_parameter + ")";
 	}
 
 	case "GetBooleanOr"s_hash:
 	{
-		auto trigger_name = node->getTriggerNamePtr();
-
 		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
 		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
 
-		std::string function_name = generate_function_name(trigger_name);
-		output += "GetBooleanOr(" + function_name + "(), ";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
-		pre_actions += "\t return ( " + first_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
-
-		function_name = generate_function_name(trigger_name);
-		output += function_name + "())";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
-		pre_actions += "\t return ( " + second_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
-
-		return (add_call ? "call " : "") + output;
+		return "(" + first_parameter + " or " + second_parameter + ")";
+		
 	}
 
 	case "OperatorInt"s_hash:
@@ -2133,8 +2104,15 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 			output += ", ";
 		}
 	}
+	std::string name = "_" + node->getName() + "_ScriptName";
 
-	return (add_call ? "call " : "") + node->getName() + "(" + output + ")";
+	std::string func_name = WorldEditor::getInstance()->getConfigData("TriggerActions", name, 0);
+
+	if (func_name.length() == 0)
+	{
+		func_name = node->getName();
+	}
+	return (add_call ? "call " : "") + func_name + "(" + output + ")";
 }
 
 

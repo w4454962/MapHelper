@@ -145,6 +145,18 @@ ActionNodePtr ActionNode::getBranchNode()
 			default:
 				break;
 			}
+
+			for (size_t k = 0; k < parent->m_action->param_count; k++) 
+			{
+				Parameter* param = parent->m_action->parameters[k];
+				const std::string child_type = param->type_name;
+
+				if (child_type == "boolexpr") 
+				{
+					isBreak = true; 
+					break;
+				}
+			}
 		}
 		if (isBreak) break;
 		branch = parent;

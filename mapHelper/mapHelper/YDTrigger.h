@@ -26,8 +26,8 @@ public:
 	void onEndGlobals(BinaryWriter& writer);
 
 	//实现任意玩家 跟触发休眠
-	bool onRegisterEvent(std::string& events, Trigger* trigger, Action* action, std::string& name);
-	void onRegisterEvent2(std::string& events, Trigger* trigger, Action* action, std::string& name);
+	bool onRegisterEvent(std::string& events,ActionNodePtr node);
+	void onRegisterEvent2(std::string& events,ActionNodePtr node);
 
 	//每条动作生成时
 	bool onActionToJass(std::string& output,ActionNodePtr node, std::string& pre_actions, bool nested);
