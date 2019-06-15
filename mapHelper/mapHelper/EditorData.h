@@ -201,8 +201,8 @@ struct Unit
 	float y;//0x10
 	float z;//0x14
 	float angle;//0x18 弧度制 要转回角度 * 180 / pi = 角度制
-	float sacle_x;//0x1c 
-	float sacle_y;//0x20
+	float scale_x;//0x1c 
+	float scale_y;//0x20
 	float scale_z;//0x24
 	float sacle;//0x28
 	char unknow2[0x54];//0x2c
@@ -254,11 +254,29 @@ struct Unit
 	char unknow28[0x2c];//0x15c
 };//size 0x188
 
+
+struct SpecialDoodas //特殊装饰物  例如 破坏的地面 山洞悬崖之类的
+{
+	const char name[0x4];//0x0 id 
+	uint32_t variation;//0x4 
+	uint32_t x;//0x8
+	uint32_t y;//0xc
+	char unknow[0x18];//0x10
+};//size 0x28
+
+struct  SpecialDoodasTable
+{
+	char unknow2[0x140]; //0x0
+	uint32_t special_doodas_count;//0x140
+	SpecialDoodas* special;//0x144
+};
 struct UnitData
 {
 	char unknow[0x5c];//0x0
 	uint32_t unit_count;//0x5c
 	Unit* array;//0x60
+	char unknow2[0x7c]; //0x64
+	SpecialDoodasTable* special_table;//0xe0
 };
 
 

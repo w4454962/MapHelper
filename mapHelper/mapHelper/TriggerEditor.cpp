@@ -817,7 +817,7 @@ endfunction
 		if (variableTable.find(id) == variableTable.end()) 
 			continue;
 		
-		sprintf(buffer, "'%.4s',%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle, unit->sacle_x, unit->variation);
+		sprintf(buffer, "'%.4s',%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle, unit->scale_x, unit->variation);
 		writer.write_string("\tset " + id + " = CreateDestructable(" + std::string(buffer) + ")\n");
 
 		if (unit->doodas_life != 100) {

@@ -140,7 +140,15 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	saveMiniMap();//不可多线程
 	saveMmp();
 	saveObject();//不可多线程
-	saveDoodas();//不可多线程
+	if (ret == 6)
+	{
+		customSaveDoodas(getTempSavePath());
+	}
+	else
+	{
+		saveDoodas();//不可多线程
+	}
+
 	saveUnits(); //不可多线程
 	saveRect();
 	saveCamara();
@@ -438,3 +446,91 @@ int WorldEditor::saveArchive()
 	
 	return 0;
 }
+
+
+
+
+
+int WorldEditor::customSaveDoodas(const char* path)
+{
+	printf("自定义保存war3map.doo地形装饰物\n");
+
+	clock_t start = clock();
+	auto doodas = getEditorData()->doodas; 
+
+	BinaryWriter writer; 
+
+
+	writer.write_string("W3do"); 
+
+
+	uint32_t write_version = 0x8; 
+
+	writer.write<uint32_t>(write_version); 
+
+
+	uint32_t write_subversion = 0xB; 
+
+	writer.write<uint32_t>(write_subversion); 
+
+
+	writer.write<uint32_t>(doodas->unit_count); 
+
+	for (size_t i = 0;i<doodas->unit_count;i++)
+	{
+		Unit* unit = &doodas->array[i]; 
+
+		writer.write_string(std::string(unit->name,0x4)); 
+		writer.write<uint32_t>(unit->variation); 
+		writer.write<float>(unit->x); 
+		writer.write<float>(unit->y); 
+		writer.write<float>(unit->z); 
+		writer.write<float>(unit->angle); 
+		writer.write<float>(unit->scale_x); 
+		writer.write<float>(unit->scale_y); 
+		writer.write<float>(unit->scale_z); 
+
+		writer.write<uint8_t>(2); 
+		writer.write<uint8_t>(unit->doodas_life); 
+		writer.write<int32_t>(unit->item_table_index); 
+		writer.write<uint32_t>(unit->item_setting_count2); 
+
+		for (size_t a = 0; a < unit->item_setting_count2;a++)
+		{
+			ItemTableSetting* setting = unit->item_setting; 
+			writer.write<uint32_t>(setting->info_count2); 
+
+			for (size_t b = 0; b < setting->info_count2; b++)
+			{
+				ItemTableInfo* info = &setting->item_infos[b]; 
+				writer.write_string(std::string(info->name)); 
+				writer.write<uint32_t>(info->rate); 
+			}
+		}
+
+		writer.write<uint32_t>(unit->index); 
+	}
+	uint32_t write_special_version = 0;
+	writer.write<uint32_t>(write_special_version);
+	writer.write<uint32_t>(doodas->special_table->special_doodas_count); 
+
+	for (size_t i = 0; i< doodas->special_table->special_doodas_count;i++)
+	{
+		SpecialDoodas* unit = &doodas->special_table->special[i];
+		writer.write_string(std::string(unit->name, 0x4)); 
+		writer.write<uint32_t>(unit->variation); 
+		writer.write<uint32_t>(unit->x); 
+		writer.write<uint32_t>(unit->y); 
+	}
+
+
+	std::ofstream out(std::string(path) + ".doo", std::ios::binary); 
+	out.write((const char*)&writer.buffer[0], writer.buffer.size()); 
+	out.close(); 
+
+
+	printf("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+	return 1;
+}
+

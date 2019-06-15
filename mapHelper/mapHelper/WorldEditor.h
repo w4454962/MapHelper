@@ -53,6 +53,9 @@ private:
 	int saveScript();
 	int saveArchive();
 
+
+	int customSaveDoodas(const char* path);
+
 protected: 
 
 	EditorData* editData;
