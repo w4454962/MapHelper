@@ -148,11 +148,11 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += "set ydl_group = CreateGroup()\n";
 		output += editor->spaces[stack];
 		output += "call GroupEnumUnitsInRange(ydl_group,";
-		output += parameters[0]->value;
+		output += editor->convertParameter(parameters[0], node, pre_actions);
 		output += ",";
-		output += parameters[1]->value;
+		output += editor->convertParameter(parameters[1], node, pre_actions);
 		output += ",";
-		output += parameters[2]->value;
+		output += editor->convertParameter(parameters[2], node, pre_actions);
 		output += ",null)\n";
 		output += editor->spaces[stack];
 		output += "loop\n";

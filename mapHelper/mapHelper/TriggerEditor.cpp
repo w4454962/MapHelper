@@ -1104,10 +1104,10 @@ endfunction
 			int centerX = minX + width / 2;
 			int centerY = minY + height / 2;
 			sprintf(buffer, "%s,%i,%i,0.0", region->sound_name, centerX, centerY);
-			writer.write_string("\tcall call SetSoundPosition("  + std::string(buffer) + ")\n");
+			writer.write_string("\tcall SetSoundPosition("  + std::string(buffer) + ")\n");
 
 			sprintf(buffer, "%s,true,%i,%i", region->sound_name, width, height);
-			writer.write_string("\tcall call RegisterStackedSound(" + std::string(buffer) + ")\n");
+			writer.write_string("\tcall RegisterStackedSound(" + std::string(buffer) + ")\n");
 		}
 
 	}
@@ -1758,7 +1758,19 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		std::string name = node->getName();
 
 		// Remove multiple
-		output += "call " + name.substr(0, name.length() - 8) + "(" + convertParameter(parameters[0], node, pre_actions) + ", function " + function_name + ")\n";
+		output += "call " + name.substr(0, name.length() - 8) + "(";
+		
+		for (size_t k = 0; k < action->param_count; k++)
+		{
+			Parameter* param = action->parameters[k];
+			if (strcmp(param->type_name, "code") != 0)
+			{
+				output += convertParameter(param, node, pre_actions);
+				output += ",";
+			}
+		}
+		output += " function " + function_name + ")\n";
+
 
 		std::string toto;
 
@@ -1792,55 +1804,74 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 	case "AndMultiple"s_hash:
 	{
-		std::string iftext;
+		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		node->getChildNodeList(list);
+		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
 
-		int i = 0;
+
 		for (auto& child : list)
 		{
-			iftext += convertAction(child, pre_actions, true);
-			if (++i < list.size())
-			{
-				iftext += " and ";
-			}
+			iftext += "\tif (not (" + convertAction(child, pre_actions, true) + ")) then\n";
+			iftext += "\t\treturn false\n";
+			iftext += "\tendif\n";
 		}
-		if (i == 0)
-		{
-			return "true";
-		}
-		
-		return iftext;
+		iftext += "\treturn true\n";
+		iftext += "endfunction\n";
+		pre_actions += iftext;
+
+		return function_name + "()";
 	}
 
 	case "OrMultiple"s_hash:
 	{
-		std::string iftext;
+		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+
+		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
 
 		node->getChildNodeList(list);
 
-		int i = 0;
 		for (auto& child : list)
 		{
-			iftext += convertAction(child, pre_actions, true);
-			if (++i < list.size())
-			{
-				iftext += " or ";
-			}
+			iftext += "\tif (" + convertAction(child, pre_actions, true) + ") then\n";
+			iftext += "\t\treturn true\n";
+			iftext += "\tendif\n";
 		}
-		if (i == 0)
-		{
-			return "true";
-		}
-
-		return iftext;
+		iftext += "\treturn false\n";
+		iftext += "endfunction\n";
+		pre_actions += iftext;
+		return function_name + "()";
 	}
+
 
 	case "SetVariable"s_hash:
 	{
 		const std::string first = convertParameter(parameters[0], node, pre_actions);
 		const std::string second = convertParameter(parameters[1], node, pre_actions);
 		return "set " + first + " = " + second;
+	}
+	case "AddTriggerEvent"s_hash:
+	{
+		
+		Action* event_action = parameters[1]->funcParam;
+		std::string trg = convertParameter(parameters[0], node, pre_actions);
+		std::string event_name = event_action->name;
+
+		std::string events = "\tcall " + event_name + "(" + trg;
+
+		ActionNodePtr temp(new ActionNode(event_action, node));
+		for (size_t k = 0; k < event_action->param_count; k++)
+		{
+			Parameter* param = event_action->parameters[k];
+
+
+			std::string type = param->type_name;
+
+			events += ", ";
+			events += convertParameter(param, temp, pre_actions);
+		}
+		events += ")\n";
+
+		return events;
 	}
 
 	}

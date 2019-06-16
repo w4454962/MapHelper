@@ -141,6 +141,8 @@ ActionNodePtr ActionNode::getBranchNode()
 			case "EnumItemsInRectBJMultiple"s_hash:
 			case "YDWETimerStartMultiple"s_hash:
 			case "YDWERegisterTriggerMultiple"s_hash:
+			case "AndMultiple"s_hash:
+			case "OrMultiple"s_hash:
 				isBreak = true; break;
 			default:
 				break;
