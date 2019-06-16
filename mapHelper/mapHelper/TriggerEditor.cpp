@@ -1808,7 +1808,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
 
-
+		node->getChildNodeList(list);
 		for (auto& child : list)
 		{
 			iftext += "\tif (not (" + convertAction(child, pre_actions, true) + ")) then\n";
