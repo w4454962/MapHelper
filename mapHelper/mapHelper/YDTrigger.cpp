@@ -31,6 +31,8 @@ bool YDTrigger::isEnable()
 void YDTrigger::onGlobals(BinaryWriter& writer)
 {
 	writer.write_string("#include <YDTrigger/Import.h>\n");
+	writer.write_string("#include <YDTrigger/ImportSaveLoadSystem.h>\n");
+	writer.write_string("#include <YDTrigger/Hash.h>\n");
 	writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
 }
 
