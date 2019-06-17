@@ -1804,42 +1804,46 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 	case "AndMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
+		std::string iftext;
 
 		node->getChildNodeList(list);
+		int i = 0;
 		for (auto& child : list)
 		{
-			iftext += "\tif (not (" + convertAction(child, pre_actions, true) + ")) then\n";
-			iftext += "\t\treturn false\n";
-			iftext += "\tendif\n";
+			iftext += convertAction(child, pre_actions, true);
+			if (++i < list.size())
+			{
+				iftext += " and ";
+			}
 		}
-		iftext += "\treturn true\n";
-		iftext += "endfunction\n";
-		pre_actions += iftext;
-
-		return function_name + "()";
+		if (i == 0)
+		{
+			return "true";
+		}
+		return iftext;
 	}
 
 	case "OrMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
+		std::string iftext;
 
 		node->getChildNodeList(list);
-
+		int i = 0;
 		for (auto& child : list)
 		{
-			iftext += "\tif (" + convertAction(child, pre_actions, true) + ") then\n";
-			iftext += "\t\treturn true\n";
-			iftext += "\tendif\n";
+			iftext += convertAction(child, pre_actions, true);
+			if (++i < list.size())
+			{
+				iftext += " or ";
+			}
 		}
-		iftext += "\treturn false\n";
-		iftext += "endfunction\n";
-		pre_actions += iftext;
-		return function_name + "()";
+		if (i == 0)
+		{
+			return "true";
+		}
+		return iftext;
 	}
 
 
