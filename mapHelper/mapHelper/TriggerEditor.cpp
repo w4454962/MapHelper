@@ -1158,7 +1158,6 @@ endfunction
 	TriggerData* trigger_data = worldData->triggers;
 
 
-
 	std::regex reg("function\\s+(InitTrig_\\w+)\\s+takes");
 	auto words_end = std::sregex_iterator();
 
