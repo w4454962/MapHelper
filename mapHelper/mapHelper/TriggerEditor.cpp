@@ -1146,7 +1146,9 @@ endfunction
 	TriggerData* trigger_data = worldData->triggers;
 
 	//Ð´ÈëÈ«¾Öjass
-	std::string globals_jass = std::string(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1);
+	std::string globals_jass = trigger_data->globals_jass_script
+		? std::string(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1)
+		: std::string();
 
 	writer.write_string(globals_jass);
 
