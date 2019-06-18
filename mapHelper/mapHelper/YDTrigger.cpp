@@ -908,10 +908,11 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			{
 				addLocalVar("ydl_triggerstep", "integer");
 				addLocalVar("ydl_trigger", "trigger");
-				next(false);
+				next(true);
 				break;
 			}
-			case  "YDWESaveAnyTypeDataByUserData"s_hash:
+
+			case "YDWESaveAnyTypeDataByUserData"s_hash:
 			case "YDWESetAnyTypeLocalVariable"s_hash:
 			case "YDWESetAnyTypeLocalArray"s_hash:
 			{
