@@ -2075,22 +2075,45 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		return output;
 	}
 
+	case "EnumItemsInRectBJ"s_hash:
 	case "ForForce"s_hash:
 	case "ForGroup"s_hash:
 	{
-		std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string tttt = convertParameter(parameters[1], node, pre_actions);
+		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		output += node->getName() + "(";
-		output += convertParameter(parameters[0], node, pre_actions);
-		output += ", function " + function_name;
-		output += ")";
+		std::string name = node->getName();
 
-		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-		pre_actions += "\tcall " + tttt + "\n";
-		pre_actions += "endfunction\n\n";
-		return (add_call ? "call " : "") + output;
+
+		output += "call " + name + "(";
+
+		uint32_t codeIndex = -1;
+
+		for (size_t k = 0; k < action->param_count; k++)
+		{
+			Parameter* param = action->parameters[k];
+			if (strcmp(param->type_name, "code") != 0)
+			{
+				output += convertParameter(param, node, pre_actions);
+				output += ",";
+			}
+			else
+			{
+				codeIndex = k;
+			}
+		}
+		if (codeIndex != -1)
+		{
+			output += " function " + function_name + ")\n";
+
+			std::string tttt = convertParameter(parameters[codeIndex], node, pre_actions);
+
+			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
+			pre_actions += "\tcall " + tttt + "\n";
+			pre_actions += "endfunction\n\n";
+		}
+	
+		return output;
 	}
 
 	case "GetBooleanAnd"s_hash:

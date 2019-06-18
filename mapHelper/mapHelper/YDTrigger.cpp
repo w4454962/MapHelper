@@ -113,8 +113,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 	std::vector<ActionNodePtr> list;
 	Action* action = node->getAction();
-
+	
 	Parameter** parameters = action->parameters;
+
     switch (node->getNameId())
 	{
 	case "YDWEForLoopLocVarMultiple"s_hash:
@@ -144,8 +145,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	}
 	case "YDWEEnumUnitsInRangeMultiple"s_hash:
 	{
-		if (m_isInYdweEnumUnit) break;
-		m_isInYdweEnumUnit = true;
 
 		output += "set ydl_group = CreateGroup()\n";
 		output += editor->spaces[stack];
@@ -180,7 +179,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += editor->spaces[stack];
 		output += "call DestroyGroup(ydl_group)\n";
 
-		m_isInYdweEnumUnit = false;
 		return true;
 	}
 	case "YDWESaveAnyTypeDataByUserData"s_hash:
@@ -597,7 +595,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	}
 	case "ReturnAction"s_hash:
 	{
-		output += "call YDLocal1Release()\n";
 		output += editor->spaces[stack];
 		onActionsToFuncEnd(output, node);
 		output += "return\n";
@@ -889,7 +886,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			{
 				addLocalVar("ydl_group", "group");
 				addLocalVar("ydl_unit", "unit");
-				next(false);
+				next(true);
 				break;
 			}
 
