@@ -82,7 +82,9 @@ void TriggerEditor::saveTriggers(const char* path)
 	writeTrigger(writer);
 
 	std::ofstream out(std::string(path) + ".wtg", std::ios::binary);
-	out.write((const char*)&writer.buffer[0],writer.buffer.size());
+
+	auto& deque = writer.data();
+	out << std::string(deque.begin(), deque.end());
 	out.close();
 
 	printf("wtg 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
@@ -332,7 +334,8 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	}
 
 	std::ofstream out(std::string(path) + ".wct", std::ios::binary);
-	out.write((const char*)&writer.buffer[0], writer.buffer.size());
+	auto& deque = writer.data();
+	out << std::string(deque.begin(), deque.end());
 	out.close();
 
 	printf("wct 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
@@ -817,7 +820,7 @@ endfunction
 	writer.write_string("\tlocal trigger t\n");
 	writer.write_string("\tlocal real life\n");
 
-	writer2.buffer.clear();
+	writer2.clear();
 
 	for (size_t i = 0; i < worldData->doodas->unit_count; i++)
 	{
@@ -856,7 +859,7 @@ endfunction
 		}
 
 	}
-	writer.write_vector(writer2.buffer);
+	writer.write_deque(writer2.data());
 
 	writer.write_string("endfunction\n");
 
@@ -1476,10 +1479,11 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
+	
 
 	std::ofstream out(std::string(path) + ".j", std::ios::binary);
-	out.write((const char*)&writer.buffer[0], writer.buffer.size());
+	auto& deque = writer.data();
+	out << std::string(deque.begin(), deque.end());
 	out.close();
 
 

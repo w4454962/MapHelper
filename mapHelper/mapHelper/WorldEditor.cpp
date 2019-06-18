@@ -525,7 +525,8 @@ int WorldEditor::customSaveDoodas(const char* path)
 
 
 	std::ofstream out(std::string(path) + ".doo", std::ios::binary); 
-	out.write((const char*)&writer.buffer[0], writer.buffer.size()); 
+	auto& deque = writer.data();
+	out << std::string(deque.begin(), deque.end());
 	out.close(); 
 
 
