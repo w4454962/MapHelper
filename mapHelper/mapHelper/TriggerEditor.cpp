@@ -307,7 +307,7 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	writer.write(data->globals_jass_size);
 
 	std::string_view jass(data->globals_jass_script, data->globals_jass_size);
-	writer.write_c_string_view(jass);
+	writer.write_string_view(jass);
 
 	writer.write(data->trigger_count);
 
@@ -376,12 +376,13 @@ void TriggerEditor::saveSctipt(const char* path)
 		VariableData* var = &data->variables->array[i];
 		std::string name = var->name;
 		std::string type = var->type;
+		std::string base = getBaseType(type);
 
 		variableTable[name] = var;
 
 		if (var->is_array)
 		{
-			writer.write_string("\t" + getBaseType(type) + " array udg_" + name + "\n");
+			writer.write_string("\t" + base + " array udg_" + name + "\n");
 		}
 		else
 		{
@@ -395,9 +396,20 @@ void TriggerEditor::saveSctipt(const char* path)
 				if (it != m_typesTable.end())
 					value = it->second->value;
 				if (value.length() == 0)
-					value = "null";
+				{
+					if (base == "integer")
+					{
+						value = "0";
+					}
+					else
+					{
+						value = "null";
+					}
+					
+				}
+				
 			}
-			writer.write_string("\t" + getBaseType(type) + " " + name + " = " + value + "\n");
+			writer.write_string("\t" + base + " " + name + " = " + value + "\n");
 		}
 	}
 
@@ -1145,22 +1157,27 @@ endfunction
 
 	TriggerData* trigger_data = worldData->triggers;
 
-	//写入全局jass
-	std::string globals_jass = std::string(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1);
-
-	writer.write_string(globals_jass);
 
 
 	std::regex reg("function\\s+(InitTrig_\\w+)\\s+takes");
-
-
-	auto words_begin = std::sregex_iterator(globals_jass.begin(), globals_jass.end(), reg);
 	auto words_end = std::sregex_iterator();
-	//正则表达式匹配 全局jass中 符合初始化触发器名字的函数
-	for (; words_begin != words_end; ++words_begin)
+
+	//写入全局jass
+	if (trigger_data->globals_jass_size > 0)
 	{
-		m_initFuncTable[words_begin->str(1)] = true;
+		std::string globals_jass = std::string(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1 );
+
+		writer.write_string(globals_jass);
+
+		auto words_begin = std::sregex_iterator(globals_jass.begin(), globals_jass.end(), reg);
+	
+		//正则表达式匹配 全局jass中 符合初始化触发器名字的函数
+		for (; words_begin != words_end; ++words_begin)
+		{
+			m_initFuncTable[words_begin->str(1)] = true;
+		}
 	}
+
 
 
 	std::vector<std::string> initialization_triggers;
@@ -1495,7 +1512,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::str
 
 	events += "function InitTrig_" + trigger_name + " takes nothing returns nothing\n";
 	events += "\tset " + trigger_variable_name + " = CreateTrigger()\n";
-	if (!trigger->is_disable_init)
+	if (trigger->is_disable_init)
 	{
 		events += "\tcall DisableTrigger(" + trigger_variable_name + ")\n";
 	}

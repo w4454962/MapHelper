@@ -574,7 +574,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	{
 
 		
-		output += editor->convertCall(node, pre_actions, !nested);
+		output += editor->convertCall(node, pre_actions, !nested) + "\n";
 
 
 		ActionNodePtr branch = node->getBranchNode();
@@ -911,6 +911,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 				next(false);
 				break;
 			}
+			case  "YDWESaveAnyTypeDataByUserData"s_hash:
 			case "YDWESetAnyTypeLocalVariable"s_hash:
 			case "YDWESetAnyTypeLocalArray"s_hash:
 			{
