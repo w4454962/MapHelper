@@ -12,9 +12,7 @@ YDTrigger::YDTrigger()
 }
 
 YDTrigger::~YDTrigger()
-{
-
-}
+= default;
 
 YDTrigger* YDTrigger::getInstance()
 {
@@ -23,123 +21,123 @@ YDTrigger* YDTrigger::getInstance()
 	return &instance;
 }
 
-bool YDTrigger::isEnable()
+bool YDTrigger::isEnable() const
 {
 	return m_bEnable;
 }
 
-void YDTrigger::onGlobals(BinaryWriter& writer)
+void YDTrigger::onGlobals(BinaryWriter& a_writer)
 {
-	writer.write_string("#include <YDTrigger/Import.h>\n");
-	writer.write_string("#include <YDTrigger/ImportSaveLoadSystem.h>\n");
-	writer.write_string("#include <YDTrigger/Hash.h>\n");
-	writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
+	a_writer.write_string("#include <YDTrigger/Import.h>\n");
+	a_writer.write_string("#include <YDTrigger/ImportSaveLoadSystem.h>\n");
+	a_writer.write_string("#include <YDTrigger/Hash.h>\n");
+	a_writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
 }
 
-void YDTrigger::onEndGlobals(BinaryWriter& writer)
+void YDTrigger::onEndGlobals(BinaryWriter& a_writer)
 {
-	writer.write_string("#include <YDTrigger/Globals.h>\n");
-	writer.write_string("endglobals\n");
-	writer.write_string("#include <YDTrigger/Function.h>\n");
+	a_writer.write_string("#include <YDTrigger/Globals.h>\n");
+	a_writer.write_string("endglobals\n");
+	a_writer.write_string("#include <YDTrigger/Function.h>\n");
 }
 
-bool YDTrigger::onRegisterEvent(std::string& events,ActionNodePtr node)
+bool YDTrigger::onRegisterEvent(std::string& a_events,ActionNodePtr a_node)
 {
-	if (node->getParentNode()->isRootNode() && node->getNameId() == "YDWEDisableRegister"s_hash)
+	if (a_node->getParentNode()->isRootNode() && a_node->getNameId() == "YDWEDisableRegister"s_hash)
 	{
-		m_triggerHasDisable[node->getTrigger()] = true;
+		m_triggerHasDisable[a_node->getTrigger()] = true;
 		return false;
 	}
 		
 
 	m_hasAnyPlayer = false;
 	//搜索事件中 所有子动作的 预设参数 是否有 任意玩家 
-	std::function<bool(Parameter**,uint32_t)> seachAnyPlayer = [&](Parameter** params,uint32_t count)
+	std::function<bool(Parameter**,uint32_t)> seachAnyPlayer = [&](Parameter** al_params,uint32_t al_count)
 	{
-		for (size_t i = 0; i < count; i++)
+		for (size_t i = 0; i < al_count; i++)
 		{
-			Parameter* param = params[i];
-			Parameter**  childs = NULL;
-			uint32_t child_count = 0;
-			switch (param->typeId)
+			Parameter* v_param = al_params[i];
+			Parameter**  v_childs = nullptr;
+			uint32_t v_child_count = 0;
+			switch (v_param->typeId)
 			{
 			case Parameter::Type::preset:
-				if (!strcmp(param->value, "PlayerALL"))
+				if (!strcmp(v_param->value, "PlayerALL"))
 					return true;
 				break;
 			case Parameter::Type::variable:
-				if (param->arrayParam)
+				if (v_param->arrayParam)
 				{
-					child_count = 1;
-					childs = &param->arrayParam;
+					v_child_count = 1;
+					v_childs = &v_param->arrayParam;
 				}
 				break;
 			case Parameter::Type::function:
-				child_count = param->funcParam->param_count;
-				childs = param->funcParam->parameters;
+				v_child_count = v_param->funcParam->param_count;
+				v_childs = v_param->funcParam->parameters;
 				break;
 			}
-			if (child_count > 0 && childs)
+			if (v_child_count > 0 && v_childs)
 			{
-				return seachAnyPlayer(childs, child_count);
+				return seachAnyPlayer(v_childs, v_child_count);
 			}
 		}
 		return false;
 	};
 
-	if (seachAnyPlayer(node->getAction()->parameters, node->getAction()->param_count))
+	if (seachAnyPlayer(a_node->getAction()->parameters, a_node->getAction()->param_count))
 	{
-		events += "#define YDTRIGGER_COMMON_LOOP(n) ";
+		a_events += "#define YDTRIGGER_COMMON_LOOP(n) ";
 		m_hasAnyPlayer = true;
 	}
 	
 	return true;
 }
 
-void YDTrigger::onRegisterEvent2(std::string& events,ActionNodePtr node)
+void YDTrigger::onRegisterEvent2(std::string& a_events,ActionNodePtr a_node)
 {
 	if (m_hasAnyPlayer)
 	{
-		events += "#define YDTRIGGER_COMMON_LOOP_LIMITS (0, 15)\n";
-		events += "#include <YDTrigger/Common/loop.h>\n";
+		a_events += "#define YDTRIGGER_COMMON_LOOP_LIMITS (0, 15)\n";
+		a_events += "#include <YDTrigger/Common/loop.h>\n";
 		m_hasAnyPlayer = false;
 	}
 }
 
-bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::string& pre_actions, bool nested)
+bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::string& a_pre_actions, bool a_nested)
 {
-	TriggerEditor* editor = TriggerEditor::getInstance();
-	int& stack = editor->space_stack;
+	TriggerEditor* v_editor = TriggerEditor::getInstance();
+	int& v_stack = v_editor->space_stack;
 
-	std::vector<ActionNodePtr> list;
-	Action* action = node->getAction();
+	std::vector<ActionNodePtr> v_list;
+	Action* action = a_node->getAction();
 
 	Parameter** parameters = action->parameters;
-    switch (node->getNameId())
+	switch (a_node->getNameId())
 	{
 	case "YDWEForLoopLocVarMultiple"s_hash:
 	{
-		std::string variable = std::string("ydul_") + action->parameters[0]->value;
-		output += editor->spaces[stack];
-		output += "set " + variable + " = ";
-		output += editor->convertParameter(parameters[1], node, pre_actions) + "\n";
-		output += editor->spaces[stack];
-		output += "loop\n";
-		output += editor->spaces[++stack];
-		output += "exitwhen " + variable + " > " + editor->convertParameter(parameters[2], node, pre_actions) + "\n";
+		std::string v_variable = std::string("ydul_") + action->parameters[0]->value;
+		a_output += v_editor->spaces[v_stack];
+		a_output += "set " + v_variable + " = ";
+		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions) + "\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "loop\n";
+		a_output += v_editor->spaces[++v_stack];
+		a_output += "exitwhen " + v_variable + " > " + v_editor->convertParameter(parameters[2], a_node, a_pre_actions) + "\n";
 	
-		node->getChildNodeList(list);
-		for (auto& child : list)
+		a_node->getChildNodeList(v_list);
+		for (auto& v_child : v_list)
 		{
-			output += editor->spaces[stack];
+			a_output += v_editor->spaces[v_stack];
 			//循环里的子动作 沿用外面相同的父节点
-			output += editor->convertAction(child, pre_actions, false) + "\n";
+			a_output += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
 		}
 
-		output += editor->spaces[stack];
-		output += "set " + variable + " = " + variable + " + 1\n";
-		output += editor->spaces[--stack];
-		output += "endloop\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "set " + v_variable + " = " + v_variable + " + 1\n";
+		a_output += v_editor->spaces[--v_stack];
+		a_output += "endloop\n";
 		return true;
 	}
 	case "YDWEEnumUnitsInRangeMultiple"s_hash:
@@ -147,98 +145,98 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		if (m_isInYdweEnumUnit) break;
 		m_isInYdweEnumUnit = true;
 
-		output += "set ydl_group = CreateGroup()\n";
-		output += editor->spaces[stack];
-		output += "call GroupEnumUnitsInRange(ydl_group,";
-		output += editor->convertParameter(parameters[0], node, pre_actions);
-		output += ",";
-		output += editor->convertParameter(parameters[1], node, pre_actions);
-		output += ",";
-		output += editor->convertParameter(parameters[2], node, pre_actions);
-		output += ",null)\n";
-		output += editor->spaces[stack];
-		output += "loop\n";
+		a_output += "set ydl_group = CreateGroup()\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "call GroupEnumUnitsInRange(ydl_group,";
+		a_output += v_editor->convertParameter(parameters[0], a_node, a_pre_actions);
+		a_output += ",";
+		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
+		a_output += ",";
+		a_output += v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
+		a_output += ",null)\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "loop\n";
 
-		output += editor->spaces[++stack];
-		output += "set ydl_unit = FirstOfGroup(ydl_group)\n";
+		a_output += v_editor->spaces[++v_stack];
+		a_output += "set ydl_unit = FirstOfGroup(ydl_group)\n";
 
-		output += editor->spaces[stack];
-		output += "exitwhen ydl_unit == null\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "exitwhen ydl_unit == null\n";
 
-		output += editor->spaces[stack];
-		output += "call GroupRemoveUnit(ydl_group, ydl_unit)\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "call GroupRemoveUnit(ydl_group, ydl_unit)\n";
 
-		node->getChildNodeList(list);
-		for (auto& child : list)
+		a_node->getChildNodeList(v_list);
+		for (auto& v_child : v_list)
 		{
-			output += editor->spaces[stack];
+			a_output += v_editor->spaces[v_stack];
 			//循环里的子动作 沿用外面相同的父节点
-			output += editor->convertAction(child, pre_actions, false) + "\n";
+			a_output += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
 		}
-		output += editor->spaces[--stack];
-		output += "endloop\n";
-		output += editor->spaces[stack];
-		output += "call DestroyGroup(ydl_group)\n";
+		a_output += v_editor->spaces[--v_stack];
+		a_output += "endloop\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "call DestroyGroup(ydl_group)\n";
 
 		m_isInYdweEnumUnit = false;
 		return true;
 	}
 	case "YDWESaveAnyTypeDataByUserData"s_hash:
 	{
-		output += "call YDUserDataSet(";
-		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
-		output += ",";
-		output += editor->convertParameter(parameters[1], node, pre_actions);
-		output += ",\"";
-		output += parameters[2]->value;
-		output += "\",";
-		output += parameters[3]->value + 11;
-		output += ",";
-		output += editor->convertParameter(parameters[4], node, pre_actions);
-		output += ")\n";
+		a_output += "call YDUserDataSet(";
+		a_output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
+		a_output += ",";
+		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
+		a_output += ",\"";
+		a_output += parameters[2]->value;
+		a_output += "\",";
+		a_output += parameters[3]->value + 11;
+		a_output += ",";
+		a_output += v_editor->convertParameter(parameters[4], a_node, a_pre_actions);
+		a_output += ")\n";
 		return true;
 	}
 	case "YDWEFlushAnyTypeDataByUserData"s_hash:
 	{
-		output += "call YDUserDataClear(";
-		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
-		output += ",";
-		output += editor->convertParameter(parameters[1], node, pre_actions);
-		output += ",\"";
-		output += parameters[3]->value;
-		output += "\",";
-		output += parameters[2]->value + 11;
-		output += ")\n";
+		a_output += "call YDUserDataClear(";
+		a_output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
+		a_output += ",";
+		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
+		a_output += ",\"";
+		a_output += parameters[3]->value;
+		a_output += "\",";
+		a_output += parameters[2]->value + 11;
+		a_output += ")\n";
 
 		return true;
 	}
 	case "YDWEFlushAllByUserData"s_hash:
 	{
-		output += "call YDUserDataClearTable(";
-		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
-		output += ",";
-		output += editor->convertParameter(parameters[1], node, pre_actions);
-		output += ")\n";
+		a_output += "call YDUserDataClearTable(";
+		a_output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
+		a_output += ",";
+		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
+		a_output += ")\n";
 		return true;
 	}
 
 	case "YDWEExecuteTriggerMultiple"s_hash:
 	{
-		output += "set ydl_trigger = ";
-		output += editor->convertParameter(parameters[0], node, pre_actions);
-		output += "\n" + editor->spaces[stack];
-		output += "YDLocalExecuteTrigger(ydl_trigger)\n";
+		a_output += "set ydl_trigger = ";
+		a_output += v_editor->convertParameter(parameters[0], a_node, a_pre_actions);
+		a_output += "\n" + v_editor->spaces[v_stack];
+		a_output += "YDLocalExecuteTrigger(ydl_trigger)\n";
 	
-		node->getChildNodeList(list);
-		for (auto& child : list)
+		a_node->getChildNodeList(v_list);
+		for (auto& child : v_list)
 		{
-			output += editor->spaces[stack];
-			output += editor->convertAction(child, pre_actions, false) + "\n";
+			a_output += v_editor->spaces[v_stack];
+			a_output += v_editor->convertAction(child, a_pre_actions, false) + "\n";
 		}
-		output += editor->spaces[stack];
-		output += "call YDTriggerExecuteTrigger(ydl_trigger,";
-		output += editor->convertParameter(parameters[1], node, pre_actions);
-		output += ")\n";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "call YDTriggerExecuteTrigger(ydl_trigger,";
+		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
+		a_output += ")\n";
 		return true;
 		
 	}
@@ -246,29 +244,29 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "YDWETimerStartMultiple"s_hash:
 	{
 
-		std::string param_text;
-		std::string action_text;
+		std::string v_param_text;
+		std::string v_action_text;
 
-		param_text += "set ydl_timer = ";
-		param_text += editor->convertParameter(parameters[0], node, pre_actions) + "\n";
+		v_param_text += "set ydl_timer = ";
+		v_param_text += v_editor->convertParameter(parameters[0], a_node, a_pre_actions) + "\n";
 
 
-		std::map<std::string, std::string> hashVarTable;
+		std::map<std::string, std::string> v_hashVarTable;
 
 		//当前这一层需要传参的变量表
-		std::map<std::string, std::string> thisVarTable;
+		std::map<std::string, std::string> v_thisVarTable;
 
 		
 		//找到上一层函数的逆天局部变量表
-		auto mapPtr = node->getLastVarTable();
+		auto v_map_ptr = a_node->getLastVarTable();
 
-		node->getChildNodeList(list);
-		for (auto& child : list)
+		a_node->getChildNodeList(v_list);
+		for (auto& v_child : v_list)
 		{
-			Action* childAction = child->getAction();
-			if (child->getActionId() == 0)//如果是参数区
+			Action* childAction = v_child->getAction();
+			if (v_child->getActionId() == 0)//如果是参数区
 			{
-				switch (child->getNameId())
+				switch (v_child->getNameId())
 				{
 					//在逆天计时器参数中使用逆天局部变量
 				case "YDWESetAnyTypeLocalArray"s_hash:
@@ -276,83 +274,84 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				{
 					std::string var_name = childAction->parameters[1]->value;
 					std::string var_type = childAction->parameters[0]->value + 11;
-					hashVarTable.emplace(var_name, var_type);
+					v_hashVarTable.emplace(var_name, var_type);
 					break;
 				}
+				default: ;
 				}
-				param_text += editor->spaces[stack];
-				param_text += editor->convertAction(child, pre_actions, false) + "\n";
+				v_param_text += v_editor->spaces[v_stack];
+				v_param_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
 			}
 		}
 
 
-		int s = stack;
-		stack = 1;
+		int v_tmp_s = v_stack;
+		v_stack = 1;
 		
-		for (auto& child : list)
+		for (auto& v_child : v_list)
 		{
-			if (child->getActionId() != 0)//如果是动作区
+			if (v_child->getActionId() != 0)//如果是动作区
 			{
-				Action* childAction = child->getAction();
+				Action* v_childAction = v_child->getAction();
 
-				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
-				action_text += editor->spaces[stack];
-				action_text += editor->convertAction(child, pre_actions, false) + "\n";
+				seachHashLocal(v_childAction->parameters, v_childAction->param_count, &v_thisVarTable);
+				v_action_text += v_editor->spaces[v_stack];
+				v_action_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
 			}
 		}
 
-		stack = s;
+		v_stack = v_tmp_s;
 
-		for (auto&[n, t] : hashVarTable)
+		for (auto&[n, t] : v_hashVarTable)
 		{	
-			thisVarTable.erase(n);
-			if (mapPtr)
+			v_thisVarTable.erase(n);
+			if (v_map_ptr)
 			{
-				mapPtr->erase(n);
+				v_map_ptr->erase(n);
 			}
 		}
 
-		output += param_text;
+		a_output += v_param_text;
 
-		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
+		ActionNodePtr v_tmp_ptr = ActionNodePtr(new ActionNode(action, a_node));
 
 		//如果当前这层有需要申请的变量
-		if (mapPtr->size() > 0)
+		if (v_map_ptr->size() > 0)
 		{
-			for (auto&[n, t] : *mapPtr)
+			for (auto&[n, t] : *v_map_ptr)
 			{
-				output += editor->spaces[stack];
-				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+				a_output += v_editor->spaces[v_stack];
+				a_output += setLocal(v_tmp_ptr, n, t, getLocal(a_node, n, t), true) + "\n";
 			}
-			mapPtr->clear();
+			v_map_ptr->clear();
 		}
 		
 		//将这一层需要传参的变量 传递给上一层
-		for (auto&[n, t] : thisVarTable)
+		for (auto&[n, t] : v_thisVarTable)
 		{
-			output += editor->spaces[stack];
-			output += setLocal(temp, n, t, getLocal(node, n, t),true) + "\n";
+			a_output += v_editor->spaces[v_stack];
+			a_output += setLocal(v_tmp_ptr, n, t, getLocal(a_node, n, t),true) + "\n";
 
-			mapPtr->emplace(n, t);
+			v_map_ptr->emplace(n, t);
 		}
 
-		std::string func_name = editor->generate_function_name(node->getTriggerNamePtr());
-		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
+		std::string v_func_name = v_editor->generate_function_name(a_node->getTriggerNamePtr());
+		a_pre_actions += "function " + v_func_name + " takes nothing returns nothing\n";
 
 
-		onActionsToFuncBegin(pre_actions,node);
-		pre_actions += action_text;
-		onActionsToFuncEnd(pre_actions, node);
-		pre_actions += "endfunction\n";
+		onActionsToFuncBegin(a_pre_actions,a_node);
+		a_pre_actions += v_action_text;
+		onActionsToFuncEnd(a_pre_actions, a_node);
+		a_pre_actions += "endfunction\n";
 
-		output += editor->spaces[stack];
-		output += "call TimerStart(ydl_timer,";
-		output += editor->convertParameter(parameters[1], node, pre_actions);
-		output += ",";
-		output += editor->convertParameter(parameters[2], node, pre_actions);
-		output += ",function ";
-		output += func_name;
-		output += ")";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "call TimerStart(ydl_timer,";
+		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
+		a_output += ",";
+		a_output += v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
+		a_output += ",function ";
+		a_output += v_func_name;
+		a_output += ")";
 
 		return true;
 		
@@ -361,50 +360,50 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 	case "YDWERegisterTriggerMultiple"s_hash:
 	{
-		std::string param_text;
-		std::string action_text;
+		std::string v_param_text;
+		std::string v_action_text;
 
-		param_text += "set ydl_trigger = ";
-		param_text += editor->convertParameter(parameters[0], node, pre_actions) + "\n";
+		v_param_text += "set ydl_trigger = ";
+		v_param_text += v_editor->convertParameter(parameters[0], a_node, a_pre_actions) + "\n";
 
 
-		std::map<std::string, std::string> hashVarTable;
+		std::map<std::string, std::string> v_hashVarTable;
 
 		//当前这一层需要传参的变量表
-		std::map<std::string, std::string> thisVarTable;
+		std::map<std::string, std::string> v_this_var_table;
 
 		//找到上一层函数的逆天局部变量表
-		auto mapPtr = node->getLastVarTable();
+		auto v_map_ptr = a_node->getLastVarTable();
 
-		node->getChildNodeList(list);
+		a_node->getChildNodeList(v_list);
 
-		for (auto& child : list)
+		for (auto& v_child : v_list)
 		{
-			Action* childAction = child->getAction();
+			Action* childAction = v_child->getAction();
 
 			//如果是事件 则单独处理
-			if (child->getActionType() == Action::Type::event)
+			if (v_child->getActionType() == Action::Type::event)
 			{
-				if (child->getNameId() == "MapInitializationEvent"s_hash)
+				if (v_child->getNameId() == "MapInitializationEvent"s_hash)
 				{
 					continue;
 				}
-				onRegisterEvent(param_text,child);
-				param_text += editor->spaces[stack];
+				onRegisterEvent(v_param_text,v_child);
+				v_param_text += v_editor->spaces[v_stack];
 				
-				param_text += "call " + child->getName() + "(ydl_trigger";
+				v_param_text += "call " + v_child->getName() + "(ydl_trigger";
 
 				for (size_t k = 0; k < childAction->param_count; k++)
 				{
-					param_text += ", ";
-					param_text += editor->convertParameter(childAction->parameters[k], child, pre_actions);
+					v_param_text += ", ";
+					v_param_text += v_editor->convertParameter(childAction->parameters[k], v_child, a_pre_actions);
 				}
-				param_text += ")\n";
-				onRegisterEvent2(param_text, child);
+				v_param_text += ")\n";
+				onRegisterEvent2(v_param_text, v_child);
 			}
-			else if (child->getActionId() == 1)//如果是参数区
+			else if (v_child->getActionId() == 1)//如果是参数区
 			{
-				switch (child->getNameId())
+				switch (v_child->getNameId())
 				{
 					//在逆天计时器参数中使用逆天局部变量
 				case "YDWESetAnyTypeLocalArray"s_hash:
@@ -412,78 +411,78 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				{
 					std::string var_name = childAction->parameters[1]->value;
 					std::string var_type = childAction->parameters[0]->value + 11;
-					hashVarTable.emplace(var_name, var_type);
+					v_hashVarTable.emplace(var_name, var_type);
 					break;
 				}
 				}
-				param_text += editor->spaces[stack];
-				param_text += editor->convertAction(child, pre_actions, false) + "\n";
+				v_param_text += v_editor->spaces[v_stack];
+				v_param_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
 			}
 		}
 
-		int s = stack;
-		stack = 1;
+		int v_tmp_stack = v_stack;
+		v_stack = 1;
 
-		for (auto& child : list)
+		for (auto& v_child : v_list)
 		{
-			Action* childAction = child->getAction();
+			Action* v_child_action = v_child->getAction();
 
-			if (child->getActionId() == 2)//如果是动作区
+			if (v_child->getActionId() == 2)//如果是动作区
 			{
-				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
-				action_text += editor->spaces[stack];
-				action_text += editor->convertAction(child, pre_actions, false) + "\n";
+				seachHashLocal(v_child_action->parameters, v_child_action->param_count, &v_this_var_table);
+				v_action_text += v_editor->spaces[v_stack];
+				v_action_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
 			}
 		}
 
-		stack = s;
+		v_stack = v_tmp_stack;
 
-		for (auto&[n, t] : hashVarTable)
+		for (auto&[n, t] : v_hashVarTable)
 		{
-			thisVarTable.erase(n);
-			if (mapPtr)
+			v_this_var_table.erase(n);
+			if (v_map_ptr)
 			{
-				mapPtr->erase(n);
+				v_map_ptr->erase(n);
 			}
 		}
 
-		output += param_text;
+		a_output += v_param_text;
 
-		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
+		ActionNodePtr v_tmp_node_ptr = ActionNodePtr(new ActionNode(action, a_node));
 
 		//如果当前这层有需要申请的变量
-		if (mapPtr->size() > 0)
+		if (v_map_ptr->size() > 0)
 		{
-			for (auto&[n, t] : *mapPtr)
+			for (auto&[n, t] : *v_map_ptr)
 			{
-				output += editor->spaces[stack];
-				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+				a_output += v_editor->spaces[v_stack];
+				a_output += setLocal(v_tmp_node_ptr, n, t, getLocal(a_node, n, t), true) + "\n";
 			}
 		}
 
 		//将这一层需要传参的变量 传递给上一层
-		for (auto&[n, t] : thisVarTable)
+		for (auto&[n, t] : v_this_var_table)
 		{
-			output += editor->spaces[stack];
-			output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+			a_output += v_editor->spaces[v_stack];
+			a_output += setLocal(v_tmp_node_ptr, n, t, getLocal(a_node, n, t), true) + "\n";
 
-			mapPtr->emplace(n, t);
+			v_map_ptr->emplace(n, t);
 		}
 
 
 
-		std::string func_name = editor->generate_function_name(node->getTriggerNamePtr());
-		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
+		std::string v_func_name = v_editor->generate_function_name(a_node->getTriggerNamePtr());
+		a_pre_actions += "function " + v_func_name + " takes nothing returns nothing\n";
 	
-		onActionsToFuncBegin(pre_actions, node);
-		pre_actions += action_text;
-		onActionsToFuncEnd(pre_actions, node);
-		pre_actions += "endfunction\n";
+		onActionsToFuncBegin(a_pre_actions, a_node);
+		a_pre_actions += v_action_text;
+		onActionsToFuncEnd(a_pre_actions, a_node);
+		a_pre_actions += "endfunction\n";
 
-		output += editor->spaces[stack];
-		output += "call TriggerAddCondition(ydl_trigger,Condition(function ";
-		output += func_name;
-		output += "))";
+		a_output += v_editor->spaces[v_stack];
+		a_output += "call TriggerAddCondition(ydl_trigger,Condition(function ";
+		a_output += v_func_name;
+		a_output += "))";
 
 		return true;
 	}
@@ -491,24 +490,24 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "YDWESetAnyTypeLocalVariable"s_hash:
 	{
 	
-		std::string var_name = parameters[1]->value;
-		std::string var_type= parameters[0]->value + 11;
+		std::string v_var_name = parameters[1]->value;
+		std::string v_var_type= parameters[0]->value + 11;
 
-		std::string var_value = editor->convertParameter(parameters[2], node, pre_actions);
+		std::string v_var_value = v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
 	
-		output +=setLocal(node,var_name, var_type, var_value);
+		a_output +=setLocal(a_node,v_var_name, v_var_type, v_var_value);
 		return true;
 	}
 	case "YDWESetAnyTypeLocalArray"s_hash:
 	{
 
-		std::string var_name = parameters[1]->value;
-		std::string var_type = parameters[0]->value + 11;
+		std::string v_var_name = parameters[1]->value;
+		std::string v_var_type = parameters[0]->value + 11;
 
-		std::string index = editor->convertParameter(parameters[2], node, pre_actions);
-		std::string var_value = editor->convertParameter(parameters[3], node, pre_actions);
+		std::string v_index = v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
+		std::string v_var_value = v_editor->convertParameter(parameters[3], a_node, a_pre_actions);
 
-		output += setLocalArray(node, var_name, var_type,index, var_value);
+		a_output += setLocalArray(a_node, v_var_name, v_var_type,v_index, v_var_value);
 		return true;
 	}
 
@@ -516,55 +515,55 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 	case "YDWETimerStartFlush"s_hash:
 	{
-		ActionNodePtr ptr = node->getParentNode();
-		bool isInTimer = false;
-		while (ptr.get())
+		ActionNodePtr v_action_node_ptr = a_node->getParentNode();
+		bool v_is_in_timer = false;
+		while (v_action_node_ptr.get())
 		{
-			if (ptr->getNameId() == "YDWETimerStartMultiple"s_hash)
+			if (v_action_node_ptr->getNameId() == "YDWETimerStartMultiple"s_hash)
 			{
-				isInTimer = true;
+				v_is_in_timer = true;
 				break;
 			}
-			ptr = ptr->getParentNode();
+			v_action_node_ptr = v_action_node_ptr->getParentNode();
 		}
-		if (isInTimer)
+		if (v_is_in_timer)
 		{
-			output += "call YDLocal3Release()\n";
-			output += editor->spaces[stack];
-			output += "call DestroyTimer(GetExpiredTimer())\n";
+			a_output += "call YDLocal3Release()\n";
+			a_output += v_editor->spaces[v_stack];
+			a_output += "call DestroyTimer(GetExpiredTimer())\n";
 			return true;
 		}
 		else
 		{
-			output += "不要在逆天计时器的动作外使用<清除逆天计时器>";
+			a_output += "不要在逆天计时器的动作外使用<清除逆天计时器>";
 			return true;
 		}
 	}
 	case "YDWERegisterTriggerFlush"s_hash:
 	{
-		ActionNodePtr parent = node->getParentNode();
+		ActionNodePtr v_parent_node_ptr = a_node->getParentNode();
 
-		ActionNodePtr ptr = node->getParentNode();
-		bool isInTrigger = false;
-		while (ptr.get())
+		ActionNodePtr v_node_ptr = a_node->getParentNode();
+		bool v_is_in_trigger = false;
+		while (v_node_ptr.get())
 		{
-			if (ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+			if (v_node_ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
 			{
-				isInTrigger = true;
+				v_is_in_trigger = true;
 				break;
 			}
-			ptr = ptr->getParentNode();
+			v_node_ptr = v_node_ptr->getParentNode();
 		}
-		if (isInTrigger)
+		if (v_is_in_trigger)
 		{
-			output += "call YDLocal4Release()\n";
-			output += editor->spaces[stack];
-			output += "call DestroyTrigger(GetTriggeringTrigger())\n";
+			a_output += "call YDLocal4Release()\n";
+			a_output += v_editor->spaces[v_stack];
+			a_output += "call DestroyTrigger(GetTriggeringTrigger())\n";
 			return true;
 		}
 		else
 		{
-			output += "不要在逆天触发器的动作外使用<清除逆天触发器>";
+			a_output += "不要在逆天触发器的动作外使用<清除逆天触发器>";
 			return true;
 		}
 	}
@@ -574,68 +573,68 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	{
 
 		
-		output += editor->convertCall(node, pre_actions, !nested) + "\n";
+		a_output += v_editor->convertCall(a_node, a_pre_actions, !a_nested) + "\n";
 
 
-		ActionNodePtr branch = node->getBranchNode();
+		ActionNodePtr v_branch_node_ptr = a_node->getBranchNode();
 
-		ActionNodePtr parent = branch->getParentNode();
-		if (parent.get() && (
-			parent->getNameId() == "YDWETimerStartMultiple"s_hash ||
-			parent->getNameId() == "YDWERegisterTriggerMultiple"s_hash
+		ActionNodePtr v_parent_node_ptr = v_branch_node_ptr->getParentNode();
+		if (v_parent_node_ptr.get() && (
+			v_parent_node_ptr->getNameId() == "YDWETimerStartMultiple"s_hash ||
+			v_parent_node_ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash
 			))
 		{
-			output += "不要在逆天计时器/逆天触发器内使用等待";
+			a_output += "不要在逆天计时器/逆天触发器内使用等待";
 		}
 		else
 		{
-			output += editor->spaces[stack];
-			output += "call YDLocalReset()\n";
+			a_output += v_editor->spaces[v_stack];
+			a_output += "call YDLocalReset()\n";
 		}
 			
 		return true;
 	}
 	case "ReturnAction"s_hash:
 	{
-		output += "call YDLocal1Release()\n";
-		output += editor->spaces[stack];
-		onActionsToFuncEnd(output, node);
-		output += "return\n";
+		a_output += "call YDLocal1Release()\n";
+		a_output += v_editor->spaces[v_stack];
+		onActionsToFuncEnd(a_output, a_node);
+		a_output += "return\n";
 		return true;
 	}
 
 	case "YDWEExitLoop"s_hash:
 	{
-		output += "exitwhen true\n";
+		a_output += "exitwhen true\n";
 		return true;
 	}
 	case "CustomScriptCode"s_hash:
 	case "YDWECustomScriptCode"s_hash:
 	{
-		output += parameters[0]->value;
+		a_output += parameters[0]->value;
 		return true;
 	}
 	case "YDWEActivateTrigger"s_hash:
 	{
-		output += "";
-		Parameter* param = parameters[0];
-		if (param->typeId == Parameter::Type::variable && param->arrayParam == NULL)
+		a_output += "";
+		Parameter* v_param = parameters[0];
+		if (v_param->typeId == Parameter::Type::variable && v_param->arrayParam == NULL)
 		{
-			const char* ptr = param->value;
+			const char* ptr = v_param->value;
 			if (ptr && strncmp(ptr, "gg_trg_", 7) == 0)
 				ptr = ptr + 7;
 			
-			std::string func_name = std::string("InitTrig_") + ptr;
-			convert_name(func_name);
+			std::string v_func_name = std::string("InitTrig_") + ptr;
+			convert_name(v_func_name);
 
-			std::string ret = editor->convertParameter(parameters[1], node, pre_actions);
-			if (ret.compare("true") == 0)
+			std::string v_ret = v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
+			if (v_ret.compare("true") == 0)
 			{
-				output += "call ExecuteFunc(\"" + func_name + "\")\n";
+				a_output += "call ExecuteFunc(\"" + v_func_name + "\")\n";
 			}
 			else
 			{
-				output += "call " + func_name + "()\n";
+				a_output += "call " + v_func_name + "()\n";
 			}
 		}
 		return true;
