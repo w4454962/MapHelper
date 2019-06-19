@@ -48,7 +48,7 @@ void convert_name(std::string& name)
 			
 	}
 
-	for (int i = 0; i < name.length(); ++i)
+	for (size_t i = 0; i < name.length(); ++i)
 	{
 		uint8_t c = name[i];
 		if (c && !isalnum(c) && c != '_')

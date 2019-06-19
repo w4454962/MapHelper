@@ -937,7 +937,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			}
 
 			}
-#undef next(b)
+#undef next
 		}
 
 	};

@@ -1087,10 +1087,10 @@ endfunction
 		convert_name(region_name);
 
 
-		int left = region->left * 32 + region->info->minX;
-		int right = region->right * 32 + region->info->minX;
-		int top = region->top * 32 + region->info->minY;
-		int bottom = region->bottom * 32 + region->info->minY;
+		int left = region->left * 32 + (int)region->info->minX;
+		int right = region->right * 32 + (int)region->info->minX;
+		int top = region->top * 32 + (int)region->info->minY;
+		int bottom = region->bottom * 32 + (int)region->info->minY;
 
 		int minX = min(left, right);
 		int minY = min(bottom, top);
@@ -1843,7 +1843,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		std::string iftext;
 
 		node->getChildNodeList(list);
-		int i = 0;
+		size_t i = 0;
 		for (auto& child : list)
 		{
 			iftext += "(" + convertAction(child, pre_actions, true) + ")";
@@ -1865,7 +1865,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		std::string iftext;
 
 		node->getChildNodeList(list);
-		int i = 0;
+		size_t i = 0;
 		for (auto& child : list)
 		{
 			iftext += convertAction(child, pre_actions, true);
@@ -2101,7 +2101,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			
 		}
 	}
-	assert(false, "error");
+	assert(false);
 	return "";
 }
 
