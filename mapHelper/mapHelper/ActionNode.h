@@ -70,10 +70,10 @@ public:
 
 
 	//获取参数数量
-	size_t count();
+	size_t count() const;
 	
 	// node(1) 取该动作的参数
-	Parameter* operator()(size_t n);
+	Parameter* operator()(size_t n) const;
 
 
 	Action::Type getActionType();

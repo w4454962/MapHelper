@@ -194,7 +194,8 @@ ActionNodePtr ActionNode::operator[](size_t n)
 	Action* action = nullptr;
 	if (n >= size())
 	{
-		return ActionNodePtr();
+		//return ActionNodePtr();
+		return nullptr;
 	}
 	if (m_type == Type::trigger)
 	{
@@ -205,7 +206,7 @@ ActionNodePtr ActionNode::operator[](size_t n)
 		action = m_action->child_actions[n];
 	}
 
-	return ActionNodePtr(new ActionNode(action, shared_from_this()));
+	return std::make_shared<ActionNode>(action, shared_from_this());
 }
 
 
@@ -222,7 +223,7 @@ void ActionNode::getChildNodeList(std::vector<ActionNodePtr>& list)
 
 			if (!action->enable)
 				continue;
-			list.push_back(ActionNodePtr(new ActionNode(action, parent)));
+			list.push_back(std::make_shared<ActionNode>(action, parent));
 		}
 	}
 	//否则是寻找该节点下的子节点
@@ -235,12 +236,12 @@ void ActionNode::getChildNodeList(std::vector<ActionNodePtr>& list)
 			Action* action = m_action->child_actions[i];
 			if (!action->enable)
 				continue;
-			list.push_back(ActionNodePtr(new ActionNode(action, parent)));
+			list.push_back(std::make_shared<ActionNode>(action, parent));
 		}
 	}
 }
 
-size_t ActionNode::count()
+size_t ActionNode::count() const
 {
 	if (m_action)
 	{
@@ -249,10 +250,10 @@ size_t ActionNode::count()
 	return 0;
 }
 
-Parameter* ActionNode::operator()(size_t n)
+Parameter* ActionNode::operator()(size_t n) const
 {
 	if (n >= count() || !m_action)
-		return NULL;
+		return nullptr;
 
 	return m_action->parameters[n];
 }
