@@ -1214,7 +1214,7 @@ endfunction
 			}
 			else 
 			{
-				writer.write_string_view(convertTrigger(trigger));
+				writer.write_string(convertTrigger(trigger));
 			}
 
 		}

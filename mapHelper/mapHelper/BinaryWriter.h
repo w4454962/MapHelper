@@ -1,67 +1,99 @@
 #pragma once
-#include <string_view>
 
-class BinaryWriter {
-public:
-	std::vector<uint8_t> buffer;
+template <size_t N>
+class BinaryWriterT {
+private:
+	struct Chunk {
+		uint8_t data[N];
+		size_t  size = 0;
+		Chunk*  next = nullptr;
+	};
+	Chunk* head = nullptr;
+	Chunk* tail = nullptr;
 
-	template<typename T>
-	void write(const T value) {
-		// These wouldn't make sense
-		static_assert(std::is_same<T, std::string>() == false);
-		static_assert(std::is_same<T, fs::path>() == false);
-
-		T temp = value;
-		buffer.resize(buffer.size() + sizeof(T));
-		std::copy(reinterpret_cast<const char*>(&temp), reinterpret_cast<const char*>(&temp) + sizeof(T), buffer.end() - sizeof(T));
+	void destory() {
+		for (Chunk* p = head; p;) {
+			Chunk* next = p->next;
+			delete p;
+			p = next;
+		}
 	}
 
-		
+public:
+	BinaryWriterT() {
+		head = tail = new Chunk;
+	}
+
+	~BinaryWriterT() {
+		destory();
+	}
+
+	void clear() {
+		destory();
+		head = tail = new Chunk;
+	}
+
+	void write(const uint8_t* buf, size_t len) {
+		if (tail->size + len <= N) {
+			memcpy(tail->data + tail->size, buf, len);
+			tail->size += len;
+			return;
+		}
+		if (tail->size < N) {
+			size_t nlen = N - tail->size;
+			write(buf, nlen);
+			buf += nlen;
+			len -= nlen;
+		}
+		tail->next = new Chunk;
+		tail = tail->next;
+		write(buf, len);
+	}
+
+	template <typename T>
+	void write(const T value) {
+		static_assert(std::is_pod<T>::value);
+		write((const uint8_t*)&value, sizeof(T));
+	}
+
 	/// Writes the string to the buffer (null terminated if the input string is null terminated)
-	void write_string(const std::string& string) {
-		buffer.resize(buffer.size() + string.size());
-		std::copy(string.begin(), string.end(), buffer.end() - string.size());
+	template <typename T>
+	void write_string(const T& string) {
+		write((const uint8_t*)string.data(), string.size());
 	}
 
 	/// Writes a null terminated string to the buffer
-	void write_c_string(const std::string& string) {
-		if (!string.empty() && string.back() == '\0') {
-			buffer.resize(buffer.size() + string.size());
-			std::copy(string.begin(), string.end(), buffer.end() - string.size());
-		} else {
-			buffer.resize(buffer.size() + string.size() + 1);
-			std::copy(string.begin(), string.end(), buffer.end() - string.size() - 1);
-			buffer[buffer.size() - 1] = '\0';
+	template <typename T>
+	void write_c_string(const T& string) {
+		write_string(string);
+		if (string.empty() || string.back() != '\0') {
+			write<uint8_t>('\0');
 		}
 	}
 
-	void write_string_view(const std::string_view& string) {
-		buffer.resize(buffer.size() + string.size());
-		std::copy(string.begin(), string.end(), buffer.end() - string.size());
+	// Do not use char array.
+	template <class T, size_t n>
+	void write_string(const T (&string)[n]) {
+		write((const uint8_t*)string, n-1);
 	}
 
-	void write_c_string_view(const std::string_view& string) {
-		if (!string.empty() && string.back() == '\0') {
-			buffer.resize(buffer.size() + string.size());
-			std::copy(string.begin(), string.end(), buffer.end() - string.size());
-		}
-		else {
-			buffer.resize(buffer.size() + string.size() + 1);
-			std::copy(string.begin(), string.end(), buffer.end() - string.size() - 1);
-			buffer[buffer.size() - 1] = '\0';
-		}
+	// Do not use string literals.
+	void write_c_string(const char* string) {
+		write((const uint8_t*)string, strlen(string) + 1);
 	}
 
-	/// Copies the contents of the array to the buffer, has special code for std::string
-	template<typename T>
-	void write_vector(const std::vector<T>& vector) {
-		if constexpr (std::is_same_v<T, std::string>) {
-			for (const auto& i : vector) {
-				buffer.insert(buffer.end(), i.begin(), i.end());
-			}
-		} else {
-			buffer.resize(buffer.size() + vector.size() * sizeof(T));
-			std::copy(vector.begin(), vector.end(), buffer.end() - vector.size() * sizeof(T));
+	void write_bw(BinaryWriterT<N>& value) {
+		tail->next = value.head;
+		tail = value.tail;
+		value.head = value.tail = nullptr;
+	}
+
+	template <typename T>
+	void finish(T& out) {
+		for (Chunk* p = head; p; p = p->next) {
+			out.write((const char*)p->data, p->size);
 		}
 	}
 };
+
+typedef BinaryWriterT<4000> BinaryWriter;
