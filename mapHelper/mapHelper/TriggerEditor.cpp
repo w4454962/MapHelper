@@ -1575,7 +1575,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 				Parameter* param = action->parameters[k];
 
 
-				std::string type = param->type_name;
+				auto type { std::string(param->type_name) };
 
 				events += ", ";
 				events += convertParameter(param, node, pre_actions);
@@ -1597,6 +1597,8 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 			action_code += spaces[space_stack];
 
 			action_code += convertAction(node, pre_actions, false) + "\n";
+			break;
+		default: 
 			break;
 		}
 	}
@@ -1746,7 +1748,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 			}
 			case Action::Type::action:
 			{
-				Action* action = child->getAction();
+				auto action = child->getAction();
 				if (action->child_flag == 1)
 				{
 					thentext += spaces[space_stack];
@@ -1790,7 +1792,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	{
 		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string name = node->getName();
+		auto name = std::string(node->getName());
 
 		// Remove multiple
 		output += "call " + name.substr(0, name.length() - 8) + "(";
@@ -1892,15 +1894,15 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	{
 		
 		Action* event_action = parameters[1]->funcParam;
-		std::string trg = convertParameter(parameters[0], node, pre_actions);
-		std::string event_name = event_action->name;
+		auto trg = convertParameter(parameters[0], node, pre_actions);
+		auto event_name = std::string(event_action->name);
 
-		std::string events = "\tcall " + event_name + "(" + trg;
+		auto events = "\tcall " + event_name + "(" + trg;
 
-		ActionNodePtr temp(new ActionNode(event_action, node));
+		auto temp{ std::make_shared<ActionNode>(event_action, node) };
 		for (size_t k = 0; k < event_action->param_count; k++)
 		{
-			Parameter* param = event_action->parameters[k];
+			auto param = event_action->parameters[k];
 
 
 			std::string type = param->type_name;
@@ -1922,9 +1924,9 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	case "DzFrameSetUpdateCallbackMultiple"s_hash:
 	case "DzFrameSetScriptMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+		const auto function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string name = node->getName();
+		auto name = node->getName();
 
 
 		output += "if GetLocalPlayer() == ";
@@ -1938,7 +1940,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		}
 		for (size_t k = 1; k < action->param_count; k++)
 		{
-			Parameter* param = action->parameters[k];
+			auto param = action->parameters[k];
 			if (strcmp(param->type_name, "code") != 0)
 			{
 				output += convertParameter(param, node, pre_actions);
@@ -2011,7 +2013,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) 
 {
-	if (parameter == NULL)
+	if (parameter == nullptr)
 	{
 		return "";
 	}
@@ -2028,19 +2030,17 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 
 	if (parameter->funcParam) 
 	{
-		ActionNodePtr childNode(new ActionNode(parameter->funcParam, parameter, node));
+		auto childNode{ std::make_shared<ActionNode>(parameter->funcParam, parameter, node) };
 		return convertCall(childNode,pre_actions, add_call);
 	}
-	else {
-	
-		std::string value = std::string(parameter->value);
+	auto value = std::string(parameter->value);
 
-		switch (parameter->typeId)
-		{
-		case Parameter::Type::invalid:
+	switch (parameter->typeId)
+	{
+	case Parameter::Type::invalid:
 	
-			return "";
-		case Parameter::Type::preset: 
+		return "";
+	case Parameter::Type::preset: 
 		{
 			auto world = WorldEditor::getInstance();
 			const std::string preset_type = world->getConfigData("TriggerParams", value, 1);
@@ -2050,9 +2050,9 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			}
 			return world->getConfigData("TriggerParams", value, 2);
 		}
-		case Parameter::Type::function:
-			return value + "()";
-		case Parameter::Type::variable:
+	case Parameter::Type::function:
+		return value + "()";
+	case Parameter::Type::variable:
 		{
 			
 			std::string output = value;
@@ -2071,7 +2071,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			}
 			return output;
 		}
-		case Parameter::Type::string:
+	case Parameter::Type::string:
 		{
 			
 			uint32_t is_import_path = 0;
@@ -2084,7 +2084,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			if (is_import_path || getBaseType(type) == "string") {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
 			}
-			else if (type == "abilcode" || // ToDo this seems like a hack?
+			if (type == "abilcode" || // ToDo this seems like a hack?
 				type == "buffcode" ||
 				type == "destructablecode" ||
 				type == "itemcode" ||
@@ -2093,13 +2093,10 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 				type == "unitcode") {
 				return "'" + value + "'";
 			}
-			else 
-			{
-				return value;
-			}
+			return value;
 		}
-			
-		}
+	default: 
+		break;
 	}
 	assert(false);
 	return "";
@@ -2256,14 +2253,14 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 	size_t size = action->param_count;
 
 	for (size_t k = 0; k < size; k++) {
-		Parameter* param = parameters[k];
+		auto param = parameters[k];
 
 		const std::string child_type = param->type_name;
 
 		if (child_type == "boolexpr") {
 			const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-			std::string tttt = convertParameter(param, node, pre_actions);
+			auto tttt = convertParameter(param, node, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
 			pre_actions += "\treturn " + tttt + "\n";
