@@ -19,7 +19,7 @@ ActionNode::ActionNode(Trigger* root)
 
 	std::string name = std::string(root->name);
 	convert_name(name);
-	m_trigger_name = std::shared_ptr<std::string>(new std::string(name));
+	m_trigger_name = std::make_shared<std::string>(name);
 
 	
 }
@@ -65,7 +65,7 @@ std::string ActionNode::getName()
 	{
 		return m_trigger->name;
 	}
-	else if (m_action)
+	if (m_action)
 	{
 		return m_action->name;
 	}
@@ -94,7 +94,7 @@ Action::Type ActionNode::getActionType()
 {
 	if (m_action)
 	{
-		return (Action::Type)m_action->table->getType(m_action);
+		return static_cast<Action::Type>(m_action->table->getType(m_action));
 	}
 	return Action::Type::none;
 }
@@ -110,12 +110,13 @@ ActionNodePtr ActionNode::getRootNode()
 	ActionNodePtr root = shared_from_this();
 	while (root.get())
 	{
-		if (root->m_parent == NULL)
+		if (root->m_parent == nullptr)
 		{
 			return root;
 		}
 		root = root->m_parent;
 	}
+	return ActionNodePtr();
 }
 
 
@@ -180,7 +181,7 @@ size_t ActionNode::size()
 	{
 		return m_trigger->line_count;
 	}
-	else if (m_action)
+	if (m_action)
 	{
 		return m_action->child_count;
 	}
@@ -189,7 +190,7 @@ size_t ActionNode::size()
 
 ActionNodePtr ActionNode::operator[](size_t n)
 {
-	Action* action = NULL;
+	Action* action = nullptr;
 	if (n >= size())
 	{
 		return ActionNodePtr();
