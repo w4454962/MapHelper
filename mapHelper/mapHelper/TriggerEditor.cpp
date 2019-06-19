@@ -40,7 +40,7 @@ void TriggerEditor::loadTriggers(TriggerData* data)
 void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 {
 	m_configData = data;
-	printf("读取配置文件\n");
+	std::cout<<"读取配置文件\n"<<std::endl;
 	for (size_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
@@ -53,13 +53,13 @@ void TriggerEditor::saveTriggers(const char* path)
 {
 	if (!m_editorData)
 	{
-		printf("缺少触发器数据\n");
+		std::cout<<"缺少触发器数据"<<std::endl;
 		return;
 	}
 
-	printf("自定义保存wtg文件\n");
+	std::cout << "自定义保存wtg文件"<< std::endl;
 
-	clock_t start = clock();
+	auto start = clock();
 
 
 
@@ -2359,7 +2359,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 			//销毁动作容器
 			const auto SMemFreeAddr = reinterpret_cast<uintptr_t>(GetProcAddress(
 				GetModuleHandleW(L"Storm.dll"), reinterpret_cast<const char*>(SMemFreeIndex)));
-				std_call<BOOL>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);	
+			std_call<BOOL>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);	
 		}
 		trigger->number = 0;
 		trigger->line_count = 0;
