@@ -524,10 +524,8 @@ int WorldEditor::customSaveDoodas(const char* path)
 	}
 
 
-	std::ofstream out(std::string(path) + ".doo", std::ios::binary); 
-	auto& deque = writer.data();
-	out << std::string(deque.begin(), deque.end());
-	out.close(); 
+	std::ofstream out(std::string(path) + ".doo", std::ios::binary);
+	writer.finish(out);
 
 
 	printf("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);

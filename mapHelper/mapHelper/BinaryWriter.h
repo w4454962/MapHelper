@@ -1,125 +1,99 @@
 #pragma once
-#include <string_view>
-#include <deque>
-class BinaryWriter {
+
+template <size_t N>
+class BinaryWriterT {
+private:
+	struct Chunk {
+		uint8_t data[N];
+		size_t  size = 0;
+		Chunk*  next = nullptr;
+	};
+	Chunk* head = nullptr;
+	Chunk* tail = nullptr;
+
+	void destory() {
+		for (Chunk* p = head; p;) {
+			Chunk* next = p->next;
+			delete p;
+			p = next;
+		}
+	}
 
 public:
-	BinaryWriter()
-		: BinaryWriter(0x1000)//初始化设置二级缓冲区大小
-	{ }
-
-	BinaryWriter(size_t second_size) {
-		second_pos = 0;
-		second.resize(second_size);
+	BinaryWriterT() {
+		head = tail = new Chunk;
 	}
 
-	std::deque<uint8_t>& data() {
-		if (second_pos) {
-			first.resize(first.size() + second_pos);
-			std::copy(second.begin(), second.begin() + second_pos, first.end() - second_pos);
-			second_pos = 0;
-		}
-		return first;
-	}
-
-	size_t size() {
-		return first.size() + second_pos;
+	~BinaryWriterT() {
+		destory();
 	}
 
 	void clear() {
-		second_pos = 0;
-		first.clear();
-		second.clear();
-	}
-	//双缓冲
-	template<typename T>
-	void write(const T& begin, const T& end, size_t data_size) {
-		size_t size = data_size + second_pos;
-
-		if (size < second.size()) {
-			std::copy(begin, end, second.begin() + second_pos);
-			second_pos += data_size;
-		}
-		else {
-			first.resize(first.size() + size);
-			std::copy(second.begin(), second.begin() + second_pos, first.end() - size);
-			std::copy(begin, end, first.end() - data_size);
-			second_pos = 0;
-		}
+		destory();
+		head = tail = new Chunk;
 	}
 
-	template<typename T>
+	void write(const uint8_t* buf, size_t len) {
+		if (tail->size + len <= N) {
+			memcpy(tail->data + tail->size, buf, len);
+			tail->size += len;
+			return;
+		}
+		if (tail->size < N) {
+			size_t nlen = N - tail->size;
+			write(buf, nlen);
+			buf += nlen;
+			len -= nlen;
+		}
+		tail->next = new Chunk;
+		tail = tail->next;
+		write(buf, len);
+	}
+
+	template <typename T>
 	void write(const T value) {
-		// These wouldn't make sense
-		static_assert(std::is_same<T, std::string>() == false);
-		static_assert(std::is_same<T, fs::path>() == false);
-
-		T temp = value;
-		uint8_t* ptr = (uint8_t*)&temp;
-		write(ptr, ptr + sizeof(T), sizeof(T));
+		static_assert(std::is_pod<T>::value);
+		write((const uint8_t*)&value, sizeof(T));
 	}
-
 
 	/// Writes the string to the buffer (null terminated if the input string is null terminated)
-	void write_string(const std::string& string) {
-		write(string.begin(), string.end(), string.size());
+	template <typename T>
+	void write_string(const T& string) {
+		write((const uint8_t*)string.data(), string.size());
 	}
 
 	/// Writes a null terminated string to the buffer
-	void write_c_string(const std::string& string) {
-		if (!string.empty() && string.back() == '\0') {
-			write(string.begin(), string.end(), string.size());
-		}
-		else {
-			write(string.begin(), string.end(), string.size());
+	template <typename T>
+	void write_c_string(const T& string) {
+		write_string(string);
+		if (string.empty() || string.back() != '\0') {
 			write<uint8_t>('\0');
 		}
 	}
 
-	void write_string_view(const std::string_view& string) {
-		write(string.begin(), string.end(), string.size());
+	// Do not use char array.
+	template <class T, size_t n>
+	void write_string(const T (&string)[n]) {
+		write((const uint8_t*)string, n-1);
 	}
 
-	void write_c_string_view(const std::string_view& string) {
-		if (!string.empty() && string.back() == '\0') {
-			write(string.begin(), string.end(), string.size());
-		}
-		else {
-			write(string.begin(), string.end(), string.size());
-			write<uint8_t>('\0');
-		}
+	// Do not use string literals.
+	void write_c_string(const char* string) {
+		write((const uint8_t*)string, strlen(string) + 1);
 	}
 
-	/// Copies the contents of the array to the buffer, has special code for std::string
-	template<typename T>
-	void write_vector(const std::vector<T>& vector) {
-		if constexpr (std::is_same_v<T, std::string>) {
-			for (const auto& i : vector) {
-				write_string(i);
-			}
-		}
-		else {
-			write(vector.begin(), vector.end(), vector.size());
-		}
+	void write_bw(BinaryWriterT<N>& value) {
+		tail->next = value.head;
+		tail = value.tail;
+		value.head = value.tail = nullptr;
 	}
 
-	template<typename T>
-	void write_deque(const std::deque<T>& deque) {
-		if constexpr (std::is_same_v<T, std::string>) {
-			for (const auto& i : deque) {
-				write_string(i);
-			}
-		}
-		else {
-			write(deque.begin(), deque.end(), deque.size());
+	template <typename T>
+	void finish(T& out) {
+		for (Chunk* p = head; p; p = p->next) {
+			out.write((const char*)p->data, p->size);
 		}
 	}
-
-
-private:
-	//一级缓冲区
-	std::deque<uint8_t> first;
-	//二级缓冲区
-	std::vector<uint8_t> second;
-	size_t second_pos;
 };
+
+typedef BinaryWriterT<4000> BinaryWriter;

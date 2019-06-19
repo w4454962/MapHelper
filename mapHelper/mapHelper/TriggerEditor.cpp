@@ -82,10 +82,7 @@ void TriggerEditor::saveTriggers(const char* path)
 	writeTrigger(writer);
 
 	std::ofstream out(std::string(path) + ".wtg", std::ios::binary);
-
-	auto& deque = writer.data();
-	out << std::string(deque.begin(), deque.end());
-	out.close();
+	writer.finish(out);
 
 	printf("wtg 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
@@ -101,17 +98,10 @@ void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 	for (size_t i = 0; i < count; i++)
 	{
 		Categoriy* categoriy = m_editorData->categories[i];
-		
 		writer.write(categoriy->categoriy_id);
-
-		std::string categoriy_name = std::string(categoriy->categoriy_name);
-
-		writer.write_c_string(categoriy_name);
-
+		writer.write_c_string(categoriy->categoriy_name);
 		writer.write(categoriy->is_comment);
-
 		categoriy->has_change = 0;
-
 	}
 
 }
@@ -309,7 +299,7 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	writer.write(data->globals_jass_size);
 
 	std::string_view jass(data->globals_jass_script, data->globals_jass_size);
-	writer.write_string_view(jass);
+	writer.write_string(jass);
 
 	writer.write(data->trigger_count);
 
@@ -326,17 +316,14 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 			writer.write(size);
 			if (size > 0)
 			{
-				std::string script(trigger->custom_jass_script, size);
-				writer.write_c_string(script);
+				writer.write_c_string(std::string_view(trigger->custom_jass_script, size));
 			}
 			
 		}
 	}
 
 	std::ofstream out(std::string(path) + ".wct", std::ios::binary);
-	auto& deque = writer.data();
-	out << std::string(deque.begin(), deque.end());
-	out.close();
+	writer.finish(out);
 
 	printf("wct 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
@@ -859,7 +846,7 @@ endfunction
 		}
 
 	}
-	writer.write_deque(writer2.data());
+	writer.write_bw(writer2);
 
 	writer.write_string("endfunction\n");
 
@@ -1217,7 +1204,7 @@ endfunction
 			}
 			else 
 			{
-				writer.write_string_view(convertTrigger(trigger, initialization_triggers));
+				writer.write_string(convertTrigger(trigger, initialization_triggers));
 			}
 
 		}
@@ -1482,9 +1469,7 @@ endfunction
 	
 
 	std::ofstream out(std::string(path) + ".j", std::ios::binary);
-	auto& deque = writer.data();
-	out << std::string(deque.begin(), deque.end());
-	out.close();
+	writer.finish(out);
 
 
 	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
