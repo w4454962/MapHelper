@@ -106,6 +106,14 @@ void YDTrigger::onRegisterEvent2(std::string& events,ActionNodePtr node)
 	}
 }
 
+void YDTrigger::onRegisterTrigger(std::string& output,const std::string& trigger_name, const std::string& var_name)
+{
+	output += "#ifdef DEBUG\n";
+	output += "\tcall YDWESaveTriggerName(" + var_name + ",\"" + trigger_name + "\")\n";
+	output += "#endif\n";
+}
+
+
 bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::string& pre_actions, bool nested)
 {
 	TriggerEditor* editor = TriggerEditor::getInstance();

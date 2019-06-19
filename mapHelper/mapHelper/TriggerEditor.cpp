@@ -1179,7 +1179,7 @@ endfunction
 
 
 
-	std::vector<std::string> initialization_triggers;
+	
 
 	writer.write_string("\n");
 
@@ -1214,7 +1214,7 @@ endfunction
 			}
 			else 
 			{
-				writer.write_string_view(convertTrigger(trigger, initialization_triggers));
+				writer.write_string_view(convertTrigger(trigger));
 			}
 
 		}
@@ -1224,6 +1224,9 @@ endfunction
 	writer.write_string(seperator);
 
 	writer.write_string("function InitCustomTriggers takes nothing returns nothing\n");
+
+
+	std::string initions;
 
 	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
@@ -1236,6 +1239,18 @@ endfunction
 			{
 				continue;
 			}
+
+			if (m_initTriggerTable.find(trigger) != m_initTriggerTable.end() || trigger->is_initialize)
+			{
+				std::string trigger_name = std::string(trigger->name);
+				convert_name(trigger_name);
+
+				std::string trigger_variable_name = "gg_trg_" + trigger_name;
+
+				initions += "\tcall ConditionalTriggerExecute(" + trigger_variable_name + ")";
+				
+			}
+
 			if (m_ydweTrigger->isEnable() && m_ydweTrigger->hasDisableRegister(trigger))
 			{
 				continue;
@@ -1255,9 +1270,7 @@ endfunction
 
 	writer.write_string(seperator);
 	writer.write_string("function RunInitializationTriggers takes nothing returns nothing\n");
-	for (const auto& i : initialization_triggers) {
-		writer.write_string("\tcall ConditionalTriggerExecute(" + i + ")\n");
-	}
+	writer.write_string(initions);
 	writer.write_string("endfunction\n");
 
 
@@ -1488,10 +1501,12 @@ endfunction
 
 	m_initFuncTable.clear();
 
+	m_initTriggerTable.clear();
+
 }
 
 
-std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::string>& initializtions) 
+std::string TriggerEditor::convertTrigger(Trigger* trigger) 
 {
 	
 
@@ -1525,6 +1540,8 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::str
 	if (m_ydweTrigger->isEnable())
 	{
 		m_ydweTrigger->onActionsToFuncBegin(actions, root);
+
+		m_ydweTrigger->onRegisterTrigger(events, root->getName(), trigger_variable_name);
 	}
 
 	std::vector<ActionNodePtr> list;
@@ -1547,7 +1564,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger, std::vector<std::str
 			}
 			if (node->getNameId() == "MapInitializationEvent"s_hash )
 			{
-				initializtions.push_back(trigger_variable_name);
+				m_initTriggerTable[trigger] = true;
 				continue;
 			}
 			events += "\tcall " + name + "(" + trigger_variable_name;
@@ -2206,4 +2223,50 @@ std::string TriggerEditor::getBaseType(const std::string& type) const
 std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> trigger_name) const {
 	auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	return "Trig_" + *trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
+}
+
+
+
+bool TriggerEditor::onConvertTrigger(Trigger* trigger)
+{
+	if (trigger->is_custom_srcipt || trigger->is_comment)
+		return false;
+	WorldEditor* world = WorldEditor::getInstance();
+
+	std::string script = convertTrigger(trigger);
+	
+	if (m_initTriggerTable.find(trigger) != m_initTriggerTable.end())
+	{
+		trigger->is_initialize = 1;
+		m_initTriggerTable.erase(trigger);
+	}
+
+	trigger->is_custom_srcipt = 1;
+
+	//写入字符串到触发器中
+	this_call<int>(world->getAddress(0x005CB280), trigger, script.c_str(), script.size());
+
+	if (trigger->line_count > 0)
+	{
+		//遍历销毁所有动作
+		for (size_t i = 0; i < trigger->line_count; i++)
+		{
+			Action* action = trigger->actions[i];
+			if (action)
+			{
+				action->table->destroy(action, 1);
+			}
+		}
+
+		if (trigger->actions)
+		{
+			//销毁动作容器
+			uint32_t addr = (uintptr_t)::GetProcAddress(::GetModuleHandleW(L"Storm.dll"), (const char*)403);
+			std_call<int>(addr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);
+		}
+		trigger->number = 0;
+		trigger->line_count = 0;
+		trigger->actions = 0;
+	}
+	return true;
 }

@@ -29,6 +29,7 @@ public:
 	bool onRegisterEvent(std::string& events,ActionNodePtr node);
 	void onRegisterEvent2(std::string& events,ActionNodePtr node);
 
+	void onRegisterTrigger(std::string& output, const std::string& trigger_name, const std::string& var_name);
 	//每条动作生成时
 	bool onActionToJass(std::string& output,ActionNodePtr node, std::string& pre_actions, bool nested);
 

@@ -48,7 +48,7 @@ struct Action
 
 	struct VritualTable
 	{
-		uint32_t unknow1;
+		uint32_t (__thiscall* destroy)(void* pThis,bool freeMemory);
 		uint32_t unknow2;
 		uint32_t(__thiscall* getType)(void* pThis);
 	};
@@ -70,7 +70,8 @@ struct Action
 
 struct Trigger
 {
-	char unknow1[0xc];
+	char unknow1[0x8];
+	uint32_t number;//0x8
 	uint32_t line_count; //0xc
 	Action** actions;	//0x10
 	char unknow2[0x4];//0x14

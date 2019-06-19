@@ -22,7 +22,7 @@ public:
 
 	
 
-	std::string convertTrigger(Trigger* trigger, std::vector<std::string>& initializtions);
+	std::string convertTrigger(Trigger* trigger);
 	std::string convertAction(ActionNodePtr node, std::string& pre_actions, bool nested);
 
 	std::string convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call = false);
@@ -30,6 +30,10 @@ public:
 	
 	std::string getBaseType(const std::string& type) const;
 	std::string generate_function_name(std::shared_ptr<std::string> trigger_name) const;
+
+
+	//当触发编辑器转换单个触发为自定义脚本的时候
+	bool onConvertTrigger(Trigger* trigger);
 
 private:
 	void writeCategoriy(BinaryWriter& writer);
@@ -53,6 +57,9 @@ protected:
 	std::unordered_map<std::string, TriggerType*> m_typesTable;
 
 	std::unordered_map<std::string, bool> m_initFuncTable;
+
+	std::unordered_map<Trigger*, bool> m_initTriggerTable;
+
 public:
 	std::string spaces[200];
 	int space_stack;
