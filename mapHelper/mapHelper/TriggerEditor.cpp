@@ -62,15 +62,10 @@ void TriggerEditor::saveTriggers(const char* path)
 	auto start = clock();
 
 
-
-
 	BinaryWriter writer;
 
 
-	const uint32_t head = '!GTW';
-
-
-	writer.write(head);
+	writer.write_string("WTG!");
 
 	m_version = 7;
 	writer.write(m_version);
@@ -115,7 +110,7 @@ void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 }
 void TriggerEditor::writeVariable(BinaryWriter& writer)
 {
-	Variable* variables = m_editorData->variables;
+	VariableData* variables = m_editorData->variables;
 
 
 	uint32_t unknow = 2;
@@ -126,7 +121,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 
 	for(size_t i = 0; i < variables->globals_count ; i++)
 	{
-		VariableData* data = &variables->array[i];
+		Variable* data = &variables->array[i];
 		//名字非gg_开头的变量
 		if (data && strncmp(data->name, "gg_", 3))
 			variable_count++;
@@ -139,7 +134,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 	//将非gg_的变量数据写入
 	for (size_t i = 0; i < variables->globals_count; i++)
 	{
-		VariableData* data = &variables->array[i];
+		Variable* data = &variables->array[i];
 		if (data && strncmp(data->name, "gg_", 3))
 		{
 
@@ -356,7 +351,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	EditorData* worldData = worldEditor->getEditorData();
 
 	char buffer[0x400];
-	std::map<std::string, VariableData*> variableTable;
+	std::map<std::string, Variable*> variableTable;
 
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
@@ -373,7 +368,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
-		VariableData* var = &data->variables->array[i];
+		Variable* var = &data->variables->array[i];
 		std::string name = var->name;
 		std::string type = var->type;
 		std::string base = getBaseType(type);
@@ -439,7 +434,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
-		VariableData* var = &data->variables->array[i];
+		Variable* var = &data->variables->array[i];
 		std::string name = var->name;
 		 
 		if (var->is_array )
@@ -1285,7 +1280,7 @@ endfunction
 		PlayerData* player_data = &worldData->players[i];
 		std::string id = std::to_string(player_data->id);
 		std::string player = "Player(" + id + "), ";
-		writer.write_string("\tcall SetPlayerStartLocation(" + player + id + ")\n");
+		writer.write_string("\tcall SetPlayerStartLocation(" + player + std::to_string(i) + ")\n");
 		if (player_data->is_lock || player_data->race == 0) 
 		{
 			writer.write_string("\tcall ForcePlayerStartLocation(" + player + id + ")\n");
@@ -1481,7 +1476,7 @@ endfunction
 		Unit* unit = &worldData->units->array[i];
 		if (strncmp(unit->name,"sloc",4) == 0) 
 		{
-			writer.write_string("\tcall DefineStartLocation(" + std::to_string(unit->player_id) + ", " + std::to_string(unit->x) + ", " + std::to_string(unit->y) + ")\n");
+			writer.write_string("\tcall DefineStartLocation(" + std::to_string(i) + ", " + std::to_string(unit->x) + ", " + std::to_string(unit->y) + ")\n");
 		}
 	}
 

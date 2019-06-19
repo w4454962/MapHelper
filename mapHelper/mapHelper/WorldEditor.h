@@ -53,9 +53,10 @@ private:
 	int saveScript();
 	int saveArchive();
 
-
+	
 	int customSaveDoodas(const char* path);
 
+	void updateSaveFlags();
 protected: 
 
 	EditorData* editData;

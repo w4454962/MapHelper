@@ -160,6 +160,8 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		triggerEditor->saveScriptTriggers(getTempSavePath());
 		triggerEditor->saveSctipt(getTempSavePath());
 	
+		//更新标签
+		updateSaveFlags();
 	}
 	else
 	{
@@ -169,6 +171,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 
 	saveArchive();
+
 
 		
 	printf("地图所有数据保存完成 总耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
@@ -533,3 +536,26 @@ int WorldEditor::customSaveDoodas(const char* path)
 	return 1;
 }
 
+
+void WorldEditor::updateSaveFlags()
+{
+	auto world_data = getEditorData();
+	if (world_data->is_test)
+		return;
+	auto trigger_data = world_data->triggers;
+	
+	trigger_data->updage_flag = 0;
+	trigger_data->variables->updage_flag = 0;
+	for (size_t i = 0; i < trigger_data->categoriy_count; i++)
+	{
+		Categoriy* categoriy = trigger_data->categories[i];
+		uint32_t trigger_count = categoriy->trigger_count;
+		for (uint32_t n = 0; n < trigger_count; n++)
+		{
+			Trigger* trigger = categoriy->triggers[n];
+			trigger->updage_flag = 0;
+		}
+	}
+
+	world_data->doodas->updage_flag = 0;
+}

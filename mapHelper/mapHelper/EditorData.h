@@ -88,7 +88,8 @@ struct Trigger
 	const char name[0x100];//0x4c
 	uint32_t unknow5;//0x14c
 	struct Categoriy* parent;//0x150 //该触发所在的文件夹
-	const char text[0x1000];//0x154 触发文本注释 这里未知长度 随便填了个size
+	const char text[0x808];//0x154 说明文本
+	uint32_t updage_flag;//0x95c 更新标签 为1时表示有新改动
 
 };
 
@@ -104,7 +105,7 @@ struct Categoriy
 	Trigger** triggers;		//0x134
 };
 
-struct VariableData
+struct Variable
 {
 	uint32_t unknow1;	//0x0 未知 总是1
 	uint32_t is_array;	//0x4
@@ -115,11 +116,13 @@ struct VariableData
 	const char value[0x12e];//0x92
 };
 
-struct Variable
+struct VariableData
 {
 	char unknow1[0x8];		//0x0
 	uint32_t globals_count;//0x8 包含gg_ 触发器 地形预设数据的全局变量
-	VariableData* array; //0xc
+	Variable* array; //0xc
+	uint32_t unknow2;//0x10
+	uint32_t updage_flag;//0x14 更新标签 为1时表示有新改动
 };
 
 struct TriggerData
@@ -130,12 +133,14 @@ struct TriggerData
 	uint32_t categoriy_count; //0x14 
 	Categoriy** categories;	  //0x18
 	uint32_t unknow3;		 //0x1c
-	Variable* variables;    //0x20
+	VariableData* variables;    //0x20
 	char unknow4[0x10]; // 0x24
 	const char global_jass_comment[0x800];//0x34
 	uint32_t unknow5; //0x834
 	uint32_t globals_jass_size; //0x838
 	const char* globals_jass_script;//0x83c
+	char unknow6[0xc];//0x840 
+	uint32_t updage_flag;//0x84c 更新标签 为1时表示有新改动
 };
 
 
@@ -278,6 +283,8 @@ struct UnitData
 	Unit* array;//0x60
 	char unknow2[0x7c]; //0x64
 	SpecialDoodasTable* special_table;//0xe0
+	char unknow3[0x8];//0xe4
+	uint32_t updage_flag;//0xec 更新标签 为1时表示有新改动
 };
 
 
@@ -342,6 +349,8 @@ struct RegionData
 	char unknow[0x60];//0x0
 	uint32_t region_count;//0x60
 	Region** array; //0x64
+	char unknow2[0x4];//0x68
+	uint32_t updage_flag;//0x6C 更新标签 为1时表示有新改动
 };
 
 
@@ -430,4 +439,6 @@ struct EditorData
 	CameraData* cameras; //0x38f4
 	void* objects;//0x38f8
 	SoundData* sounds; //0x38fc
+	char unknow4[0x12c];//0x3900
+	uint32_t is_test;//0x3a2c 当前是否是测试保存模式
 };
