@@ -86,7 +86,7 @@ uintptr_t Helper::onSaveMap()
 	return editor->getAddress(0x0055D175);
 }
 
-void Helper::attatch()
+void Helper::attach()
 {
 
 	if (m_bAttach) return;

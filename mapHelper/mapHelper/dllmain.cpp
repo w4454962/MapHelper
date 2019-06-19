@@ -14,7 +14,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
 		DisableThreadLibraryCalls(hModule);
-		helper->attatch();
+		helper->attach();
 	}
 	else if (ul_reason_for_call == DLL_PROCESS_DETACH)
 	{
