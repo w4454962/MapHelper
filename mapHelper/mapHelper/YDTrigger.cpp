@@ -1283,7 +1283,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 
 			if (branch->getActionId() < 2) //0是事件区 1是参数区
 			{
-				return getLocal(parent->getParentNode(), name, type);
+				return getLocal(parent, name, type);
 			}
 			else
 			{//否则是动作区
