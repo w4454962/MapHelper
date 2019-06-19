@@ -1740,7 +1740,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 				{
 					iftext += " and ";
 				}
-				iftext += convertAction(child, pre_actions, true);
+				iftext += "(" + convertAction(child, pre_actions, true) + ")";
 				break;
 			}
 			case Action::Type::action:
@@ -1845,7 +1845,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		int i = 0;
 		for (auto& child : list)
 		{
-			iftext += convertAction(child, pre_actions, true);
+			iftext += "(" + convertAction(child, pre_actions, true) + ")";
 			if (++i < list.size())
 			{
 				iftext += " and ";

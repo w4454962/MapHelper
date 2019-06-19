@@ -33,16 +33,31 @@ std::string string_replaced(const std::string& source, const std::string& from, 
 
 void convert_name(std::string& name)
 {
-	auto begin = name.begin();
-	for (; begin != name.end(); ++begin)
+
+	if (name.length() == 0)
+		return;
+
+
+	//空格结尾的删掉
+	for (int i = name.length(); i > 0; --i)
 	{
-		uint8_t c = *begin;
-		if (!isalnum(c) && c != '_')
-			*begin = '_';
+		if (name[i - 1] == ' ')
+			name[i - 1] = '\0';
+		else
+			break;
+			
+	}
+
+	for (int i = 0; i < name.length(); ++i)
+	{
+		uint8_t c = name[i];
+		if (c && !isalnum(c) && c != '_')
+			name[i] = '_';
 	}
 	//如果末尾是以下划线结尾的 要加上u
 	if (name.length() > 0 && name[name.length() - 1] == '_')
 	{
 		name += 'u';
 	}
+	name = name.c_str();
 }
