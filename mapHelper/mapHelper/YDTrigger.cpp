@@ -409,7 +409,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				onRegisterEvent(param_text,child);
 				param_text += editor->spaces[stack];
 				
-				param_text += "call " + child->getName() + "(ydl_trigger";
+				param_text += "call " + editor->getBaseName(child) + "(ydl_trigger";
 
 				for (size_t k = 0; k < childAction->param_count; k++)
 				{

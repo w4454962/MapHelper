@@ -1568,7 +1568,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 				m_initTriggerTable[trigger] = true;
 				continue;
 			}
-			events += "\tcall " + name + "(" + trigger_variable_name;
+			events += "\tcall " + getBaseName(node) + "(" + trigger_variable_name;
 
 			for (size_t k = 0; k < action->param_count; k++)
 			{
@@ -2279,15 +2279,8 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 			output += ", ";
 		}
 	}
-	std::string name = "_" + node->getName() + "_ScriptName";
 
-	std::string func_name = WorldEditor::getInstance()->getConfigData("TriggerActions", name, 0);
-
-	if (func_name.length() == 0)
-	{
-		func_name = node->getName();
-	}
-	return (add_call ? "call " : "") + func_name + "(" + output + ")";
+	return (add_call ? "call " : "") + getBaseName(node) + "(" + output + ")";
 }
 
 
@@ -2302,6 +2295,27 @@ std::string TriggerEditor::getBaseType(const std::string& type) const
 		}
 	}
 	return type;
+}
+
+std::string TriggerEditor::getBaseName(ActionNodePtr node)
+{
+	std::string name = node->getName();
+	std::string key = "_" + name + "_ScriptName";
+	std::string parent_key;
+	if (node->getActionType() == Action::event)
+	{
+		parent_key = "TriggerEvents";
+	}
+	else 
+	{ 
+		parent_key = "TriggerActions";
+	}
+	std::string func_name = WorldEditor::getInstance()->getConfigData(parent_key, key, 0);
+	if (func_name.length() > 0)
+	{
+		return func_name;
+	}
+	return name;
 }
 
 std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> trigger_name) const {

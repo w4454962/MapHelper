@@ -29,6 +29,8 @@ public:
 	std::string convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call);
 	
 	std::string getBaseType(const std::string& type) const;
+	std::string getBaseName(ActionNodePtr node);
+
 	std::string generate_function_name(std::shared_ptr<std::string> trigger_name) const;
 
 
