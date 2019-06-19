@@ -8,7 +8,7 @@
 #include <regex>
 
 TriggerEditor::TriggerEditor()
-	:m_editorData(NULL),
+	:m_editorData(nullptr),
 	m_version(7)
 { 
 	space_stack = 0;
@@ -2359,7 +2359,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 			//Ïú»Ù¶¯×÷ÈÝÆ÷
 			const auto SMemFreeAddr = reinterpret_cast<uintptr_t>(GetProcAddress(
 				GetModuleHandleW(L"Storm.dll"), reinterpret_cast<const char*>(SMemFreeIndex)));
-			std_call<BOOL>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);
+				std_call<BOOL>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);	
 		}
 		trigger->number = 0;
 		trigger->line_count = 0;
