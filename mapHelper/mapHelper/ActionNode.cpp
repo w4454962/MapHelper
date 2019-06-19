@@ -143,6 +143,13 @@ ActionNodePtr ActionNode::getBranchNode()
 			case "YDWERegisterTriggerMultiple"s_hash:
 			case "AndMultiple"s_hash:
 			case "OrMultiple"s_hash:
+			case "DzTriggerRegisterMouseEventMultiple"s_hash:
+			case "DzTriggerRegisterKeyEventMultiple"s_hash:
+			case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+			case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+			case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+			case "DzFrameSetUpdateCallbackMultiple"s_hash:
+			case "DzFrameSetScriptMultiple"s_hash:
 				isBreak = true; break;
 			default:
 				break;

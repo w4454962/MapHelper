@@ -1868,7 +1868,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		size_t i = 0;
 		for (auto& child : list)
 		{
-			iftext += convertAction(child, pre_actions, true);
+			iftext += "(" + convertAction(child, pre_actions, true) + ")";
 			if (++i < list.size())
 			{
 				iftext += " or ";
