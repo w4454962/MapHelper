@@ -22,16 +22,16 @@ public:
 	static YDTrigger* getInstance();
 
 	//引入头文件
-	void onGlobals(BinaryWriter& writer);
-	void onEndGlobals(BinaryWriter& writer);
+	static void onGlobals(BinaryWriter& a_writer);
+	static void onEndGlobals(BinaryWriter& a_writer);
 
 	//实现任意玩家 跟触发休眠
-	bool onRegisterEvent(std::string& events,ActionNodePtr node);
-	void onRegisterEvent2(std::string& events,ActionNodePtr node);
+	bool onRegisterEvent(std::string& a_events,ActionNodePtr node);
+	void onRegisterEvent2(std::string& a_events,ActionNodePtr node);
 
 	void onRegisterTrigger(std::string& output, const std::string& trigger_name, const std::string& var_name);
 	//每条动作生成时
-	bool onActionToJass(std::string& output,ActionNodePtr node, std::string& pre_actions, bool nested);
+	bool onActionToJass(std::string& a_output,ActionNodePtr a_node, std::string& a_pre_actions, bool a_nested);
 
 	//每条参数生成时
 	bool onParamterToJass(Parameter* parameter, ActionNodePtr node, std::string& actions, std::string& pre_actions, bool nested);
@@ -46,7 +46,7 @@ public:
 	//判断触发是否休眠 true 为休眠状态
 	bool hasDisableRegister(Trigger* trigger);
 
-	bool isEnable();
+	bool isEnable() const;
 private:
 
 	
