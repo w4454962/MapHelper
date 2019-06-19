@@ -396,6 +396,23 @@ struct SteamData
 	const char name[0x64];//0x8
 };//0x6c
 
+struct TriggerString
+{
+	uint32_t index;//0x0
+	uint32_t unknow1;//0x4
+	uint32_t unknow2;//0x8
+	uint32_t unknow3;//0xc
+	const char* str;//0x10
+	char unknow[0x130];//0x14
+};//size 0x144
+
+struct TriggerStringData
+{
+	uint32_t unknow;//0x0
+	uint32_t count;//0x4
+	TriggerString* array;//0x8
+};
+
 struct EditorData
 {
 	uint32_t map_version;//0x0 地图版本
@@ -439,6 +456,8 @@ struct EditorData
 	CameraData* cameras; //0x38f4
 	void* objects;//0x38f8
 	SoundData* sounds; //0x38fc
-	char unknow4[0x12c];//0x3900
+	TriggerStringData* strings;//0x3900
+
+	char unknow4[0x128];//0x3904
 	uint32_t is_test;//0x3a2c 当前是否是测试保存模式
 };

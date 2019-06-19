@@ -53,7 +53,7 @@ private:
 	int saveScript();
 	int saveArchive();
 
-	
+	int customSaveWts(const char* path);
 	int customSaveDoodas(const char* path);
 
 	void updateSaveFlags();
