@@ -1283,7 +1283,7 @@ endfunction
 	for (size_t i = 0; i < worldData->player_count; i++)
 	{
 		PlayerData* player_data = &worldData->players[i];
-		std::string id = std::to_string(i);
+		std::string id = std::to_string(player_data->id);
 		std::string player = "Player(" + id + "), ";
 		writer.write_string("\tcall SetPlayerStartLocation(" + player + id + ")\n");
 		if (player_data->is_lock || player_data->race == 0) 
@@ -1302,7 +1302,7 @@ endfunction
 
 			if (player_data->controller_id == 0 && data->controller_id == 1) 
 			{
-				writer.write_string("\tcall SetPlayerAlliance(" + player + "Player(" + std::to_string(a) + "), ALLIANCE_RESCUABLE, true)\n");
+				writer.write_string("\tcall SetPlayerAlliance(" + player + "Player(" + std::to_string(data->id) + "), ALLIANCE_RESCUABLE, true)\n");
 			}
 		}
 
@@ -1331,8 +1331,8 @@ endfunction
 		for (size_t a = 0; a < worldData->player_count; a++) {
 			PlayerData* player = &worldData->players[a];
 
-			if (data->player_masks & (1 << a)) {
-				std::string id = std::to_string(a);
+			if (data->player_masks & (1 << player->id)) {
+				std::string id = std::to_string(player->id);
 
 				writer.write_string("\tcall SetPlayerTeam(Player(" + id + "), " + index + ")\n");
 
@@ -1342,8 +1342,8 @@ endfunction
 
 				for (size_t b = 0; b < worldData->player_count; b++) {
 					PlayerData* p = &worldData->players[b];
-					if (data->player_masks & (1 << b) && a != b) {
-						std::string id2 = std::to_string(b);
+					if (data->player_masks & (1 << p->id) && player->id != p->id) {
+						std::string id2 = std::to_string(p->id);
 						if (allied) {
 							post_state += "\tcall SetPlayerAllianceStateAllyBJ(Player(" + id + "), Player(" + id2 + "), true)\n";
 						}
@@ -1377,23 +1377,26 @@ endfunction
 
 	for (size_t i = 0; i < worldData->player_count; i++) {
 		PlayerData* player = &worldData->players[i];
-
+		uint32_t id = player->id;
 		std::string player_text;
 
 		int current_index = 0;
 		for (size_t j = 0; j < worldData->player_count; j++) {
 			PlayerData* target = &worldData->players[j];
-			if (player->low_level & (1 << j) && i != j) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(i) + ", " + std::to_string(current_index) + ", " + std::to_string(j) + ", MAP_LOC_PRIO_LOW)\n";
+			uint32_t id2 = target->id;
+			if (player->low_level & (1 << id2) && id != id2) {
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(id) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_LOW)\n";
 				current_index++;
 			}
-			else if (player->height_level & (1 << j) && i != j) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(i) + ", " + std::to_string(current_index) + ", " + std::to_string(j) + ", MAP_LOC_PRIO_HIGH)\n";
+			else if (player->height_level & (1 << id2) && id != id2) {
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(id) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_HIGH)\n";
 				current_index++;
 			}
 		}
-
-		player_text = "\tcall SetStartLocPrioCount(" + std::to_string(i) + ", " + std::to_string(current_index) + ")\n" + player_text;
+		if (current_index > 0)
+		{
+			writer.write_string("\tcall SetStartLocPrioCount(" + std::to_string(id) + ", " + std::to_string(current_index) + ")\n");
+		}
 		writer.write_string(player_text);
 	}
 	writer.write_string("endfunction\n");
@@ -1468,7 +1471,7 @@ endfunction
 	writer.write_string("\tcall SetMapName(\"" + std::string(worldData->map_name) + "\")\n");
 	writer.write_string("\tcall SetMapDescription(\"" + std::string(worldData->description) + "\")\n");
 	writer.write_string("\tcall SetPlayers(" + std::to_string(worldData->player_count) + ")\n");
-	writer.write_string("\tcall SetTeams(" + std::to_string(worldData->steam_count) + ")\n");
+	writer.write_string("\tcall SetTeams(" + std::to_string(worldData->player_count) + ")\n");
 	writer.write_string("\tcall SetGamePlacement(MAP_PLACEMENT_TEAMS_TOGETHER)\n");
 
 	writer.write_string("\n");
@@ -2084,16 +2087,20 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			if (is_import_path || getBaseType(type) == "string") {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
 			}
-			if (type == "abilcode" || // ToDo this seems like a hack?
-				type == "buffcode" ||
-				type == "destructablecode" ||
-				type == "itemcode" ||
-				type == "ordercode" ||
-				type == "techcode" ||
-				type == "unitcode") {
+			switch (hash_(type.c_str()))
+			{
+			case "abilcode"s_hash:
+			case "buffcode"s_hash:
+			case "destructablecode"s_hash:
+			case "itemcode"s_hash:
+			case "ordercode"s_hash:
+			case "techcode"s_hash:
+			case "unitcode"s_hash:
 				return "'" + value + "'";
+			
+			default:
+				return value;
 			}
-			return value;
 		}
 	default: 
 		break;

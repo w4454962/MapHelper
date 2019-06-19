@@ -370,7 +370,7 @@ struct CameraData
 
 struct PlayerData
 {
-	uint32_t internal_number;//0x0
+	uint32_t id;//0x0
 	uint32_t controller_id;//0x4 控制者id  0无 1玩家 2电脑 3中立 4可营救的
 	uint32_t race;//0x8 种族 
 	uint32_t is_lock;//0xc 是否锁定开始点
