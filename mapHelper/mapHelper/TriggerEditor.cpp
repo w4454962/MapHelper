@@ -342,7 +342,7 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 void TriggerEditor::saveSctipt(const char* path)
 {
 
-	printf("自定义保存wct文件\n");
+	printf("自定义保存jass文件\n");
 
 	clock_t start = clock();
 
@@ -397,7 +397,7 @@ void TriggerEditor::saveSctipt(const char* path)
 					value = it->second->value;
 				if (value.length() == 0)
 				{
-					if (base == "integer")
+					if (base == "integer" || base == "real")
 					{
 						value = "0";
 					}
@@ -1248,7 +1248,7 @@ endfunction
 
 				std::string trigger_variable_name = "gg_trg_" + trigger_name;
 
-				initions += "\tcall ConditionalTriggerExecute(" + trigger_variable_name + ")";
+				initions += "\tcall ConditionalTriggerExecute(" + trigger_variable_name + ")\n";
 				
 			}
 
@@ -1640,6 +1640,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	std::string output;
 
 	bool is_loopa = false;
+	bool flag = false;
 
 	Parameter** parameters = action->parameters;
 
@@ -1910,6 +1911,88 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		events += ")\n";
 
 		return events;
+	}
+
+	case "DzTriggerRegisterMouseEventMultiple"s_hash:
+	case "DzTriggerRegisterKeyEventMultiple"s_hash:
+	case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+	case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+	case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+		flag = true;
+	case "DzFrameSetUpdateCallbackMultiple"s_hash:
+	case "DzFrameSetScriptMultiple"s_hash:
+	{
+		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+
+		std::string name = node->getName();
+
+
+		output += "if GetLocalPlayer() == ";
+		output += convertParameter(parameters[0], node, pre_actions);
+		output += " then\n";
+		output += spaces[space_stack + 1];
+		output += "call " + name.substr(0, name.length() - 8) + "ByCode(";
+		if (flag)
+		{
+			output += "null,";
+		}
+		for (size_t k = 1; k < action->param_count; k++)
+		{
+			Parameter* param = action->parameters[k];
+			if (strcmp(param->type_name, "code") != 0)
+			{
+				output += convertParameter(param, node, pre_actions);
+				output += ",";
+			}
+		}
+		if (flag)
+		{
+			output += "false,";
+		}
+
+		output += " function " + function_name;
+		
+		if (node->getNameId() == "DzFrameSetScriptMultiple"s_hash)
+		{
+			output += ",false";
+		}
+
+		output += ")\n";
+		output += spaces[space_stack];
+		output += "endif";
+
+		std::string toto;
+
+		int stack = space_stack;
+		space_stack = 1;
+
+		node->getChildNodeList(list);
+
+		for (auto& child : list)
+		{
+			if (child->getActionId() == 1)
+			{
+				toto += spaces[space_stack];
+				toto += convertAction(child, pre_actions, false) + "\n";
+			}
+		
+		}
+
+		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
+		if (m_ydweTrigger->isEnable())
+		{
+			m_ydweTrigger->onActionsToFuncBegin(pre_actions, node);
+			pre_actions += toto;
+			m_ydweTrigger->onActionsToFuncEnd(pre_actions, node);
+		}
+		else
+		{
+			pre_actions += toto;
+		}
+
+		pre_actions += "\nendfunction\n";
+		space_stack = stack;
+		return output;
 	}
 
 	}

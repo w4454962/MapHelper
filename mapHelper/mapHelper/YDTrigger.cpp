@@ -141,7 +141,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		for (auto& child : list)
 		{
 			output += editor->spaces[stack];
-			//循环里的子动作 沿用外面相同的父节点
 			output += editor->convertAction(child, pre_actions, false) + "\n";
 		}
 
@@ -149,6 +148,18 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += "set " + variable + " = " + variable + " + 1\n";
 		output += editor->spaces[--stack];
 		output += "endloop\n";
+		return true;
+	}
+	case "YDWERegionMultiple"s_hash:
+	{
+
+		node->getChildNodeList(list);
+		for (auto& child : list)
+		{
+			output += editor->spaces[stack];
+			output += editor->convertAction(child, pre_actions, false) + "\n";
+		}
+
 		return true;
 	}
 	case "YDWEEnumUnitsInRangeMultiple"s_hash:
