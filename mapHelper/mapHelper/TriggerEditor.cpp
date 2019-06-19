@@ -2357,9 +2357,9 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 		{
 #define SMemFreeIndex 403
 			//Ïú»Ù¶¯×÷ÈÝÆ÷
-			const auto SMemFreeAddr = reinterpret_cast<uintptr_t>(::GetProcAddress(::GetModuleHandleW(L"Storm.dll"),
-			                                                         reinterpret_cast<const char*>(SMemFreeIndex)));
-			std_call<int>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);
+			const auto SMemFreeAddr = reinterpret_cast<uintptr_t>(GetProcAddress(
+				GetModuleHandleW(L"Storm.dll"), reinterpret_cast<const char*>(SMemFreeIndex)));
+			std_call<BOOL>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);
 		}
 		trigger->number = 0;
 		trigger->line_count = 0;
