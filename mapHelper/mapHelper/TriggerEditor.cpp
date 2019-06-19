@@ -67,7 +67,7 @@ void TriggerEditor::saveTriggers(const char* path)
 	BinaryWriter writer;
 
 
-	uint32_t head = '!GTW';
+	const uint32_t head = '!GTW';
 
 
 	writer.write(head);
@@ -90,19 +90,19 @@ void TriggerEditor::saveTriggers(const char* path)
 
 void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 {
-	Categoriy** categories = m_editorData->categories;
+	auto categories = m_editorData->categories;
 
-	uint32_t count = m_editorData->categoriy_count;
+	const auto count = m_editorData->categoriy_count;
 
 	writer.write(count);
 
 	for (size_t i = 0; i < count; i++)
 	{
-		Categoriy* categoriy = m_editorData->categories[i];
+		auto categoriy = m_editorData->categories[i];
 		
 		writer.write(categoriy->categoriy_id);
 
-		std::string categoriy_name = std::string(categoriy->categoriy_name);
+		auto categoriy_name = std::string(categoriy->categoriy_name);
 
 		writer.write_c_string(categoriy_name);
 
