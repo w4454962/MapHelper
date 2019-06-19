@@ -59,7 +59,7 @@ std::shared_ptr<std::string> ActionNode::getTriggerNamePtr()
 	return m_trigger_name;
 }
 
-std::string ActionNode::getName()
+std::string ActionNode::getName() const
 {
 	if (m_type == Type::trigger && m_trigger)
 	{
@@ -69,9 +69,10 @@ std::string ActionNode::getName()
 	{
 		return m_action->name;
 	}
+	return std::string();
 }
 
-uint32_t ActionNode::getNameId()
+uint32_t ActionNode::getNameId() const
 {
 	return m_nameId;
 }
@@ -116,7 +117,7 @@ ActionNodePtr ActionNode::getRootNode()
 		}
 		root = root->m_parent;
 	}
-	return ActionNodePtr();
+	return nullptr;
 }
 
 
