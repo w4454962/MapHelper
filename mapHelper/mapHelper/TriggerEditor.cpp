@@ -2055,7 +2055,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 	case Parameter::Type::variable:
 		{
 			
-			std::string output = value;
+			auto output = value;
 
 			if (!output._Starts_with("gg_")) 
 			{
@@ -2075,7 +2075,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 		{
 			
 			uint32_t is_import_path = 0;
-			std::string type = parameter->type_name;
+			auto type{ std::string (parameter->type_name)};
 
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
@@ -2108,8 +2108,8 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 {
 	std::string output;
 
-	Action* action = node->getAction();
-	Parameter** parameters = action->parameters;
+	auto action = node->getAction();
+	auto parameters = action->parameters;
 
 	switch (hash_(action->name))
 	{
@@ -2180,7 +2180,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string name = node->getName();
+		auto name = node->getName();
 
 
 		output += "call " + name + "(";
@@ -2189,7 +2189,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 		for (size_t k = 0; k < action->param_count; k++)
 		{
-			Parameter* param = action->parameters[k];
+			auto param = action->parameters[k];
 			if (strcmp(param->type_name, "code") != 0)
 			{
 				output += convertParameter(param, node, pre_actions);
@@ -2204,7 +2204,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		{
 			output += " function " + function_name + ")\n";
 
-			std::string tttt = convertParameter(parameters[codeIndex], node, pre_actions);
+			auto tttt = convertParameter(parameters[codeIndex], node, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
 			pre_actions += "\tcall " + tttt + "\n";
@@ -2217,16 +2217,16 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 	case "GetBooleanAnd"s_hash:
 	{
 
-		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
-		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
+		auto first_parameter = convertParameter(parameters[0], node, pre_actions);
+		auto second_parameter = convertParameter(parameters[1], node, pre_actions);
 
 		return "(" + first_parameter + " and " + second_parameter + ")";
 	}
 
 	case "GetBooleanOr"s_hash:
 	{
-		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
-		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
+		auto first_parameter = convertParameter(parameters[0], node, pre_actions);
+		auto second_parameter = convertParameter(parameters[1], node, pre_actions);
 
 		return "(" + first_parameter + " or " + second_parameter + ")";
 		
@@ -2250,15 +2250,15 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		output += convertParameter(parameters[2], node, pre_actions);
 		return output;
 	}
-	size_t size = action->param_count;
+	auto size = action->param_count;
 
 	for (size_t k = 0; k < size; k++) {
 		auto param = parameters[k];
 
-		const std::string child_type = param->type_name;
+		const auto child_type = std::string(param->type_name);
 
 		if (child_type == "boolexpr") {
-			const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+			const auto function_name = generate_function_name(node->getTriggerNamePtr());
 
 			auto tttt = convertParameter(param, node, pre_actions);
 
@@ -2296,8 +2296,8 @@ std::string TriggerEditor::getBaseType(const std::string& type) const
 
 std::string TriggerEditor::getBaseName(ActionNodePtr node)
 {
-	std::string name = node->getName();
-	std::string key = "_" + name + "_ScriptName";
+	auto name = node->getName();
+	const auto key{ std::string("_" + name + "_ScriptName") };
 	std::string parent_key;
 	if (node->getActionType() == Action::event)
 	{
@@ -2307,7 +2307,7 @@ std::string TriggerEditor::getBaseName(ActionNodePtr node)
 	{ 
 		parent_key = "TriggerActions";
 	}
-	std::string func_name = WorldEditor::getInstance()->getConfigData(parent_key, key, 0);
+	auto func_name = WorldEditor::getInstance()->getConfigData(parent_key, key, 0);
 	if (func_name.length() > 0)
 	{
 		return func_name;
@@ -2316,7 +2316,7 @@ std::string TriggerEditor::getBaseName(ActionNodePtr node)
 }
 
 std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> trigger_name) const {
-	auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	const auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	return "Trig_" + *trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
 }
 
@@ -2326,9 +2326,9 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {
 	if (trigger->is_custom_srcipt || trigger->is_comment)
 		return false;
-	WorldEditor* world = WorldEditor::getInstance();
+	auto world = WorldEditor::getInstance();
 
-	std::string script = convertTrigger(trigger);
+	const auto script = convertTrigger(trigger);
 	
 	if (m_initTriggerTable.find(trigger) != m_initTriggerTable.end())
 	{
@@ -2346,7 +2346,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 		//遍历销毁所有动作
 		for (size_t i = 0; i < trigger->line_count; i++)
 		{
-			Action* action = trigger->actions[i];
+			const auto action = trigger->actions[i];
 			if (action)
 			{
 				action->table->destroy(action, 1);
@@ -2355,9 +2355,11 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 
 		if (trigger->actions)
 		{
+#define SMemFreeIndex 403
 			//销毁动作容器
-			uint32_t addr = (uintptr_t)::GetProcAddress(::GetModuleHandleW(L"Storm.dll"), (const char*)403);
-			std_call<int>(addr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);
+			const auto SMemFreeAddr = reinterpret_cast<uintptr_t>(::GetProcAddress(::GetModuleHandleW(L"Storm.dll"),
+			                                                         reinterpret_cast<const char*>(SMemFreeIndex)));
+			std_call<int>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);
 		}
 		trigger->number = 0;
 		trigger->line_count = 0;
