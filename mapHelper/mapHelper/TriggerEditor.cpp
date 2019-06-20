@@ -1275,21 +1275,36 @@ endfunction
 	const std::vector<std::string> players = { "MAP_CONTROL_USER", "MAP_CONTROL_COMPUTER", "MAP_CONTROL_NEUTRAL", "MAP_CONTROL_RESCUABLE" };
 	const std::vector<std::string> races = { "RACE_PREF_RANDOM", "RACE_PREF_HUMAN", "RACE_PREF_ORC", "RACE_PREF_UNDEAD", "RACE_PREF_NIGHTELF" };
 
+
+	std::vector<uint32_t> player_to_startloc(16,16);
+
 	for (size_t i = 0; i < worldData->player_count; i++)
 	{
 		PlayerData* player_data = &worldData->players[i];
 		std::string id = std::to_string(player_data->id);
 		std::string player = "Player(" + id + "), ";
 		writer.write_string("\tcall SetPlayerStartLocation(" + player + std::to_string(i) + ")\n");
+
+		player_to_startloc[player_data->id % 16] = i;
+
 		if (player_data->is_lock || player_data->race == 0) 
 		{
-			writer.write_string("\tcall ForcePlayerStartLocation(" + player + id + ")\n");
+			writer.write_string("\tcall ForcePlayerStartLocation(" + player + std::to_string(i) + ")\n");
 		}
 
 		writer.write_string("\tcall SetPlayerColor(" + player + "ConvertPlayerColor(" + id + "))\n");
 		writer.write_string("\tcall SetPlayerRacePreference(" + player + races[static_cast<int>(player_data->race)] + ")\n");
-		writer.write_string("\tcall SetPlayerRaceSelectable(" + player + "true" + ")\n");
-		writer.write_string("\tcall SetPlayerController(" + player + players[static_cast<int>(player_data->controller_id)] + ")\n");
+
+		std::string selectable = "false";
+		if (player_data->race == 0)
+		{
+			selectable = "true";
+		}
+		writer.write_string("\tcall SetPlayerRaceSelectable(" + player + selectable + ")\n");
+		if (player_data->controller_id > 0)
+		{
+			writer.write_string("\tcall SetPlayerController(" + player + players[static_cast<int>(player_data->controller_id - 1)] + ")\n");
+		}
 
 		for (size_t a = 0; a < worldData->player_count; a++)
 		{
@@ -1373,6 +1388,8 @@ endfunction
 	for (size_t i = 0; i < worldData->player_count; i++) {
 		PlayerData* player = &worldData->players[i];
 		uint32_t id = player->id;
+		uint32_t slot = player_to_startloc[id];
+
 		std::string player_text;
 
 		int current_index = 0;
@@ -1380,17 +1397,17 @@ endfunction
 			PlayerData* target = &worldData->players[j];
 			uint32_t id2 = target->id;
 			if (player->low_level & (1 << id2) && id != id2) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(id) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_LOW)\n";
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(slot) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_LOW)\n";
 				current_index++;
 			}
 			else if (player->height_level & (1 << id2) && id != id2) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(id) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_HIGH)\n";
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(slot) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_HIGH)\n";
 				current_index++;
 			}
 		}
 		if (current_index > 0)
 		{
-			writer.write_string("\tcall SetStartLocPrioCount(" + std::to_string(id) + ", " + std::to_string(current_index) + ")\n");
+			writer.write_string("\tcall SetStartLocPrioCount(" + std::to_string(slot) + ", " + std::to_string(current_index) + ")\n");
 		}
 		writer.write_string(player_text);
 	}
@@ -1476,7 +1493,11 @@ endfunction
 		Unit* unit = &worldData->units->array[i];
 		if (strncmp(unit->name,"sloc",4) == 0) 
 		{
-			writer.write_string("\tcall DefineStartLocation(" + std::to_string(i) + ", " + std::to_string(unit->x) + ", " + std::to_string(unit->y) + ")\n");
+			uint32_t slot = player_to_startloc[unit->player_id % 16];
+			if (slot < 16)
+			{
+				writer.write_string("\tcall DefineStartLocation(" + std::to_string(slot) + ", " + std::to_string(unit->x) + ", " + std::to_string(unit->y) + ")\n");
+			}
 		}
 	}
 
