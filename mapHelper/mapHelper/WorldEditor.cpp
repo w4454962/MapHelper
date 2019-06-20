@@ -491,6 +491,7 @@ int WorldEditor::customSaveWts(const char* path)
 	out.close();
 	printf("war3map.wts 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
+	return 1;
 }
 
 
