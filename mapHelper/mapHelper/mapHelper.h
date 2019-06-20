@@ -22,7 +22,7 @@ public:
 	Helper();
 	~Helper();
 	
-	static Helper* getInstance();
+	//static Helper* getInstance();
 
 	void enableConsole();
 
@@ -34,7 +34,7 @@ public:
 private: 
 
 	//保存地图
-	uintptr_t onSaveMap();
+	static uintptr_t onSaveMap();
 
 	//选择转换模式
 	int onSelectConvartMode();
@@ -50,3 +50,5 @@ protected:
 
 	fs::path m_configPath;
 };
+extern Helper g_CHelper;
+Helper& get_helper();

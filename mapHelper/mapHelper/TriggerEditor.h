@@ -11,7 +11,7 @@ public:
 	TriggerEditor();
 	~TriggerEditor();
 
-	static TriggerEditor* getInstance();
+	//static TriggerEditor* getInstance();
 
 	void loadTriggers(TriggerData* data);
 	void loadTriggerConfig(TriggerConfigData* data);
@@ -66,3 +66,5 @@ public:
 	std::string spaces[200];
 	int space_stack;
 };
+extern TriggerEditor g_trigger_editor;
+TriggerEditor& get_trigger_editor();

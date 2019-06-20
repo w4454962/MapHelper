@@ -12,7 +12,7 @@ public:
 	WorldEditor();
 	~WorldEditor();
 	
-	static WorldEditor* getInstance();
+	//static WorldEditor* getInstance();
 
 	static uintptr_t getAddress(uintptr_t addr);
 
@@ -67,3 +67,5 @@ protected:
 	bool m_bInit;
 
 };
+extern WorldEditor g_c_world_editor;
+WorldEditor& get_world_editor();

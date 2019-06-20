@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <iostream>
 #include <regex>
+#include "singleton.h"
 
 TriggerEditor::TriggerEditor()
 	:m_editorData(nullptr),
@@ -23,13 +24,13 @@ TriggerEditor::TriggerEditor()
 }
 
 TriggerEditor::~TriggerEditor()
-{ }
+= default;
 
-TriggerEditor* TriggerEditor::getInstance()
-{
-	static TriggerEditor instance; 
-	return &instance;
-}
+//TriggerEditor* TriggerEditor::getInstance()
+//{
+//	static TriggerEditor instance; 
+//	return &instance;
+//}
 
 void TriggerEditor::loadTriggers(TriggerData* data)
 {
@@ -278,8 +279,10 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 
 }
 
-
-
+TriggerEditor& get_trigger_editor()
+{
+	return base::singleton_nonthreadsafe<TriggerEditor>::instance();
+}
 
 
 void TriggerEditor::saveScriptTriggers(const char* path)
@@ -345,8 +348,8 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	BinaryWriter writer,writer2;
 
-	auto worldEditor = WorldEditor::getInstance();
-	auto worldData = worldEditor->getEditorData();
+	auto& worldEditor = get_world_editor();
+	auto worldData = worldEditor.getEditorData();
 
 	char buffer[0x400];
 	std::map<std::string, Variable*> variableTable;
@@ -771,8 +774,8 @@ endfunction
 			std::to_string(sound->fade_out_rate) + ", " +
 			"\"" + sound->effect + "\"" +
 			")\n");
-
-		int duration = WorldEditor::getInstance()->getSoundDuration(sound->file);
+		auto& v_we = get_world_editor();
+		int duration = v_we.getSoundDuration(sound->file);
 		if (duration > 0)
 		{
 			
@@ -1016,14 +1019,14 @@ endfunction
 			
 			if (skill->is_enable)
 			{
-				worldEditor->getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderon", objectValue);
+				worldEditor.getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderon", objectValue);
 				if (objectValue.empty()) 
-					worldEditor->getSkillObjectData(*(uint32_t*)(skill->name), 0, "Order", objectValue);
+					worldEditor.getSkillObjectData(*(uint32_t*)(skill->name), 0, "Order", objectValue);
 				writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + objectValue + "\")\n");
 			} 
 			else 
 			{
-				worldEditor->getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderoff", objectValue);
+				worldEditor.getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderoff", objectValue);
 				if (!objectValue.empty()) 
 					writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + objectValue + "\")\n");
 			}
@@ -1439,18 +1442,18 @@ endfunction
 	
 	const std::string tileset = std::string((char*)&worldData->tileset,1);
 	
-	const std::string terrain_lights = string_replaced(worldEditor->getConfigData("TerrainLights", tileset), "\\", "\\\\");
-	const std::string unit_lights = string_replaced(worldEditor->getConfigData("UnitLights",tileset), "\\", "\\\\");
+	const std::string terrain_lights = string_replaced(worldEditor.getConfigData("TerrainLights", tileset), "\\", "\\\\");
+	const std::string unit_lights = string_replaced(worldEditor.getConfigData("UnitLights",tileset), "\\", "\\\\");
 	
 	writer.write_string("\tcall SetDayNightModels(\"" + terrain_lights + "\", \"" + unit_lights + "\")\n");
 	
-	const std::string sound_environment = worldEditor->getConfigData("SoundEnvironment",tileset);
+	const std::string sound_environment = worldEditor.getConfigData("SoundEnvironment",tileset);
 	writer.write_string("\tcall NewSoundEnvironment(\"" + sound_environment + "\")\n");
 	
-	const std::string ambient_day = worldEditor->getConfigData("DayAmbience", tileset);
+	const std::string ambient_day = worldEditor.getConfigData("DayAmbience", tileset);
 	writer.write_string("\tcall SetAmbientDaySound(\"" + ambient_day + "\")\n");
 	
-	const std::string ambient_night = worldEditor->getConfigData("NightAmbience", tileset);
+	const std::string ambient_night = worldEditor.getConfigData("NightAmbience", tileset);
 	writer.write_string("\tcall SetAmbientNightSound(\"" + ambient_night + "\")\n");
 	
 	writer.write_string("\tcall SetMapMusic(\"Music\", true, 0)\n");
@@ -2059,13 +2062,13 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 		return "";
 	case Parameter::Type::preset: 
 		{
-			auto world = WorldEditor::getInstance();
-			const std::string preset_type = world->getConfigData("TriggerParams", value, 1);
+			auto& world = get_world_editor();
+			const auto preset_type = world.getConfigData("TriggerParams", value, 1);
 
 			if (getBaseType(preset_type) == "string") {
-				return string_replaced(world->getConfigData("TriggerParams",value, 2), "`", "\"");
+				return string_replaced(world.getConfigData("TriggerParams",value, 2), "`", "\"");
 			}
-			return world->getConfigData("TriggerParams", value, 2);
+			return world.getConfigData("TriggerParams", value, 2);
 		}
 	case Parameter::Type::function:
 		return value + "()";
@@ -2328,7 +2331,8 @@ std::string TriggerEditor::getBaseName(ActionNodePtr node)
 	{ 
 		parent_key = "TriggerActions";
 	}
-	auto func_name = WorldEditor::getInstance()->getConfigData(parent_key, key, 0);
+	auto& v_we = get_world_editor();
+	auto func_name = v_we.getConfigData(parent_key, key, 0);
 	if (func_name.length() > 0)
 	{
 		return func_name;
@@ -2347,7 +2351,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {
 	if (trigger->is_custom_srcipt || trigger->is_comment)
 		return false;
-	auto world = WorldEditor::getInstance();
+	auto& world = get_world_editor();
 
 	const auto script = convertTrigger(trigger);
 	
@@ -2360,7 +2364,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 	trigger->is_custom_srcipt = 1;
 
 	//写入字符串到触发器中
-	this_call<int>(world->getAddress(0x005CB280), trigger, script.c_str(), script.size());
+	this_call<int>(world.getAddress(0x005CB280), trigger, script.c_str(), script.size());
 
 	if (trigger->line_count > 0)
 	{

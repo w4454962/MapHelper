@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "mapHelper.h"
-
+#include "singleton.h"
 
 
 const char* g_path;
@@ -12,23 +12,23 @@ uintptr_t g_addr;
 uintptr_t g_convertAddr;
 
 Helper::Helper()
-	: m_bAttach(0)
+	: m_bAttach(false)
 {
 }
 
 Helper::~Helper()
-{
-}
+= default;
 
-Helper* Helper::getInstance()
-{
-	static Helper instance;
-	return &instance;
-}
+//Helper* Helper::getInstance()
+//{
+//	static Helper instance;
+//	return &instance;
+//}
 
 
 static void __declspec(naked) insertSaveMapData()
 {
+	
 	__asm
 	{
 		mov g_object, esi
@@ -36,7 +36,7 @@ static void __declspec(naked) insertSaveMapData()
 		mov g_path, eax
 		pushad
 		pushfd
-		call Helper::getInstance
+		call get_helper
 		mov ecx, eax
 	
 		call Helper::onSaveMap
@@ -52,7 +52,7 @@ static void __declspec(naked) insertConvertTrigger()
 	__asm
 	{
 		mov g_object, ecx
-		call Helper::getInstance
+		call get_helper
 		mov ecx, eax
 		call Helper::onSelectConvartMode
 		test eax,eax 
@@ -65,7 +65,7 @@ static void __declspec(naked) insertConvertTrigger()
 
 		pushad
 		pushfd 
-		call Helper::getInstance
+		call get_helper
 		mov ecx,eax
 		push g_object
 		call Helper::onConvertTrigger
@@ -81,9 +81,9 @@ static void __declspec(naked) insertConvertTrigger()
 
 uintptr_t Helper::onSaveMap()
 {
-	WorldEditor* editor = WorldEditor::getInstance();
-	editor->onSaveMap(g_path);
-	return editor->getAddress(0x0055D175);
+	auto& editor = get_world_editor();
+	editor.onSaveMap(g_path);
+	return editor.getAddress(0x0055D175);
 }
 
 
@@ -107,13 +107,13 @@ void Helper::attach()
 	m_bAttach = true;
 
 
-	WorldEditor* editor = WorldEditor::getInstance();
+	auto& editor = get_world_editor();
 
-	uintptr_t addr = editor->getAddress(0x0055CDE6);
+	uintptr_t addr = editor.getAddress(0x0055CDE6);
 
 	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertSaveMapData),m_hookSaveMap);
 
-	addr = editor->getAddress(static_cast<uintptr_t>(0x005CB4C0));
+	addr = editor.getAddress(static_cast<uintptr_t>(0x005CB4C0));
 
 	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
 	g_convertAddr = addr;
@@ -152,12 +152,17 @@ int Helper::onSelectConvartMode()
 
 int Helper::onConvertTrigger(Trigger* trigger)
 {
-	
-	TriggerData* data = WorldEditor::getInstance()->getEditorData()->triggers;
-	TriggerEditor* editor = TriggerEditor::getInstance();
-	editor->loadTriggers(data);
+	auto& v_we = get_world_editor();
+	TriggerData* data = v_we.getEditorData()->triggers;
+	auto& editor = get_trigger_editor();
+	editor.loadTriggers(data);
 
-	return editor->onConvertTrigger(trigger) ? 1 : 0;
+	return editor.onConvertTrigger(trigger) ? 1 : 0;
+}
+
+Helper& get_helper()
+{
+	return base::singleton_nonthreadsafe<Helper>::instance();
 }
 
 void Helper::detach()

@@ -81,6 +81,12 @@
     <ClInclude Include="..\3rd\Detours\src\detver.h">
       <Filter>源文件\detours</Filter>
     </ClInclude>
+    <ClInclude Include="noncopyable.h">
+      <Filter>源文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="singleton.h">
+      <Filter>源文件\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

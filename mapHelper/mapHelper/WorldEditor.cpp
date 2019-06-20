@@ -1,30 +1,29 @@
 #include "stdafx.h"
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
+#include "singleton.h"
 
 WorldEditor::WorldEditor()
 {
-	m_tempPath = NULL;
+	m_tempPath = nullptr;
 
-	TriggerEditor* triggerEditor = TriggerEditor::getInstance();
+	auto& triggerEditor = get_trigger_editor();
 
-	TriggerConfigData* configData = std_call<TriggerConfigData*>(getAddress(0x004D4DA0));
-	triggerEditor->loadTriggerConfig(configData);
+	const auto configData = std_call<TriggerConfigData*>(getAddress(0x004D4DA0));
+	triggerEditor.loadTriggerConfig(configData);
 
 
 }
 
 WorldEditor::~WorldEditor()
-{
+= default;
 
-}
-
-WorldEditor* WorldEditor::getInstance()
-{
-	static WorldEditor instance;
-
-	return &instance;
-}
+//WorldEditor* WorldEditor::getInstance()
+//{
+//	static WorldEditor instance;
+//
+//	return &instance;
+//}
 
 uintptr_t WorldEditor::getAddress(uintptr_t addr)
 {
@@ -82,7 +81,8 @@ int WorldEditor::getSoundDuration(const char* path)
 {
 	uint32_t param[10];
 	ZeroMemory(&param, sizeof param);
-	fast_call<int>(WorldEditor::getInstance()->getAddress(0x004DCFA0), path, &param);
+	auto& v_we = get_world_editor();
+	fast_call<int>(v_we.getAddress(0x004DCFA0), path, &param);
 	return param[1];
 }
 
@@ -114,17 +114,17 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	printf("当前地图路径%s\n", getCurrentMapPath());
 	printf("保存地图路径 %s\n", getTempSavePath());
 
-	TriggerEditor* triggerEditor = TriggerEditor::getInstance();
+	auto& triggerEditor = get_trigger_editor();
 
 	TriggerData* triggerData = getEditorData()->triggers;
 
-	triggerEditor->loadTriggers(triggerData);
+	triggerEditor.loadTriggers(triggerData);
 
 
 
 	int ret = 0;
-
-	int result = Helper::getInstance()->getConfig();
+	auto& v_helper = get_helper();
+	const auto result = v_helper.getConfig();
 	if (result == -1)
 	{
 		ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
@@ -169,9 +169,9 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 	if (ret == 6)
 	{
-		triggerEditor->saveTriggers(getTempSavePath());
-		triggerEditor->saveScriptTriggers(getTempSavePath());
-		triggerEditor->saveSctipt(getTempSavePath());
+		triggerEditor.saveTriggers(getTempSavePath());
+		triggerEditor.saveScriptTriggers(getTempSavePath());
+		triggerEditor.saveSctipt(getTempSavePath());
 	
 		//更新标签
 		updateSaveFlags();
@@ -610,4 +610,9 @@ void WorldEditor::updateSaveFlags()
 	}
 
 	world_data->doodas->updage_flag = 0;
+}
+
+WorldEditor& get_world_editor()
+{
+	return base::singleton_nonthreadsafe<WorldEditor>::instance();
 }
