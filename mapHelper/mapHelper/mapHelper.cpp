@@ -100,7 +100,7 @@ void Helper::attatch()
 	if (name.find("worldedit") == std::string::npos)
 		return;
 	
-	GetModuleFileNameA(GetModuleHandleA("ydwar3.dll"), buffer, 0x400);
+	GetModuleFileNameA(GetModuleHandleA("ydbase.dll"), buffer, 0x400);
 	
 	m_configPath = fs::path(buffer).remove_filename() / "EverConfig.cfg";
 
