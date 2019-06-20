@@ -26,7 +26,7 @@ public:
 
 	void enableConsole();
 
-	void attach();//∏Ωº”
+	void attatch();//∏Ωº”
 
 	void detach();//∑÷¿Î
 

@@ -12,7 +12,9 @@ YDTrigger::YDTrigger()
 }
 
 YDTrigger::~YDTrigger()
-= default;
+{
+
+}
 
 YDTrigger* YDTrigger::getInstance()
 {
@@ -21,85 +23,85 @@ YDTrigger* YDTrigger::getInstance()
 	return &instance;
 }
 
-bool YDTrigger::isEnable() const
+bool YDTrigger::isEnable()
 {
 	return m_bEnable;
 }
 
-void YDTrigger::onGlobals(BinaryWriter& a_writer)
+void YDTrigger::onGlobals(BinaryWriter& writer)
 {
-	a_writer.write_string("#include <YDTrigger/Import.h>\n");
-	a_writer.write_string("#include <YDTrigger/ImportSaveLoadSystem.h>\n");
-	a_writer.write_string("#include <YDTrigger/Hash.h>\n");
-	a_writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
+	writer.write_string("#include <YDTrigger/Import.h>\n");
+	writer.write_string("#include <YDTrigger/ImportSaveLoadSystem.h>\n");
+	writer.write_string("#include <YDTrigger/Hash.h>\n");
+	writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
 }
 
-void YDTrigger::onEndGlobals(BinaryWriter& a_writer)
+void YDTrigger::onEndGlobals(BinaryWriter& writer)
 {
-	a_writer.write_string("#include <YDTrigger/Globals.h>\n");
-	a_writer.write_string("endglobals\n");
-	a_writer.write_string("#include <YDTrigger/Function.h>\n");
+	writer.write_string("#include <YDTrigger/Globals.h>\n");
+	writer.write_string("endglobals\n");
+	writer.write_string("#include <YDTrigger/Function.h>\n");
 }
 
-bool YDTrigger::onRegisterEvent(std::string& a_events,ActionNodePtr a_node)
+bool YDTrigger::onRegisterEvent(std::string& events,ActionNodePtr node)
 {
-	if (a_node->getParentNode()->isRootNode() && a_node->getNameId() == "YDWEDisableRegister"s_hash)
+	if (node->getParentNode()->isRootNode() && node->getNameId() == "YDWEDisableRegister"s_hash)
 	{
-		m_triggerHasDisable[a_node->getTrigger()] = true;
+		m_triggerHasDisable[node->getTrigger()] = true;
 		return false;
 	}
 		
 
 	m_hasAnyPlayer = false;
-	//æœç´¢äº‹ä»¶ä¸­ æ‰€æœ‰å­åŠ¨ä½œçš„ é¢„è®¾å‚æ•° æ˜¯å¦æœ‰ ä»»æ„ç©å®¶ 
-	std::function<bool(Parameter**,uint32_t)> seachAnyPlayer = [&](Parameter** al_params,uint32_t al_count)
+	//ËÑË÷ÊÂ¼şÖĞ ËùÓĞ×Ó¶¯×÷µÄ Ô¤Éè²ÎÊı ÊÇ·ñÓĞ ÈÎÒâÍæ¼Ò 
+	std::function<bool(Parameter**,uint32_t)> seachAnyPlayer = [&](Parameter** params,uint32_t count)
 	{
-		for (size_t i = 0; i < al_count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
-			Parameter* v_param = al_params[i];
-			Parameter**  v_childs = nullptr;
-			uint32_t v_child_count = 0;
-			switch (v_param->typeId)
+			Parameter* param = params[i];
+			Parameter**  childs = NULL;
+			uint32_t child_count = 0;
+			switch (param->typeId)
 			{
 			case Parameter::Type::preset:
-				if (!strcmp(v_param->value, "PlayerALL"))
+				if (!strcmp(param->value, "PlayerALL"))
 					return true;
 				break;
 			case Parameter::Type::variable:
-				if (v_param->arrayParam)
+				if (param->arrayParam)
 				{
-					v_child_count = 1;
-					v_childs = &v_param->arrayParam;
+					child_count = 1;
+					childs = &param->arrayParam;
 				}
 				break;
 			case Parameter::Type::function:
-				v_child_count = v_param->funcParam->param_count;
-				v_childs = v_param->funcParam->parameters;
+				child_count = param->funcParam->param_count;
+				childs = param->funcParam->parameters;
 				break;
 			}
-			if (v_child_count > 0 && v_childs)
+			if (child_count > 0 && childs)
 			{
-				return seachAnyPlayer(v_childs, v_child_count);
+				return seachAnyPlayer(childs, child_count);
 			}
 		}
 		return false;
 	};
 
-	if (seachAnyPlayer(a_node->getAction()->parameters, a_node->getAction()->param_count))
+	if (seachAnyPlayer(node->getAction()->parameters, node->getAction()->param_count))
 	{
-		a_events += "#define YDTRIGGER_COMMON_LOOP(n) ";
+		events += "#define YDTRIGGER_COMMON_LOOP(n) ";
 		m_hasAnyPlayer = true;
 	}
 	
 	return true;
 }
 
-void YDTrigger::onRegisterEvent2(std::string& a_events,ActionNodePtr a_node)
+void YDTrigger::onRegisterEvent2(std::string& events,ActionNodePtr node)
 {
 	if (m_hasAnyPlayer)
 	{
-		a_events += "#define YDTRIGGER_COMMON_LOOP_LIMITS (0, 15)\n";
-		a_events += "#include <YDTrigger/Common/loop.h>\n";
+		events += "#define YDTRIGGER_COMMON_LOOP_LIMITS (0, 15)\n";
+		events += "#include <YDTrigger/Common/loop.h>\n";
 		m_hasAnyPlayer = false;
 	}
 }
@@ -111,41 +113,41 @@ void YDTrigger::onRegisterTrigger(std::string& output,const std::string& trigger
 	output += "#endif\n";
 }
 
-bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::string& pre_actions, bool a_nested)
 
+bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::string& pre_actions, bool nested)
 {
-	TriggerEditor* v_editor = TriggerEditor::getInstance();
-	int& v_stack = v_editor->space_stack;
-  
-	std::vector<ActionNodePtr> v_list;
-	Action* v_action = node->getAction();
-	
-	Parameter** v_parameters = action->parameters;
+	TriggerEditor* editor = TriggerEditor::getInstance();
+	int& stack = editor->space_stack;
 
-    switch (a_node->getNameId())
+	std::vector<ActionNodePtr> list;
+	Action* action = node->getAction();
+	
+	Parameter** parameters = action->parameters;
+
+    switch (node->getNameId())
 	{
 	case "YDWEForLoopLocVarMultiple"s_hash:
 	{
-		std::string v_variable = std::string("ydul_") + action->parameters[0]->value;
-		a_output += v_editor->spaces[v_stack];
-		a_output += "set " + v_variable + " = ";
-		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions) + "\n";
-		a_output += v_editor->spaces[v_stack];
-		a_output += "loop\n";
-		a_output += v_editor->spaces[++v_stack];
-		a_output += "exitwhen " + v_variable + " > " + v_editor->convertParameter(parameters[2], a_node, a_pre_actions) + "\n";
+		std::string variable = std::string("ydul_") + action->parameters[0]->value;
+		output += editor->spaces[stack];
+		output += "set " + variable + " = ";
+		output += editor->convertParameter(parameters[1], node, pre_actions) + "\n";
+		output += editor->spaces[stack];
+		output += "loop\n";
+		output += editor->spaces[++stack];
+		output += "exitwhen " + variable + " > " + editor->convertParameter(parameters[2], node, pre_actions) + "\n";
 	
-		a_node->getChildNodeList(v_list);
-		for (auto& v_child : v_list)
+		node->getChildNodeList(list);
+		for (auto& child : list)
 		{
-			a_output += editor->spaces[stack];
-			a_output += editor->convertAction(child, pre_actions, false) + "\n";
+			output += editor->spaces[stack];
+			output += editor->convertAction(child, pre_actions, false) + "\n";
 		}
 
-		a_output += v_editor->spaces[v_stack];
-		a_output += "set " + v_variable + " = " + v_variable + " + 1\n";
-		a_output += v_editor->spaces[--v_stack];
-		a_output += "endloop\n";
+		output += editor->spaces[stack];
+		output += "set " + variable + " = " + variable + " + 1\n";
+		output += editor->spaces[--stack];
+		output += "endloop\n";
 		return true;
 	}
 	case "YDWERegionMultiple"s_hash:
@@ -163,97 +165,97 @@ bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::
 	case "YDWEEnumUnitsInRangeMultiple"s_hash:
 	{
 
-		a_output += "set ydl_group = CreateGroup()\n";
-		a_output += v_editor->spaces[v_stack];
-		a_output += "call GroupEnumUnitsInRange(ydl_group,";
-		a_output += v_editor->convertParameter(parameters[0], a_node, a_pre_actions);
-		a_output += ",";
-		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
-		a_output += ",";
-		a_output += v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
-		a_output += ",null)\n";
-		a_output += v_editor->spaces[v_stack];
-		a_output += "loop\n";
+		output += "set ydl_group = CreateGroup()\n";
+		output += editor->spaces[stack];
+		output += "call GroupEnumUnitsInRange(ydl_group,";
+		output += editor->convertParameter(parameters[0], node, pre_actions);
+		output += ",";
+		output += editor->convertParameter(parameters[1], node, pre_actions);
+		output += ",";
+		output += editor->convertParameter(parameters[2], node, pre_actions);
+		output += ",null)\n";
+		output += editor->spaces[stack];
+		output += "loop\n";
 
-		a_output += v_editor->spaces[++v_stack];
-		a_output += "set ydl_unit = FirstOfGroup(ydl_group)\n";
+		output += editor->spaces[++stack];
+		output += "set ydl_unit = FirstOfGroup(ydl_group)\n";
 
-		a_output += v_editor->spaces[v_stack];
-		a_output += "exitwhen ydl_unit == null\n";
+		output += editor->spaces[stack];
+		output += "exitwhen ydl_unit == null\n";
 
-		a_output += v_editor->spaces[v_stack];
-		a_output += "call GroupRemoveUnit(ydl_group, ydl_unit)\n";
+		output += editor->spaces[stack];
+		output += "call GroupRemoveUnit(ydl_group, ydl_unit)\n";
 
-		a_node->getChildNodeList(v_list);
-		for (auto& v_child : v_list)
+		node->getChildNodeList(list);
+		for (auto& child : list)
 		{
-			a_output += v_editor->spaces[v_stack];
-			//å¾ªç¯é‡Œçš„å­åŠ¨ä½œ æ²¿ç”¨å¤–é¢ç›¸åŒçš„çˆ¶èŠ‚ç‚¹
-			a_output += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
+			output += editor->spaces[stack];
+			//Ñ­»·ÀïµÄ×Ó¶¯×÷ ÑØÓÃÍâÃæÏàÍ¬µÄ¸¸½Úµã
+			output += editor->convertAction(child, pre_actions, false) + "\n";
 		}
-		a_output += v_editor->spaces[--v_stack];
-		a_output += "endloop\n";
-		a_output += v_editor->spaces[v_stack];
-		a_output += "call DestroyGroup(ydl_group)\n";
+		output += editor->spaces[--stack];
+		output += "endloop\n";
+		output += editor->spaces[stack];
+		output += "call DestroyGroup(ydl_group)\n";
 
 		return true;
 	}
 	case "YDWESaveAnyTypeDataByUserData"s_hash:
 	{
-		a_output += "call YDUserDataSet(";
-		a_output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
-		a_output += ",";
-		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
-		a_output += ",\"";
-		a_output += parameters[2]->value;
-		a_output += "\",";
-		a_output += parameters[3]->value + 11;
-		a_output += ",";
-		a_output += v_editor->convertParameter(parameters[4], a_node, a_pre_actions);
-		a_output += ")\n";
+		output += "call YDUserDataSet(";
+		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
+		output += ",";
+		output += editor->convertParameter(parameters[1], node, pre_actions);
+		output += ",\"";
+		output += parameters[2]->value;
+		output += "\",";
+		output += parameters[3]->value + 11;
+		output += ",";
+		output += editor->convertParameter(parameters[4], node, pre_actions);
+		output += ")\n";
 		return true;
 	}
 	case "YDWEFlushAnyTypeDataByUserData"s_hash:
 	{
-		a_output += "call YDUserDataClear(";
-		a_output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
-		a_output += ",";
-		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
-		a_output += ",\"";
-		a_output += parameters[3]->value;
-		a_output += "\",";
-		a_output += parameters[2]->value + 11;
-		a_output += ")\n";
+		output += "call YDUserDataClear(";
+		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
+		output += ",";
+		output += editor->convertParameter(parameters[1], node, pre_actions);
+		output += ",\"";
+		output += parameters[3]->value;
+		output += "\",";
+		output += parameters[2]->value + 11;
+		output += ")\n";
 
 		return true;
 	}
 	case "YDWEFlushAllByUserData"s_hash:
 	{
-		a_output += "call YDUserDataClearTable(";
-		a_output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
-		a_output += ",";
-		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
-		a_output += ")\n";
+		output += "call YDUserDataClearTable(";
+		output += parameters[0]->value + 11; //typename_01_integer  + 11 = integer
+		output += ",";
+		output += editor->convertParameter(parameters[1], node, pre_actions);
+		output += ")\n";
 		return true;
 	}
 
 	case "YDWEExecuteTriggerMultiple"s_hash:
 	{
-		a_output += "set ydl_trigger = ";
-		a_output += v_editor->convertParameter(parameters[0], a_node, a_pre_actions);
-		a_output += "\n" + v_editor->spaces[v_stack];
-		a_output += "YDLocalExecuteTrigger(ydl_trigger)\n";
+		output += "set ydl_trigger = ";
+		output += editor->convertParameter(parameters[0], node, pre_actions);
+		output += "\n" + editor->spaces[stack];
+		output += "YDLocalExecuteTrigger(ydl_trigger)\n";
 	
-		a_node->getChildNodeList(v_list);
-		for (auto& child : v_list)
+		node->getChildNodeList(list);
+		for (auto& child : list)
 		{
-			a_output += v_editor->spaces[v_stack];
-			a_output += v_editor->convertAction(child, a_pre_actions, false) + "\n";
+			output += editor->spaces[stack];
+			output += editor->convertAction(child, pre_actions, false) + "\n";
 		}
-		a_output += v_editor->spaces[v_stack];
-		a_output += "call YDTriggerExecuteTrigger(ydl_trigger,";
-		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
-		a_output += ")\n";
+		output += editor->spaces[stack];
+		output += "call YDTriggerExecuteTrigger(ydl_trigger,";
+		output += editor->convertParameter(parameters[1], node, pre_actions);
+		output += ")\n";
 		return true;
 		
 	}
@@ -261,114 +263,113 @@ bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::
 	case "YDWETimerStartMultiple"s_hash:
 	{
 
-		std::string v_param_text;
-		std::string v_action_text;
+		std::string param_text;
+		std::string action_text;
 
-		v_param_text += "set ydl_timer = ";
-		v_param_text += v_editor->convertParameter(parameters[0], a_node, a_pre_actions) + "\n";
+		param_text += "set ydl_timer = ";
+		param_text += editor->convertParameter(parameters[0], node, pre_actions) + "\n";
 
 
-		std::map<std::string, std::string> v_hashVarTable;
+		std::map<std::string, std::string> hashVarTable;
 
-		//å½“å‰è¿™ä¸€å±‚éœ€è¦ä¼ å‚çš„å˜é‡è¡¨
-		std::map<std::string, std::string> v_thisVarTable;
+		//µ±Ç°ÕâÒ»²ãĞèÒª´«²ÎµÄ±äÁ¿±í
+		std::map<std::string, std::string> thisVarTable;
 
 		
-		//æ‰¾åˆ°ä¸Šä¸€å±‚å‡½æ•°çš„é€†å¤©å±€éƒ¨å˜é‡è¡¨
-		auto v_map_ptr = a_node->getLastVarTable();
+		//ÕÒµ½ÉÏÒ»²ãº¯ÊıµÄÄæÌì¾Ö²¿±äÁ¿±í
+		auto mapPtr = node->getLastVarTable();
 
-		a_node->getChildNodeList(v_list);
-		for (auto& v_child : v_list)
+		node->getChildNodeList(list);
+		for (auto& child : list)
 		{
-			Action* childAction = v_child->getAction();
-			if (v_child->getActionId() == 0)//å¦‚æœæ˜¯å‚æ•°åŒº
+			Action* childAction = child->getAction();
+			if (child->getActionId() == 0)//Èç¹ûÊÇ²ÎÊıÇø
 			{
-				switch (v_child->getNameId())
+				switch (child->getNameId())
 				{
-					//åœ¨é€†å¤©è®¡æ—¶å™¨å‚æ•°ä¸­ä½¿ç”¨é€†å¤©å±€éƒ¨å˜é‡
+					//ÔÚÄæÌì¼ÆÊ±Æ÷²ÎÊıÖĞÊ¹ÓÃÄæÌì¾Ö²¿±äÁ¿
 				case "YDWESetAnyTypeLocalArray"s_hash:
 				case "YDWESetAnyTypeLocalVariable"s_hash:
 				{
 					std::string var_name = childAction->parameters[1]->value;
 					std::string var_type = childAction->parameters[0]->value + 11;
-					v_hashVarTable.emplace(var_name, var_type);
+					hashVarTable.emplace(var_name, var_type);
 					break;
 				}
-				default: ;
 				}
-				v_param_text += v_editor->spaces[v_stack];
-				v_param_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
+				param_text += editor->spaces[stack];
+				param_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
 
-		int v_tmp_s = v_stack;
-		v_stack = 1;
+		int s = stack;
+		stack = 1;
 		
-		for (auto& v_child : v_list)
+		for (auto& child : list)
 		{
-			if (v_child->getActionId() != 0)//å¦‚æœæ˜¯åŠ¨ä½œåŒº
+			if (child->getActionId() != 0)//Èç¹ûÊÇ¶¯×÷Çø
 			{
-				Action* v_childAction = v_child->getAction();
+				Action* childAction = child->getAction();
 
-				seachHashLocal(v_childAction->parameters, v_childAction->param_count, &v_thisVarTable);
-				v_action_text += v_editor->spaces[v_stack];
-				v_action_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
+				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
+				action_text += editor->spaces[stack];
+				action_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
-		v_stack = v_tmp_s;
+		stack = s;
 
-		for (auto&[n, t] : v_hashVarTable)
+		for (auto&[n, t] : hashVarTable)
 		{	
-			v_thisVarTable.erase(n);
-			if (v_map_ptr)
+			thisVarTable.erase(n);
+			if (mapPtr)
 			{
-				v_map_ptr->erase(n);
+				mapPtr->erase(n);
 			}
 		}
 
-		a_output += v_param_text;
+		output += param_text;
 
-		ActionNodePtr v_tmp_ptr = ActionNodePtr(new ActionNode(action, a_node));
+		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
 
-		//å¦‚æœå½“å‰è¿™å±‚æœ‰éœ€è¦ç”³è¯·çš„å˜é‡
-		if (v_map_ptr->size() > 0)
+		//Èç¹ûµ±Ç°Õâ²ãÓĞĞèÒªÉêÇëµÄ±äÁ¿
+		if (mapPtr->size() > 0)
 		{
-			for (auto&[n, t] : *v_map_ptr)
+			for (auto&[n, t] : *mapPtr)
 			{
-				a_output += v_editor->spaces[v_stack];
-				a_output += setLocal(v_tmp_ptr, n, t, getLocal(a_node, n, t), true) + "\n";
+				output += editor->spaces[stack];
+				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
 			}
-			v_map_ptr->clear();
+			mapPtr->clear();
 		}
 		
-		//å°†è¿™ä¸€å±‚éœ€è¦ä¼ å‚çš„å˜é‡ ä¼ é€’ç»™ä¸Šä¸€å±‚
-		for (auto&[n, t] : v_thisVarTable)
+		//½«ÕâÒ»²ãĞèÒª´«²ÎµÄ±äÁ¿ ´«µİ¸øÉÏÒ»²ã
+		for (auto&[n, t] : thisVarTable)
 		{
-			a_output += v_editor->spaces[v_stack];
-			a_output += setLocal(v_tmp_ptr, n, t, getLocal(a_node, n, t),true) + "\n";
+			output += editor->spaces[stack];
+			output += setLocal(temp, n, t, getLocal(node, n, t),true) + "\n";
 
-			v_map_ptr->emplace(n, t);
+			mapPtr->emplace(n, t);
 		}
 
-		std::string v_func_name = v_editor->generate_function_name(a_node->getTriggerNamePtr());
-		a_pre_actions += "function " + v_func_name + " takes nothing returns nothing\n";
+		std::string func_name = editor->generate_function_name(node->getTriggerNamePtr());
+		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
 
 
-		onActionsToFuncBegin(a_pre_actions,a_node);
-		a_pre_actions += v_action_text;
-		onActionsToFuncEnd(a_pre_actions, a_node);
-		a_pre_actions += "endfunction\n";
+		onActionsToFuncBegin(pre_actions,node);
+		pre_actions += action_text;
+		onActionsToFuncEnd(pre_actions, node);
+		pre_actions += "endfunction\n";
 
-		a_output += v_editor->spaces[v_stack];
-		a_output += "call TimerStart(ydl_timer,";
-		a_output += v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
-		a_output += ",";
-		a_output += v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
-		a_output += ",function ";
-		a_output += v_func_name;
-		a_output += ")";
+		output += editor->spaces[stack];
+		output += "call TimerStart(ydl_timer,";
+		output += editor->convertParameter(parameters[1], node, pre_actions);
+		output += ",";
+		output += editor->convertParameter(parameters[2], node, pre_actions);
+		output += ",function ";
+		output += func_name;
+		output += ")";
 
 		return true;
 		
@@ -377,129 +378,129 @@ bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::
 
 	case "YDWERegisterTriggerMultiple"s_hash:
 	{
-		std::string v_param_text;
-		std::string v_action_text;
+		std::string param_text;
+		std::string action_text;
 
-		v_param_text += "set ydl_trigger = ";
-		v_param_text += v_editor->convertParameter(parameters[0], a_node, a_pre_actions) + "\n";
+		param_text += "set ydl_trigger = ";
+		param_text += editor->convertParameter(parameters[0], node, pre_actions) + "\n";
 
 
-		std::map<std::string, std::string> v_hashVarTable;
+		std::map<std::string, std::string> hashVarTable;
 
-		//å½“å‰è¿™ä¸€å±‚éœ€è¦ä¼ å‚çš„å˜é‡è¡¨
-		std::map<std::string, std::string> v_this_var_table;
+		//µ±Ç°ÕâÒ»²ãĞèÒª´«²ÎµÄ±äÁ¿±í
+		std::map<std::string, std::string> thisVarTable;
 
-		//æ‰¾åˆ°ä¸Šä¸€å±‚å‡½æ•°çš„é€†å¤©å±€éƒ¨å˜é‡è¡¨
-		auto v_map_ptr = a_node->getLastVarTable();
+		//ÕÒµ½ÉÏÒ»²ãº¯ÊıµÄÄæÌì¾Ö²¿±äÁ¿±í
+		auto mapPtr = node->getLastVarTable();
 
-		a_node->getChildNodeList(v_list);
+		node->getChildNodeList(list);
 
-		for (auto& v_child : v_list)
+		for (auto& child : list)
 		{
-			Action* childAction = v_child->getAction();
+			Action* childAction = child->getAction();
 
-			//å¦‚æœæ˜¯äº‹ä»¶ åˆ™å•ç‹¬å¤„ç†
-			if (v_child->getActionType() == Action::Type::event)
+			//Èç¹ûÊÇÊÂ¼ş Ôòµ¥¶À´¦Àí
+			if (child->getActionType() == Action::Type::event)
 			{
-				if (v_child->getNameId() == "MapInitializationEvent"s_hash)
+				if (child->getNameId() == "MapInitializationEvent"s_hash)
 				{
 					continue;
 				}
-				onRegisterEvent(v_param_text,v_child);
-				v_param_text += v_editor->spaces[v_stack];
+				onRegisterEvent(param_text,child);
+				param_text += editor->spaces[stack];
 				
 				param_text += "call " + editor->getBaseName(child) + "(ydl_trigger";
 
 				for (size_t k = 0; k < childAction->param_count; k++)
 				{
-					v_param_text += ", ";
-					v_param_text += v_editor->convertParameter(childAction->parameters[k], v_child, a_pre_actions);
+					param_text += ", ";
+					param_text += editor->convertParameter(childAction->parameters[k], child, pre_actions);
 				}
-				v_param_text += ")\n";
-				onRegisterEvent2(v_param_text, v_child);
+				param_text += ")\n";
+				onRegisterEvent2(param_text, child);
 			}
-			else if (v_child->getActionId() == 1)//å¦‚æœæ˜¯å‚æ•°åŒº
+			else if (child->getActionId() == 1)//Èç¹ûÊÇ²ÎÊıÇø
 			{
-				switch (v_child->getNameId())
+				switch (child->getNameId())
 				{
-					//åœ¨é€†å¤©è®¡æ—¶å™¨å‚æ•°ä¸­ä½¿ç”¨é€†å¤©å±€éƒ¨å˜é‡
+					//ÔÚÄæÌì¼ÆÊ±Æ÷²ÎÊıÖĞÊ¹ÓÃÄæÌì¾Ö²¿±äÁ¿
 				case "YDWESetAnyTypeLocalArray"s_hash:
 				case "YDWESetAnyTypeLocalVariable"s_hash:
 				{
 					std::string var_name = childAction->parameters[1]->value;
 					std::string var_type = childAction->parameters[0]->value + 11;
-					v_hashVarTable.emplace(var_name, var_type);
+					hashVarTable.emplace(var_name, var_type);
 					break;
 				}
 				}
-				v_param_text += v_editor->spaces[v_stack];
-				v_param_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
+				param_text += editor->spaces[stack];
+				param_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
-		int v_tmp_stack = v_stack;
-		v_stack = 1;
+		int s = stack;
+		stack = 1;
 
-		for (auto& v_child : v_list)
+		for (auto& child : list)
 		{
-			Action* v_child_action = v_child->getAction();
+			Action* childAction = child->getAction();
 
-			if (v_child->getActionId() == 2)//å¦‚æœæ˜¯åŠ¨ä½œåŒº
+			if (child->getActionId() == 2)//Èç¹ûÊÇ¶¯×÷Çø
 			{
-				seachHashLocal(v_child_action->parameters, v_child_action->param_count, &v_this_var_table);
-				v_action_text += v_editor->spaces[v_stack];
-				v_action_text += v_editor->convertAction(v_child, a_pre_actions, false) + "\n";
+				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
+				action_text += editor->spaces[stack];
+				action_text += editor->convertAction(child, pre_actions, false) + "\n";
 			}
 		}
 
-		v_stack = v_tmp_stack;
+		stack = s;
 
-		for (auto&[n, t] : v_hashVarTable)
+		for (auto&[n, t] : hashVarTable)
 		{
-			v_this_var_table.erase(n);
-			if (v_map_ptr)
+			thisVarTable.erase(n);
+			if (mapPtr)
 			{
-				v_map_ptr->erase(n);
+				mapPtr->erase(n);
 			}
 		}
 
-		a_output += v_param_text;
+		output += param_text;
 
-		ActionNodePtr v_tmp_node_ptr = ActionNodePtr(new ActionNode(action, a_node));
+		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
 
-		//å¦‚æœå½“å‰è¿™å±‚æœ‰éœ€è¦ç”³è¯·çš„å˜é‡
-		if (v_map_ptr->size() > 0)
+		//Èç¹ûµ±Ç°Õâ²ãÓĞĞèÒªÉêÇëµÄ±äÁ¿
+		if (mapPtr->size() > 0)
 		{
-			for (auto&[n, t] : *v_map_ptr)
+			for (auto&[n, t] : *mapPtr)
 			{
-				a_output += v_editor->spaces[v_stack];
-				a_output += setLocal(v_tmp_node_ptr, n, t, getLocal(a_node, n, t), true) + "\n";
+				output += editor->spaces[stack];
+				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
 			}
 		}
 
-		//å°†è¿™ä¸€å±‚éœ€è¦ä¼ å‚çš„å˜é‡ ä¼ é€’ç»™ä¸Šä¸€å±‚
-		for (auto&[n, t] : v_this_var_table)
+		//½«ÕâÒ»²ãĞèÒª´«²ÎµÄ±äÁ¿ ´«µİ¸øÉÏÒ»²ã
+		for (auto&[n, t] : thisVarTable)
 		{
-			a_output += v_editor->spaces[v_stack];
-			a_output += setLocal(v_tmp_node_ptr, n, t, getLocal(a_node, n, t), true) + "\n";
+			output += editor->spaces[stack];
+			output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
 
-			v_map_ptr->emplace(n, t);
+			mapPtr->emplace(n, t);
 		}
 
 
 
-		std::string v_func_name = v_editor->generate_function_name(a_node->getTriggerNamePtr());
-		a_pre_actions += "function " + v_func_name + " takes nothing returns nothing\n";
+		std::string func_name = editor->generate_function_name(node->getTriggerNamePtr());
+		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
 	
-		onActionsToFuncBegin(a_pre_actions, a_node);
-		a_pre_actions += v_action_text;
-		onActionsToFuncEnd(a_pre_actions, a_node);
-		a_pre_actions += "endfunction\n";
+		onActionsToFuncBegin(pre_actions, node);
+		pre_actions += action_text;
+		onActionsToFuncEnd(pre_actions, node);
+		pre_actions += "endfunction\n";
 
-		a_output += v_editor->spaces[v_stack];
-		a_output += "call TriggerAddCondition(ydl_trigger,Condition(function ";
-		a_output += v_func_name;
-		a_output += "))";
+		output += editor->spaces[stack];
+		output += "call TriggerAddCondition(ydl_trigger,Condition(function ";
+		output += func_name;
+		output += "))";
 
 		return true;
 	}
@@ -507,24 +508,24 @@ bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::
 	case "YDWESetAnyTypeLocalVariable"s_hash:
 	{
 	
-		std::string v_var_name = parameters[1]->value;
-		std::string v_var_type= parameters[0]->value + 11;
+		std::string var_name = parameters[1]->value;
+		std::string var_type= parameters[0]->value + 11;
 
-		std::string v_var_value = v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
+		std::string var_value = editor->convertParameter(parameters[2], node, pre_actions);
 	
-		a_output +=setLocal(a_node,v_var_name, v_var_type, v_var_value);
+		output +=setLocal(node,var_name, var_type, var_value);
 		return true;
 	}
 	case "YDWESetAnyTypeLocalArray"s_hash:
 	{
 
-		std::string v_var_name = parameters[1]->value;
-		std::string v_var_type = parameters[0]->value + 11;
+		std::string var_name = parameters[1]->value;
+		std::string var_type = parameters[0]->value + 11;
 
-		std::string v_index = v_editor->convertParameter(parameters[2], a_node, a_pre_actions);
-		std::string v_var_value = v_editor->convertParameter(parameters[3], a_node, a_pre_actions);
+		std::string index = editor->convertParameter(parameters[2], node, pre_actions);
+		std::string var_value = editor->convertParameter(parameters[3], node, pre_actions);
 
-		a_output += setLocalArray(a_node, v_var_name, v_var_type,v_index, v_var_value);
+		output += setLocalArray(node, var_name, var_type,index, var_value);
 		return true;
 	}
 
@@ -532,55 +533,55 @@ bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::
 
 	case "YDWETimerStartFlush"s_hash:
 	{
-		ActionNodePtr v_action_node_ptr = a_node->getParentNode();
-		bool v_is_in_timer = false;
-		while (v_action_node_ptr.get())
+		ActionNodePtr ptr = node->getParentNode();
+		bool isInTimer = false;
+		while (ptr.get())
 		{
-			if (v_action_node_ptr->getNameId() == "YDWETimerStartMultiple"s_hash)
+			if (ptr->getNameId() == "YDWETimerStartMultiple"s_hash)
 			{
-				v_is_in_timer = true;
+				isInTimer = true;
 				break;
 			}
-			v_action_node_ptr = v_action_node_ptr->getParentNode();
+			ptr = ptr->getParentNode();
 		}
-		if (v_is_in_timer)
+		if (isInTimer)
 		{
-			a_output += "call YDLocal3Release()\n";
-			a_output += v_editor->spaces[v_stack];
-			a_output += "call DestroyTimer(GetExpiredTimer())\n";
+			output += "call YDLocal3Release()\n";
+			output += editor->spaces[stack];
+			output += "call DestroyTimer(GetExpiredTimer())\n";
 			return true;
 		}
 		else
 		{
-			a_output += "ä¸è¦åœ¨é€†å¤©è®¡æ—¶å™¨çš„åŠ¨ä½œå¤–ä½¿ç”¨<æ¸…é™¤é€†å¤©è®¡æ—¶å™¨>";
+			output += "²»ÒªÔÚÄæÌì¼ÆÊ±Æ÷µÄ¶¯×÷ÍâÊ¹ÓÃ<Çå³ıÄæÌì¼ÆÊ±Æ÷>";
 			return true;
 		}
 	}
 	case "YDWERegisterTriggerFlush"s_hash:
 	{
-		ActionNodePtr v_parent_node_ptr = a_node->getParentNode();
+		ActionNodePtr parent = node->getParentNode();
 
-		ActionNodePtr v_node_ptr = a_node->getParentNode();
-		bool v_is_in_trigger = false;
-		while (v_node_ptr.get())
+		ActionNodePtr ptr = node->getParentNode();
+		bool isInTrigger = false;
+		while (ptr.get())
 		{
-			if (v_node_ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+			if (ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
 			{
-				v_is_in_trigger = true;
+				isInTrigger = true;
 				break;
 			}
-			v_node_ptr = v_node_ptr->getParentNode();
+			ptr = ptr->getParentNode();
 		}
-		if (v_is_in_trigger)
+		if (isInTrigger)
 		{
-			a_output += "call YDLocal4Release()\n";
-			a_output += v_editor->spaces[v_stack];
-			a_output += "call DestroyTrigger(GetTriggeringTrigger())\n";
+			output += "call YDLocal4Release()\n";
+			output += editor->spaces[stack];
+			output += "call DestroyTrigger(GetTriggeringTrigger())\n";
 			return true;
 		}
 		else
 		{
-			a_output += "ä¸è¦åœ¨é€†å¤©è§¦å‘å™¨çš„åŠ¨ä½œå¤–ä½¿ç”¨<æ¸…é™¤é€†å¤©è§¦å‘å™¨>";
+			output += "²»ÒªÔÚÄæÌì´¥·¢Æ÷µÄ¶¯×÷ÍâÊ¹ÓÃ<Çå³ıÄæÌì´¥·¢Æ÷>";
 			return true;
 		}
 	}
@@ -590,67 +591,67 @@ bool YDTrigger::onActionToJass(std::string& a_output,ActionNodePtr a_node, std::
 	{
 
 		
-		a_output += v_editor->convertCall(a_node, a_pre_actions, !a_nested) + "\n";
+		output += editor->convertCall(node, pre_actions, !nested) + "\n";
 
 
-		ActionNodePtr v_branch_node_ptr = a_node->getBranchNode();
+		ActionNodePtr branch = node->getBranchNode();
 
-		ActionNodePtr v_parent_node_ptr = v_branch_node_ptr->getParentNode();
-		if (v_parent_node_ptr.get() && (
-			v_parent_node_ptr->getNameId() == "YDWETimerStartMultiple"s_hash ||
-			v_parent_node_ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash
+		ActionNodePtr parent = branch->getParentNode();
+		if (parent.get() && (
+			parent->getNameId() == "YDWETimerStartMultiple"s_hash ||
+			parent->getNameId() == "YDWERegisterTriggerMultiple"s_hash
 			))
 		{
-			a_output += "ä¸è¦åœ¨é€†å¤©è®¡æ—¶å™¨/é€†å¤©è§¦å‘å™¨å†…ä½¿ç”¨ç­‰å¾…";
+			output += "²»ÒªÔÚÄæÌì¼ÆÊ±Æ÷/ÄæÌì´¥·¢Æ÷ÄÚÊ¹ÓÃµÈ´ı";
 		}
 		else
 		{
-			a_output += v_editor->spaces[v_stack];
-			a_output += "call YDLocalReset()\n";
+			output += editor->spaces[stack];
+			output += "call YDLocalReset()\n";
 		}
 			
 		return true;
 	}
 	case "ReturnAction"s_hash:
 	{
-		a_output += editor->spaces[stack];
+		output += editor->spaces[stack];
 		onActionsToFuncEnd(output, node);
-		a_output += "return\n";
+		output += "return\n";
 		return true;
 	}
 
 	case "YDWEExitLoop"s_hash:
 	{
-		a_output += "exitwhen true\n";
+		output += "exitwhen true\n";
 		return true;
 	}
 	case "CustomScriptCode"s_hash:
 	case "YDWECustomScriptCode"s_hash:
 	{
-		a_output += parameters[0]->value;
+		output += parameters[0]->value;
 		return true;
 	}
 	case "YDWEActivateTrigger"s_hash:
 	{
-		a_output += "";
-		Parameter* v_param = parameters[0];
-		if (v_param->typeId == Parameter::Type::variable && v_param->arrayParam == NULL)
+		output += "";
+		Parameter* param = parameters[0];
+		if (param->typeId == Parameter::Type::variable && param->arrayParam == NULL)
 		{
-			const char* ptr = v_param->value;
+			const char* ptr = param->value;
 			if (ptr && strncmp(ptr, "gg_trg_", 7) == 0)
 				ptr = ptr + 7;
 			
-			std::string v_func_name = std::string("InitTrig_") + ptr;
-			convert_name(v_func_name);
+			std::string func_name = std::string("InitTrig_") + ptr;
+			convert_name(func_name);
 
-			std::string v_ret = v_editor->convertParameter(parameters[1], a_node, a_pre_actions);
-			if (v_ret.compare("true") == 0)
+			std::string ret = editor->convertParameter(parameters[1], node, pre_actions);
+			if (ret.compare("true") == 0)
 			{
-				a_output += "call ExecuteFunc(\"" + v_func_name + "\")\n";
+				output += "call ExecuteFunc(\"" + func_name + "\")\n";
 			}
 			else
 			{
-				a_output += "call " + v_func_name + "()\n";
+				output += "call " + func_name + "()\n";
 			}
 		}
 		return true;
@@ -794,7 +795,7 @@ bool YDTrigger::seachHashLocal(Parameter** parameters, uint32_t count, std::map<
 				}
 				else
 				{
-					return true; //æœç´¢åˆ°äº†å°±é€€å‡ºé€’å½’
+					return true; //ËÑË÷µ½ÁË¾ÍÍË³öµİ¹é
 				}
 				break;
 			}
@@ -803,7 +804,7 @@ bool YDTrigger::seachHashLocal(Parameter** parameters, uint32_t count, std::map<
 			{
 				if (!mapPtr)
 				{
-					return true;//æœç´¢åˆ°äº†å°±é€€å‡ºé€’å½’
+					return true;//ËÑË÷µ½ÁË¾ÍÍË³öµİ¹é
 				}
 			}
 			}
@@ -839,13 +840,13 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 		}
 	};
 
-	//æœç´¢éœ€è¦æ³¨å†Œçš„å±€éƒ¨å˜é‡
+	//ËÑË÷ĞèÒª×¢²áµÄ¾Ö²¿±äÁ¿
 	std::function<void(Action**, uint32_t,Action*,bool,bool)> seachLocal = [&](Action** actions, uint32_t count,Action* parent_action,bool isSeachChild,bool isTimer)
 	{
 		for (size_t i = 0; i < count; i++)
 		{
 			Action* action = actions[i];
-			//å¦‚æœä¸æœç´¢å­åŠ¨ä½œ and actionæ˜¯å­åŠ¨ä½œåˆ™è·³è¿‡
+			//Èç¹û²»ËÑË÷×Ó¶¯×÷ and actionÊÇ×Ó¶¯×÷ÔòÌø¹ı
 		if (!isSeachChild && action->child_flag != -1 )
 				continue;
 			
@@ -854,12 +855,12 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			{
 				if (!isTimer)
 				{
-					//å¦‚æœä¸åœ¨è®¡æ—¶å™¨é‡Œ åˆ™æœç´¢å‚æ•°
+					//Èç¹û²»ÔÚ¼ÆÊ±Æ÷Àï ÔòËÑË÷²ÎÊı
 					if (hash == "YDWETimerStartMultiple"s_hash)
 						isTimer = true;
 				}
 		
-				//æœç´¢å‚æ•°ä¸­æ˜¯å¦æœ‰å¼•ç”¨åˆ°é€†å¤©å±€éƒ¨å˜é‡
+				//ËÑË÷²ÎÊıÖĞÊÇ·ñÓĞÒıÓÃµ½ÄæÌì¾Ö²¿±äÁ¿
 				uint32_t count = action->param_count;
 
 				isInMainProc = isInMainProc || seachHashLocal(action->parameters,count );
@@ -1006,12 +1007,12 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	ActionNodePtr branch = node->getBranchNode();
 
 	ActionNodePtr parent = branch->getParentNode();
-	//æ ¹æ®å½“å‰è®¾ç½®é€†å¤©å±€éƒ¨å˜é‡çš„ä½ç½® æ¥å†³å®šç”Ÿæˆçš„ä»£ç 
+	//¸ù¾İµ±Ç°ÉèÖÃÄæÌì¾Ö²¿±äÁ¿µÄÎ»ÖÃ À´¾ö¶¨Éú³ÉµÄ´úÂë
 
 	std::string callname;
 	std::string handle;
 
-	if (parent.get() == NULL || parent->isRootNode())//å¦‚æœæ˜¯åœ¨è§¦å‘ä¸­
+	if (parent.get() == NULL || parent->isRootNode())//Èç¹ûÊÇÔÚ´¥·¢ÖĞ
 	{
 		callname = "YDLocal1Set";
 
@@ -1020,41 +1021,41 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	{
 		switch (parent->getNameId())
 		{
-			//å¦‚æœæ˜¯åœ¨é€†å¤©è®¡æ—¶å™¨é‡Œ
+			//Èç¹ûÊÇÔÚÄæÌì¼ÆÊ±Æ÷Àï
 		case "YDWETimerStartMultiple"s_hash:
 		{
 			if (branch->getActionId() == 0 || add)
 			{
 				handle = "ydl_timer";
 			}
-			else //å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			else //·ñÔòÊÇ¶¯×÷Çø
 			{
 				handle = "GetExpiredTimer()";
 			}
 			callname = "YDLocalSet";
 			break;
 		}
-		//å¦‚æœæ˜¯åœ¨é€†å¤©è§¦å‘å™¨é‡Œ
+		//Èç¹ûÊÇÔÚÄæÌì´¥·¢Æ÷Àï
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
 			if (branch->getActionId() == 0)
 			{
 				handle = "ydl_trigger";
 			}
-			else //å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			else //·ñÔòÊÇ¶¯×÷Çø
 			{	
 				handle = "GetTriggeringTrigger()";
 			}
 			callname = "YDLocalSet";
 			break;
 		}
-		//å¦‚æœæ˜¯åœ¨ é€†å¤©è¿è¡ŒåŠ¨ä½œä¼ å‚é‡Œ
+		//Èç¹ûÊÇÔÚ ÄæÌìÔËĞĞ¶¯×÷´«²ÎÀï
 		case "YDWEExecuteTriggerMultiple"s_hash:
 		{
 			callname = "YDLocal5Set";
 			break;
 		}
-		//å¦åˆ™ åœ¨å…¶ä»–æœªå®šä¹‰çš„åŠ¨ä½œç»„ä¸­
+		//·ñÔò ÔÚÆäËûÎ´¶¨ÒåµÄ¶¯×÷×éÖĞ
 		default:
 		{
 			callname = "YDLocal2Set";
@@ -1065,7 +1066,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	std::string output;
 
 	output += "call " + callname + "(";
-	if (!handle.empty()) //å¸¦handleå‚æ•°çš„
+	if (!handle.empty()) //´øhandle²ÎÊıµÄ
 	{
 		output += handle + ",";
 	}
@@ -1084,10 +1085,10 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 
 	ActionNodePtr parent = branch->getParentNode();
 
-	//æ ¹æ®å½“å‰è®¾ç½®é€†å¤©å±€éƒ¨å˜é‡çš„ä½ç½® æ¥å†³å®šç”Ÿæˆçš„ä»£ç 
+	//¸ù¾İµ±Ç°ÉèÖÃÄæÌì¾Ö²¿±äÁ¿µÄÎ»ÖÃ À´¾ö¶¨Éú³ÉµÄ´úÂë
 	std::string callname;
 	std::string handle;
-	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//å¦‚æœæ˜¯åœ¨è§¦å‘ä¸­
+	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//Èç¹ûÊÇÔÚ´¥·¢ÖĞ
 	{
 		auto varTable = branch->getLastVarTable();
 		if (varTable->find(name) != varTable->end())
@@ -1104,35 +1105,35 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 	{
 		switch (parent->getNameId())
 		{
-			//å¦‚æœæ˜¯åœ¨é€†å¤©è®¡æ—¶å™¨é‡Œ
+			//Èç¹ûÊÇÔÚÄæÌì¼ÆÊ±Æ÷Àï
 		case "YDWETimerStartMultiple"s_hash:
 		{
-			if (branch->getActionId() == 0) //0æ˜¯å‚æ•°åŒº
+			if (branch->getActionId() == 0) //0ÊÇ²ÎÊıÇø
 			{
 				return getLocal(parent, name, type);
 			}
-			else //å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			else //·ñÔòÊÇ¶¯×÷Çø
 			{
 				handle = "GetExpiredTimer()";
 			}
 			callname = "YDLocalGet";
 			break;
 		}
-		//å¦‚æœæ˜¯åœ¨é€†å¤©è§¦å‘å™¨é‡Œ
+		//Èç¹ûÊÇÔÚÄæÌì´¥·¢Æ÷Àï
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
-			if (branch->getActionId() < 2) //0æ˜¯äº‹ä»¶åŒº 1æ˜¯å‚æ•°åŒº
+			if (branch->getActionId() < 2) //0ÊÇÊÂ¼şÇø 1ÊÇ²ÎÊıÇø
 			{
 				return getLocal(parent, name, type);
 			}
 			else
-			{//å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			{//·ñÔòÊÇ¶¯×÷Çø
 				handle = "GetTriggeringTrigger()";
 			}
 			callname = "YDLocalGet";
 			break;
 		}
-		//å¦åˆ™ åœ¨å…¶ä»–æœªå®šä¹‰çš„åŠ¨ä½œç»„ä¸­
+		//·ñÔò ÔÚÆäËûÎ´¶¨ÒåµÄ¶¯×÷×éÖĞ
 		default:
 		{
 			callname = "YDLocal2Get";
@@ -1144,7 +1145,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 	std::string output;
 
 	output += callname + "(";
-	if (!handle.empty()) //å¸¦handleå‚æ•°çš„
+	if (!handle.empty()) //´øhandle²ÎÊıµÄ
 	{
 		output += handle + ",";
 	}
@@ -1161,11 +1162,11 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 
 	ActionNodePtr parent = branch->getParentNode();
 
-	//æ ¹æ®å½“å‰è®¾ç½®é€†å¤©å±€éƒ¨å˜é‡çš„ä½ç½® æ¥å†³å®šç”Ÿæˆçš„ä»£ç 
+	//¸ù¾İµ±Ç°ÉèÖÃÄæÌì¾Ö²¿±äÁ¿µÄÎ»ÖÃ À´¾ö¶¨Éú³ÉµÄ´úÂë
 	std::string callname;
 	std::string handle;
 
-	if (parent.get() == NULL || branch->isRootNode())//å¦‚æœæ˜¯åœ¨è§¦å‘ä¸­
+	if (parent.get() == NULL || branch->isRootNode())//Èç¹ûÊÇÔÚ´¥·¢ÖĞ
 	{
 		callname = "YDLocal1ArraySet";
 	}
@@ -1173,28 +1174,28 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	{
 		switch (parent->getNameId())
 		{
-			//å¦‚æœæ˜¯åœ¨é€†å¤©è®¡æ—¶å™¨é‡Œ
+			//Èç¹ûÊÇÔÚÄæÌì¼ÆÊ±Æ÷Àï
 		case "YDWETimerStartMultiple"s_hash:
 		{
 			if (branch->getNameId() == 0)
 			{
 				handle = "ydl_timer";
 			}
-			else //å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			else //·ñÔòÊÇ¶¯×÷Çø
 			{
 				handle = "GetExpiredTimer()";
 			}
 			callname = "YDLocalArraySet";
 			break;
 		}
-		//å¦‚æœæ˜¯åœ¨é€†å¤©è§¦å‘å™¨é‡Œ
+		//Èç¹ûÊÇÔÚÄæÌì´¥·¢Æ÷Àï
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
 			if (branch->getNameId() == 0)
 			{
 				handle = "ydl_trigger";
 			}
-			else //å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			else //·ñÔòÊÇ¶¯×÷Çø
 			{
 				handle = "GetTriggeringTrigger()";
 			}
@@ -1202,13 +1203,13 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 			callname = "YDLocalArraySet";
 			break;
 		}
-		//å¦‚æœæ˜¯åœ¨ é€†å¤©è¿è¡ŒåŠ¨ä½œä¼ å‚é‡Œ
+		//Èç¹ûÊÇÔÚ ÄæÌìÔËĞĞ¶¯×÷´«²ÎÀï
 		case "YDWEExecuteTriggerMultiple"s_hash:
 		{
 			callname = "YDLocal5ArraySet";
 			break;
 		}
-		//å¦åˆ™ åœ¨å…¶ä»–æœªå®šä¹‰çš„åŠ¨ä½œç»„ä¸­
+		//·ñÔò ÔÚÆäËûÎ´¶¨ÒåµÄ¶¯×÷×éÖĞ
 		default:
 		{
 			callname = "YDLocal2ArraySet";
@@ -1220,7 +1221,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	std::string output;
 
 	output += "call " + callname + "(";
-	if (!handle.empty()) //å¸¦handleå‚æ•°çš„
+	if (!handle.empty()) //´øhandle²ÎÊıµÄ
 	{
 		output += handle + ",";
 	}
@@ -1238,7 +1239,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 }
 std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name, const std::string& type, const std::string& index)
 {
-	//æ ¹æ®å½“å‰è®¾ç½®é€†å¤©å±€éƒ¨å˜é‡çš„ä½ç½® æ¥å†³å®šç”Ÿæˆçš„ä»£ç 
+	//¸ù¾İµ±Ç°ÉèÖÃÄæÌì¾Ö²¿±äÁ¿µÄÎ»ÖÃ À´¾ö¶¨Éú³ÉµÄ´úÂë
 
 	ActionNodePtr branch = node->getBranchNode();
 
@@ -1246,7 +1247,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 
 	std::string callname;
 	std::string handle;
-	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//å¦‚æœæ˜¯åœ¨è§¦å‘ä¸­
+	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//Èç¹ûÊÇÔÚ´¥·¢ÖĞ
 	{
 		auto varTable = branch->getLastVarTable();
 		if (varTable->find(name) != varTable->end())
@@ -1262,36 +1263,36 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 	{
 		switch (parent->getNameId())
 		{
-			//å¦‚æœæ˜¯åœ¨é€†å¤©è®¡æ—¶å™¨é‡Œ
+			//Èç¹ûÊÇÔÚÄæÌì¼ÆÊ±Æ÷Àï
 		case "YDWETimerStartMultiple"s_hash:
 		{
-			if (branch->getActionId() == 0) //0æ˜¯å‚æ•°åŒº
+			if (branch->getActionId() == 0) //0ÊÇ²ÎÊıÇø
 			{
 				return getLocal(parent, name, type);
 			}
-			else //å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			else //·ñÔòÊÇ¶¯×÷Çø
 			{
 				handle = "GetExpiredTimer()";
 			}
 			callname = "YDLocalArrayGet";
 			break;
 		}
-		//å¦‚æœæ˜¯åœ¨é€†å¤©è§¦å‘å™¨é‡Œ
+		//Èç¹ûÊÇÔÚÄæÌì´¥·¢Æ÷Àï
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
 
-			if (branch->getActionId() < 2) //0æ˜¯äº‹ä»¶åŒº 1æ˜¯å‚æ•°åŒº
+			if (branch->getActionId() < 2) //0ÊÇÊÂ¼şÇø 1ÊÇ²ÎÊıÇø
 			{
 				return getLocal(parent, name, type);
 			}
 			else
-			{//å¦åˆ™æ˜¯åŠ¨ä½œåŒº
+			{//·ñÔòÊÇ¶¯×÷Çø
 				handle = "GetTriggeringTrigger()";
 			}
 			callname = "YDLocalArrayGet";
 			break;
 		}
-		//å¦åˆ™ åœ¨å…¶ä»–æœªå®šä¹‰çš„åŠ¨ä½œç»„ä¸­
+		//·ñÔò ÔÚÆäËûÎ´¶¨ÒåµÄ¶¯×÷×éÖĞ
 		default:
 		{
 
@@ -1303,7 +1304,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 	std::string output;
 
 	output += callname + "(";
-	if (!handle.empty()) //å¸¦handleå‚æ•°çš„
+	if (!handle.empty()) //´øhandle²ÎÊıµÄ
 	{
 		output += handle + ",";
 	}
