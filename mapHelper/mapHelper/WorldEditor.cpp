@@ -131,7 +131,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 	clock_t start = clock();
 		
-	saveWts();
+	
 	saveW3i();
 	saveImp();
 	saveW3e();
@@ -142,10 +142,12 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	saveObject();//不可多线程
 	if (ret == 6)
 	{
+		customSaveWts(getTempSavePath());
 		customSaveDoodas(getTempSavePath());
 	}
 	else
 	{
+		saveWts();
 		saveDoodas();//不可多线程
 	}
 
@@ -160,6 +162,8 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		triggerEditor->saveScriptTriggers(getTempSavePath());
 		triggerEditor->saveSctipt(getTempSavePath());
 	
+		//更新标签
+		updateSaveFlags();
 	}
 	else
 	{
@@ -169,6 +173,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 
 	saveArchive();
+
 
 		
 	printf("地图所有数据保存完成 总耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
@@ -449,6 +454,45 @@ int WorldEditor::saveArchive()
 
 
 
+int WorldEditor::customSaveWts(const char* path)
+{
+	printf("自定义保存war3map.wts文本数据\n");
+
+	clock_t start = clock();
+
+	BinaryWriter writer;
+	auto string_data = getEditorData()->strings;
+
+
+	writer.write<uint8_t>(0xEF);
+	writer.write<uint8_t>(0xBB);
+	writer.write<uint8_t>(0xBF);
+
+	std::vector<TriggerString*> list(string_data->count);
+	for (size_t i = 0; i < string_data->count; i++)
+	{
+		TriggerString* info = &string_data->array[i];
+		list[i] = info;
+	}
+	std::sort(list.begin(), list.end(), [&](TriggerString* a, TriggerString* b) 
+	{
+		return a->index < b->index;
+	});
+
+	for (auto& i : list)
+	{
+		writer.write_string("STRING " + std::to_string(i->index));
+		writer.write_string("\r\n{\r\n");
+		writer.write_string(std::string(i->str));
+		writer.write_string("\r\n}\r\n\r\n");
+	}
+	std::ofstream out(std::string(path) + ".wts", std::ios::binary);
+	writer.finish(out);
+	out.close();
+	printf("war3map.wts 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+	return 1;
+}
 
 
 int WorldEditor::customSaveDoodas(const char* path)
@@ -526,10 +570,33 @@ int WorldEditor::customSaveDoodas(const char* path)
 
 	std::ofstream out(std::string(path) + ".doo", std::ios::binary);
 	writer.finish(out);
-
+	out.close();
 
 	printf("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return 1;
 }
 
+
+void WorldEditor::updateSaveFlags()
+{
+	auto world_data = getEditorData();
+	if (world_data->is_test)
+		return;
+	auto trigger_data = world_data->triggers;
+	
+	trigger_data->updage_flag = 0;
+	trigger_data->variables->updage_flag = 0;
+	for (size_t i = 0; i < trigger_data->categoriy_count; i++)
+	{
+		Categoriy* categoriy = trigger_data->categories[i];
+		uint32_t trigger_count = categoriy->trigger_count;
+		for (uint32_t n = 0; n < trigger_count; n++)
+		{
+			Trigger* trigger = categoriy->triggers[n];
+			trigger->updage_flag = 0;
+		}
+	}
+
+	world_data->doodas->updage_flag = 0;
+}

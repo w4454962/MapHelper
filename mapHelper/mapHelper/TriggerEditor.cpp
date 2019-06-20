@@ -8,7 +8,7 @@
 #include <regex>
 
 TriggerEditor::TriggerEditor()
-	:m_editorData(NULL),
+	:m_editorData(nullptr),
 	m_version(7)
 { 
 	space_stack = 0;
@@ -40,7 +40,7 @@ void TriggerEditor::loadTriggers(TriggerData* data)
 void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 {
 	m_configData = data;
-	printf("读取配置文件\n");
+	std::cout<<"读取配置文件\n"<<std::endl;
 	for (size_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
@@ -53,24 +53,19 @@ void TriggerEditor::saveTriggers(const char* path)
 {
 	if (!m_editorData)
 	{
-		printf("缺少触发器数据\n");
+		std::cout<<"缺少触发器数据"<<std::endl;
 		return;
 	}
 
-	printf("自定义保存wtg文件\n");
+	std::cout << "自定义保存wtg文件"<< std::endl;
 
-	clock_t start = clock();
-
-
+	auto start = clock();
 
 
 	BinaryWriter writer;
 
 
-	uint32_t head = '!GTW';
-
-
-	writer.write(head);
+	writer.write_string("WTG!");
 
 	m_version = 7;
 	writer.write(m_version);
@@ -90,19 +85,19 @@ void TriggerEditor::saveTriggers(const char* path)
 
 void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 {
-	Categoriy** categories = m_editorData->categories;
+	auto categories = m_editorData->categories;
 
-	uint32_t count = m_editorData->categoriy_count;
+	const auto count = m_editorData->categoriy_count;
 
 	writer.write(count);
 
 	for (size_t i = 0; i < count; i++)
 	{
-		Categoriy* categoriy = m_editorData->categories[i];
+		auto categoriy = m_editorData->categories[i];
 		
 		writer.write(categoriy->categoriy_id);
 
-		std::string categoriy_name = std::string(categoriy->categoriy_name);
+		auto categoriy_name = std::string(categoriy->categoriy_name);
 
 		writer.write_c_string(categoriy_name);
 
@@ -115,7 +110,7 @@ void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 }
 void TriggerEditor::writeVariable(BinaryWriter& writer)
 {
-	Variable* variables = m_editorData->variables;
+	VariableData* variables = m_editorData->variables;
 
 
 	uint32_t unknow = 2;
@@ -126,7 +121,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 
 	for(size_t i = 0; i < variables->globals_count ; i++)
 	{
-		VariableData* data = &variables->array[i];
+		Variable* data = &variables->array[i];
 		//名字非gg_开头的变量
 		if (data && strncmp(data->name, "gg_", 3))
 			variable_count++;
@@ -139,7 +134,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 	//将非gg_的变量数据写入
 	for (size_t i = 0; i < variables->globals_count; i++)
 	{
-		VariableData* data = &variables->array[i];
+		Variable* data = &variables->array[i];
 		if (data && strncmp(data->name, "gg_", 3))
 		{
 
@@ -356,7 +351,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	EditorData* worldData = worldEditor->getEditorData();
 
 	char buffer[0x400];
-	std::map<std::string, VariableData*> variableTable;
+	std::map<std::string, Variable*> variableTable;
 
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
@@ -373,7 +368,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
-		VariableData* var = &data->variables->array[i];
+		Variable* var = &data->variables->array[i];
 		std::string name = var->name;
 		std::string type = var->type;
 		std::string base = getBaseType(type);
@@ -439,7 +434,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
-		VariableData* var = &data->variables->array[i];
+		Variable* var = &data->variables->array[i];
 		std::string name = var->name;
 		 
 		if (var->is_array )
@@ -1283,9 +1278,9 @@ endfunction
 	for (size_t i = 0; i < worldData->player_count; i++)
 	{
 		PlayerData* player_data = &worldData->players[i];
-		std::string id = std::to_string(i);
+		std::string id = std::to_string(player_data->id);
 		std::string player = "Player(" + id + "), ";
-		writer.write_string("\tcall SetPlayerStartLocation(" + player + id + ")\n");
+		writer.write_string("\tcall SetPlayerStartLocation(" + player + std::to_string(i) + ")\n");
 		if (player_data->is_lock || player_data->race == 0) 
 		{
 			writer.write_string("\tcall ForcePlayerStartLocation(" + player + id + ")\n");
@@ -1302,7 +1297,7 @@ endfunction
 
 			if (player_data->controller_id == 0 && data->controller_id == 1) 
 			{
-				writer.write_string("\tcall SetPlayerAlliance(" + player + "Player(" + std::to_string(a) + "), ALLIANCE_RESCUABLE, true)\n");
+				writer.write_string("\tcall SetPlayerAlliance(" + player + "Player(" + std::to_string(data->id) + "), ALLIANCE_RESCUABLE, true)\n");
 			}
 		}
 
@@ -1331,8 +1326,8 @@ endfunction
 		for (size_t a = 0; a < worldData->player_count; a++) {
 			PlayerData* player = &worldData->players[a];
 
-			if (data->player_masks & (1 << a)) {
-				std::string id = std::to_string(a);
+			if (data->player_masks & (1 << player->id)) {
+				std::string id = std::to_string(player->id);
 
 				writer.write_string("\tcall SetPlayerTeam(Player(" + id + "), " + index + ")\n");
 
@@ -1342,8 +1337,8 @@ endfunction
 
 				for (size_t b = 0; b < worldData->player_count; b++) {
 					PlayerData* p = &worldData->players[b];
-					if (data->player_masks & (1 << b) && a != b) {
-						std::string id2 = std::to_string(b);
+					if (data->player_masks & (1 << p->id) && player->id != p->id) {
+						std::string id2 = std::to_string(p->id);
 						if (allied) {
 							post_state += "\tcall SetPlayerAllianceStateAllyBJ(Player(" + id + "), Player(" + id2 + "), true)\n";
 						}
@@ -1377,23 +1372,26 @@ endfunction
 
 	for (size_t i = 0; i < worldData->player_count; i++) {
 		PlayerData* player = &worldData->players[i];
-
+		uint32_t id = player->id;
 		std::string player_text;
 
 		int current_index = 0;
 		for (size_t j = 0; j < worldData->player_count; j++) {
 			PlayerData* target = &worldData->players[j];
-			if (player->low_level & (1 << j) && i != j) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(i) + ", " + std::to_string(current_index) + ", " + std::to_string(j) + ", MAP_LOC_PRIO_LOW)\n";
+			uint32_t id2 = target->id;
+			if (player->low_level & (1 << id2) && id != id2) {
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(id) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_LOW)\n";
 				current_index++;
 			}
-			else if (player->height_level & (1 << j) && i != j) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(i) + ", " + std::to_string(current_index) + ", " + std::to_string(j) + ", MAP_LOC_PRIO_HIGH)\n";
+			else if (player->height_level & (1 << id2) && id != id2) {
+				player_text += "\tcall SetStartLocPrio(" + std::to_string(id) + ", " + std::to_string(current_index) + ", " + std::to_string(id2) + ", MAP_LOC_PRIO_HIGH)\n";
 				current_index++;
 			}
 		}
-
-		player_text = "\tcall SetStartLocPrioCount(" + std::to_string(i) + ", " + std::to_string(current_index) + ")\n" + player_text;
+		if (current_index > 0)
+		{
+			writer.write_string("\tcall SetStartLocPrioCount(" + std::to_string(id) + ", " + std::to_string(current_index) + ")\n");
+		}
 		writer.write_string(player_text);
 	}
 	writer.write_string("endfunction\n");
@@ -1468,7 +1466,7 @@ endfunction
 	writer.write_string("\tcall SetMapName(\"" + std::string(worldData->map_name) + "\")\n");
 	writer.write_string("\tcall SetMapDescription(\"" + std::string(worldData->description) + "\")\n");
 	writer.write_string("\tcall SetPlayers(" + std::to_string(worldData->player_count) + ")\n");
-	writer.write_string("\tcall SetTeams(" + std::to_string(worldData->steam_count) + ")\n");
+	writer.write_string("\tcall SetTeams(" + std::to_string(worldData->player_count) + ")\n");
 	writer.write_string("\tcall SetGamePlacement(MAP_PLACEMENT_TEAMS_TOGETHER)\n");
 
 	writer.write_string("\n");
@@ -1478,7 +1476,7 @@ endfunction
 		Unit* unit = &worldData->units->array[i];
 		if (strncmp(unit->name,"sloc",4) == 0) 
 		{
-			writer.write_string("\tcall DefineStartLocation(" + std::to_string(unit->player_id) + ", " + std::to_string(unit->x) + ", " + std::to_string(unit->y) + ")\n");
+			writer.write_string("\tcall DefineStartLocation(" + std::to_string(i) + ", " + std::to_string(unit->x) + ", " + std::to_string(unit->y) + ")\n");
 		}
 	}
 
@@ -1575,7 +1573,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 				Parameter* param = action->parameters[k];
 
 
-				std::string type = param->type_name;
+				auto type { std::string(param->type_name) };
 
 				events += ", ";
 				events += convertParameter(param, node, pre_actions);
@@ -1597,6 +1595,8 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 			action_code += spaces[space_stack];
 
 			action_code += convertAction(node, pre_actions, false) + "\n";
+			break;
+		default: 
 			break;
 		}
 	}
@@ -1746,7 +1746,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 			}
 			case Action::Type::action:
 			{
-				Action* action = child->getAction();
+				auto action = child->getAction();
 				if (action->child_flag == 1)
 				{
 					thentext += spaces[space_stack];
@@ -1790,7 +1790,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	{
 		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string name = node->getName();
+		auto name = std::string(node->getName());
 
 		// Remove multiple
 		output += "call " + name.substr(0, name.length() - 8) + "(";
@@ -1892,15 +1892,15 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	{
 		
 		Action* event_action = parameters[1]->funcParam;
-		std::string trg = convertParameter(parameters[0], node, pre_actions);
-		std::string event_name = event_action->name;
+		auto trg = convertParameter(parameters[0], node, pre_actions);
+		auto event_name = std::string(event_action->name);
 
-		std::string events = "\tcall " + event_name + "(" + trg;
+		auto events = "\tcall " + event_name + "(" + trg;
 
-		ActionNodePtr temp(new ActionNode(event_action, node));
+		auto temp{ std::make_shared<ActionNode>(event_action, node) };
 		for (size_t k = 0; k < event_action->param_count; k++)
 		{
-			Parameter* param = event_action->parameters[k];
+			auto param = event_action->parameters[k];
 
 
 			std::string type = param->type_name;
@@ -1922,9 +1922,9 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	case "DzFrameSetUpdateCallbackMultiple"s_hash:
 	case "DzFrameSetScriptMultiple"s_hash:
 	{
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+		const auto function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string name = node->getName();
+		auto name = node->getName();
 
 
 		output += "if GetLocalPlayer() == ";
@@ -1938,7 +1938,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		}
 		for (size_t k = 1; k < action->param_count; k++)
 		{
-			Parameter* param = action->parameters[k];
+			auto param = action->parameters[k];
 			if (strcmp(param->type_name, "code") != 0)
 			{
 				output += convertParameter(param, node, pre_actions);
@@ -2011,7 +2011,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) 
 {
-	if (parameter == NULL)
+	if (parameter == nullptr)
 	{
 		return "";
 	}
@@ -2028,19 +2028,17 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 
 	if (parameter->funcParam) 
 	{
-		ActionNodePtr childNode(new ActionNode(parameter->funcParam, parameter, node));
+		auto childNode{ std::make_shared<ActionNode>(parameter->funcParam, parameter, node) };
 		return convertCall(childNode,pre_actions, add_call);
 	}
-	else {
-	
-		std::string value = std::string(parameter->value);
+	auto value = std::string(parameter->value);
 
-		switch (parameter->typeId)
-		{
-		case Parameter::Type::invalid:
+	switch (parameter->typeId)
+	{
+	case Parameter::Type::invalid:
 	
-			return "";
-		case Parameter::Type::preset: 
+		return "";
+	case Parameter::Type::preset: 
 		{
 			auto world = WorldEditor::getInstance();
 			const std::string preset_type = world->getConfigData("TriggerParams", value, 1);
@@ -2050,12 +2048,12 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			}
 			return world->getConfigData("TriggerParams", value, 2);
 		}
-		case Parameter::Type::function:
-			return value + "()";
-		case Parameter::Type::variable:
+	case Parameter::Type::function:
+		return value + "()";
+	case Parameter::Type::variable:
 		{
 			
-			std::string output = value;
+			auto output = value;
 
 			if (!output._Starts_with("gg_")) 
 			{
@@ -2071,11 +2069,11 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			}
 			return output;
 		}
-		case Parameter::Type::string:
+	case Parameter::Type::string:
 		{
 			
 			uint32_t is_import_path = 0;
-			std::string type = parameter->type_name;
+			auto type{ std::string (parameter->type_name)};
 
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
@@ -2084,22 +2082,23 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			if (is_import_path || getBaseType(type) == "string") {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
 			}
-			else if (type == "abilcode" || // ToDo this seems like a hack?
-				type == "buffcode" ||
-				type == "destructablecode" ||
-				type == "itemcode" ||
-				type == "ordercode" ||
-				type == "techcode" ||
-				type == "unitcode") {
-				return "'" + value + "'";
-			}
-			else 
+			switch (hash_(type.c_str()))
 			{
+			case "abilcode"s_hash:
+			case "buffcode"s_hash:
+			case "destructablecode"s_hash:
+			case "itemcode"s_hash:
+			case "ordercode"s_hash:
+			case "techcode"s_hash:
+			case "unitcode"s_hash:
+				return "'" + value + "'";
+			
+			default:
 				return value;
 			}
 		}
-			
-		}
+	default: 
+		break;
 	}
 	assert(false);
 	return "";
@@ -2111,8 +2110,8 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 {
 	std::string output;
 
-	Action* action = node->getAction();
-	Parameter** parameters = action->parameters;
+	auto action = node->getAction();
+	auto parameters = action->parameters;
 
 	switch (hash_(action->name))
 	{
@@ -2183,7 +2182,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
-		std::string name = node->getName();
+		auto name = node->getName();
 
 
 		output += "call " + name + "(";
@@ -2192,7 +2191,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 		for (size_t k = 0; k < action->param_count; k++)
 		{
-			Parameter* param = action->parameters[k];
+			auto param = action->parameters[k];
 			if (strcmp(param->type_name, "code") != 0)
 			{
 				output += convertParameter(param, node, pre_actions);
@@ -2207,7 +2206,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		{
 			output += " function " + function_name + ")\n";
 
-			std::string tttt = convertParameter(parameters[codeIndex], node, pre_actions);
+			auto tttt = convertParameter(parameters[codeIndex], node, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
 			pre_actions += "\tcall " + tttt + "\n";
@@ -2220,16 +2219,16 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 	case "GetBooleanAnd"s_hash:
 	{
 
-		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
-		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
+		auto first_parameter = convertParameter(parameters[0], node, pre_actions);
+		auto second_parameter = convertParameter(parameters[1], node, pre_actions);
 
 		return "(" + first_parameter + " and " + second_parameter + ")";
 	}
 
 	case "GetBooleanOr"s_hash:
 	{
-		std::string first_parameter = convertParameter(parameters[0], node, pre_actions);
-		std::string second_parameter = convertParameter(parameters[1], node, pre_actions);
+		auto first_parameter = convertParameter(parameters[0], node, pre_actions);
+		auto second_parameter = convertParameter(parameters[1], node, pre_actions);
 
 		return "(" + first_parameter + " or " + second_parameter + ")";
 		
@@ -2253,17 +2252,17 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		output += convertParameter(parameters[2], node, pre_actions);
 		return output;
 	}
-	size_t size = action->param_count;
+	auto size = action->param_count;
 
 	for (size_t k = 0; k < size; k++) {
-		Parameter* param = parameters[k];
+		auto param = parameters[k];
 
-		const std::string child_type = param->type_name;
+		const auto child_type = std::string(param->type_name);
 
 		if (child_type == "boolexpr") {
-			const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+			const auto function_name = generate_function_name(node->getTriggerNamePtr());
 
-			std::string tttt = convertParameter(param, node, pre_actions);
+			auto tttt = convertParameter(param, node, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
 			pre_actions += "\treturn " + tttt + "\n";
@@ -2299,8 +2298,8 @@ std::string TriggerEditor::getBaseType(const std::string& type) const
 
 std::string TriggerEditor::getBaseName(ActionNodePtr node)
 {
-	std::string name = node->getName();
-	std::string key = "_" + name + "_ScriptName";
+	auto name = node->getName();
+	const auto key{ std::string("_" + name + "_ScriptName") };
 	std::string parent_key;
 	if (node->getActionType() == Action::event)
 	{
@@ -2310,7 +2309,7 @@ std::string TriggerEditor::getBaseName(ActionNodePtr node)
 	{ 
 		parent_key = "TriggerActions";
 	}
-	std::string func_name = WorldEditor::getInstance()->getConfigData(parent_key, key, 0);
+	auto func_name = WorldEditor::getInstance()->getConfigData(parent_key, key, 0);
 	if (func_name.length() > 0)
 	{
 		return func_name;
@@ -2319,7 +2318,7 @@ std::string TriggerEditor::getBaseName(ActionNodePtr node)
 }
 
 std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> trigger_name) const {
-	auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	const auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	return "Trig_" + *trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
 }
 
@@ -2329,9 +2328,9 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {
 	if (trigger->is_custom_srcipt || trigger->is_comment)
 		return false;
-	WorldEditor* world = WorldEditor::getInstance();
+	auto world = WorldEditor::getInstance();
 
-	std::string script = convertTrigger(trigger);
+	const auto script = convertTrigger(trigger);
 	
 	if (m_initTriggerTable.find(trigger) != m_initTriggerTable.end())
 	{
@@ -2349,7 +2348,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 		//遍历销毁所有动作
 		for (size_t i = 0; i < trigger->line_count; i++)
 		{
-			Action* action = trigger->actions[i];
+			const auto action = trigger->actions[i];
 			if (action)
 			{
 				action->table->destroy(action, 1);
@@ -2358,9 +2357,11 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 
 		if (trigger->actions)
 		{
+#define SMemFreeIndex 403
 			//销毁动作容器
-			uint32_t addr = (uintptr_t)::GetProcAddress(::GetModuleHandleW(L"Storm.dll"), (const char*)403);
-			std_call<int>(addr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);
+			const auto SMemFreeAddr = reinterpret_cast<uintptr_t>(GetProcAddress(
+				GetModuleHandleW(L"Storm.dll"), reinterpret_cast<const char*>(SMemFreeIndex)));
+			std_call<BOOL>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);	
 		}
 		trigger->number = 0;
 		trigger->line_count = 0;

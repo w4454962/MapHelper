@@ -38,10 +38,10 @@ public:
 	std::shared_ptr<std::string> getTriggerNamePtr();
 
 	//获取动作名
-	std::string getName();
+	std::string getName() const;
 
 	//获取动作名id 字符串哈希值
-	uint32_t getNameId();
+	uint32_t getNameId() const;
 
 	//获取动作所属子动作id
 	uint32_t getActionId();
@@ -70,10 +70,10 @@ public:
 
 
 	//获取参数数量
-	size_t count();
+	size_t count() const;
 	
 	// node(1) 取该动作的参数
-	Parameter* operator()(size_t n);
+	Parameter* operator()(size_t n) const;
 
 
 	Action::Type getActionType();
