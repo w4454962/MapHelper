@@ -14,7 +14,7 @@ public:
 	
 	static WorldEditor* getInstance();
 
-	uintptr_t getAddress(uintptr_t addr);
+	static uintptr_t getAddress(uintptr_t addr);
 
 	EditorData* getEditorData();
 

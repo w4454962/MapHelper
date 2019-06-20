@@ -88,13 +88,13 @@ uintptr_t Helper::onSaveMap()
 
 
 
-void Helper::attatch()
+void Helper::attach()
 {
 	if (m_bAttach) return;
 
 	char buffer[0x400];
 
-	GetModuleFileNameA(NULL, buffer, 0x400);
+	GetModuleFileNameA(nullptr, buffer, 0x400);
 
 	std::string name = fs::path(buffer).filename().string();
 	if (name.find("worldedit") == std::string::npos)
@@ -111,11 +111,11 @@ void Helper::attatch()
 
 	uintptr_t addr = editor->getAddress(0x0055CDE6);
 
-	hook::install(&addr, (uintptr_t)&insertSaveMapData,m_hookSaveMap);
+	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertSaveMapData),m_hookSaveMap);
 
-	addr = editor->getAddress(0x005CB4C0);
+	addr = editor->getAddress(static_cast<uintptr_t>(0x005CB4C0));
 
-	hook::install(&addr, (uintptr_t)&insertConvertTrigger, m_hookConvertTrigger);
+	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
 	g_convertAddr = addr;
 
 	if (getConfig() == -1)

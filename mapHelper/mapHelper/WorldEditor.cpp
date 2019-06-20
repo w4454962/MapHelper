@@ -28,7 +28,7 @@ WorldEditor* WorldEditor::getInstance()
 
 uintptr_t WorldEditor::getAddress(uintptr_t addr)
 {
-	uintptr_t base = (uintptr_t)GetModuleHandle(NULL);
+	auto base = reinterpret_cast<uintptr_t>(GetModuleHandle(nullptr));
 	return addr - 0x00400000 + base;
 }
 
