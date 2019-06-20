@@ -110,7 +110,7 @@ void TriggerEditor::writeCategoriy(BinaryWriter& writer)
 }
 void TriggerEditor::writeVariable(BinaryWriter& writer)
 {
-	VariableData* variables = m_editorData->variables;
+	auto variables = m_editorData->variables;
 
 
 	uint32_t unknow = 2;
@@ -134,7 +134,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 	//将非gg_的变量数据写入
 	for (size_t i = 0; i < variables->globals_count; i++)
 	{
-		Variable* data = &variables->array[i];
+		auto data = &variables->array[i];
 		if (data && strncmp(data->name, "gg_", 3))
 		{
 
@@ -155,17 +155,16 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 
 void TriggerEditor::writeTrigger(BinaryWriter& writer)
 {
-	uint32_t count = m_editorData->trigger_count;
+	const auto count = m_editorData->trigger_count;
 	writer.write(count);
 
 	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
-		Categoriy* categoriy = m_editorData->categories[i];
-		uint32_t trigger_count = categoriy->trigger_count;
+		auto categoriy = m_editorData->categories[i];
+		auto trigger_count = categoriy->trigger_count;
 		for (uint32_t n = 0; n < trigger_count; n++)
 		{
-
-			Trigger* trigger = categoriy->triggers[n];
+			auto trigger = categoriy->triggers[n];
 	
 			writeTrigger(writer, trigger);
 		}
@@ -202,9 +201,9 @@ void TriggerEditor::writeTrigger(BinaryWriter& writer, Trigger* trigger)
 
 	for (size_t i = 0; i < trigger->line_count; i++)
 	{
-		Action* action = trigger->actions[i];
+		auto action = trigger->actions[i];
 
-		uint32_t actionType = action->table->getType(action);
+		auto actionType = action->table->getType(action);
 
 		writer.write(actionType);
 
@@ -224,19 +223,18 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 	//循环写参数
 	for (size_t i = 0; i < count; i++)
 	{
-
-		Parameter* param = action->parameters[i];
+		auto param = action->parameters[i];
 		writeParameter(writer, param);
 	}
 
-	uint32_t child_count = action->child_count;
+	const auto child_count = action->child_count;
 	writer.write(child_count);
 	//如果是 动作组 则循环将子动作写入
 	for (size_t i = 0; i < child_count; i++)
 	{
-		Action* child = action->child_actions[i];
+		const auto child = action->child_actions[i];
 
-		uint32_t child_type = child->table->getType(child);
+		const auto child_type = child->table->getType(child);
 
 		writer.write(child_type);
 
@@ -248,19 +246,19 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 
 void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 {
-	uint32_t type = param->typeId;
+	const auto type = param->typeId;
 	writer.write(type);
 
 	writer.write_c_string(param->value);
 
-	uint32_t has_param = (type == Parameter::function && param->funcParam);
+	const uint32_t has_param = (type == Parameter::function && param->funcParam);
 
 	writer.write(has_param);
 	if (has_param)
 	{
 		Action* action = param->funcParam;
 
-		uint32_t actionType = action->table->getType(action);
+		const uint32_t actionType = action->table->getType(action);
 
 		writer.write(actionType);
 
@@ -268,13 +266,13 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 
 	}
 
-	uint32_t is_array = param->arrayParam != NULL;
+	const uint32_t is_array = param->arrayParam != nullptr;
 	writer.write(is_array);
 
 	//如果是数组 则写入数组中的参数
 	if (is_array)
 	{
-		Parameter* child = param->arrayParam;
+		auto child = param->arrayParam;
 		writeParameter(writer,child);
 	}
 
@@ -288,20 +286,20 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 {
 	printf("自定义保存wct文件\n");
 
-	clock_t start = clock();
+	const auto start = clock();
 
-	TriggerData* data = m_editorData;
+	auto* data = m_editorData;
 
 	BinaryWriter writer;
 
-	uint32_t version = 1;
+	const uint32_t version = 1;
 	writer.write(version);
 
 	writer.write_c_string(data->global_jass_comment);
 
 	writer.write(data->globals_jass_size);
 
-	std::string_view jass(data->globals_jass_script, data->globals_jass_size);
+	const std::string_view jass(data->globals_jass_script, data->globals_jass_size);
 	writer.write_string(jass);
 
 	writer.write(data->trigger_count);
