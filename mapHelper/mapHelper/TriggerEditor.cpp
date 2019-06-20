@@ -306,11 +306,11 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 
 	for (size_t i = 0; i < m_editorData->categoriy_count; i++)
 	{
-		Categoriy* categoriy = m_editorData->categories[i];
-		uint32_t trigger_count = categoriy->trigger_count;
+		const auto categoriy = m_editorData->categories[i];
+		const auto trigger_count = categoriy->trigger_count;
 		for (uint32_t n = 0; n < trigger_count; n++)
 		{
-			Trigger* trigger = categoriy->triggers[n];
+			auto trigger = categoriy->triggers[n];
 			size_t size = 0;
 			if (trigger->is_custom_srcipt)
 				size = trigger->custom_jass_size;
@@ -337,16 +337,16 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	printf("自定义保存jass文件\n");
 
-	clock_t start = clock();
+	auto start = clock();
 
-	TriggerData* data = m_editorData;
+	auto data = m_editorData;
 
 
 
 	BinaryWriter writer,writer2;
 
-	WorldEditor* worldEditor = WorldEditor::getInstance();
-	EditorData* worldData = worldEditor->getEditorData();
+	auto worldEditor = WorldEditor::getInstance();
+	auto worldData = worldEditor->getEditorData();
 
 	char buffer[0x400];
 	std::map<std::string, Variable*> variableTable;
@@ -367,9 +367,9 @@ void TriggerEditor::saveSctipt(const char* path)
 	for (size_t i = 0; i < data->variables->globals_count; i++)
 	{
 		Variable* var = &data->variables->array[i];
-		std::string name = var->name;
-		std::string type = var->type;
-		std::string base = getBaseType(type);
+		auto name{ std::string(var->name) };
+		auto type{ std::string(var->type) };
+		auto base{ std::string(getBaseType(type)) };
 
 		variableTable[name] = var;
 
