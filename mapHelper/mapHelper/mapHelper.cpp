@@ -86,22 +86,26 @@ uintptr_t Helper::onSaveMap()
 	return editor->getAddress(0x0055D175);
 }
 
+
+
 void Helper::attatch()
 {
-
 	if (m_bAttach) return;
 
 	char buffer[0x400];
+
 	GetModuleFileNameA(NULL, buffer, 0x400);
 
 	std::string name = fs::path(buffer).filename().string();
 	if (name.find("worldedit") == std::string::npos)
 		return;
-
+	
+	GetModuleFileNameA(GetModuleHandleA("ydwar3.dll"), buffer, 0x400);
+	
+	m_configPath = fs::path(buffer).remove_filename() / "EverConfig.cfg";
 
 	m_bAttach = true;
 
-	enableConsole();
 
 	WorldEditor* editor = WorldEditor::getInstance();
 
@@ -109,26 +113,43 @@ void Helper::attatch()
 
 	hook::install(&addr, (uintptr_t)&insertSaveMapData,m_hookSaveMap);
 
-
 	addr = editor->getAddress(0x005CB4C0);
 
 	hook::install(&addr, (uintptr_t)&insertConvertTrigger, m_hookConvertTrigger);
 	g_convertAddr = addr;
 
+	if (getConfig() == -1)
+	{
+		enableConsole();
+	}
+	
 }
 
 int Helper::onSelectConvartMode()
 {
-	int ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
-
-	if (ret == 6)
+	int result = getConfig();
+	if (result == -1)
 	{
-		printf("自定义保存模式\n");
-		return 0;
+		int ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
+
+		if (ret == 6)
+		{
+			printf("自定义保存模式\n");
+			return 0;
+		}
+		printf("原始保存模式\n");
+		return 1;
 	}
-	printf("原始保存模式\n");
-	return 1;
+	else
+	{
+		if (result == 1)
+		{
+			return 0;
+		}
+		return 1;
+	}
 }
+
 int Helper::onConvertTrigger(Trigger* trigger)
 {
 	
@@ -165,4 +186,9 @@ void Helper::enableConsole()
 		freopen_s(&new_file, "CONOUT$", "w", stdout);
 		freopen_s(&new_file, "CONOUT$", "w", stderr);
 	}
+}
+
+int Helper::getConfig()
+{
+	return GetPrivateProfileIntA("ScriptCompiler", "EnableYDTrigger", -1, m_configPath.string().c_str());
 }

@@ -120,13 +120,24 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 	triggerEditor->loadTriggers(triggerData);
 
-	int ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
 
-	if (ret == 6)
-		printf("自定义保存模式\n");
-	else 
-		printf("原始保存模式\n");
-	
+
+	int ret = 0;
+
+	int result = Helper::getInstance()->getConfig();
+	if (result == -1)
+	{
+		ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
+
+		if (ret == 6)
+			printf("自定义保存模式\n");
+		else
+			printf("原始保存模式\n");
+	}
+	else if (result == 1)
+	{
+		ret = 6;
+	}
 	
 
 	clock_t start = clock();

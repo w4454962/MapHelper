@@ -30,6 +30,7 @@ public:
 
 	void detach();//∑÷¿Î
 
+	int getConfig();
 private: 
 
 	//±£¥ÊµÿÕº
@@ -46,4 +47,6 @@ protected:
 
 	hook::hook_t* m_hookSaveMap;
 	hook::hook_t* m_hookConvertTrigger;
+
+	fs::path m_configPath;
 };
