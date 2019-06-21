@@ -912,7 +912,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			case "YDWETimerStartMultiple"s_hash:
 			{
 				addLocalVar("ydl_timer", "timer");
-				next(false);
+				next(true);
 				break;
 			}
 			case "YDWERegisterTriggerMultiple"s_hash:
@@ -1090,16 +1090,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 	std::string handle;
 	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
 	{
-		auto varTable = branch->getLastVarTable();
-		if (varTable->find(name) != varTable->end())
-		{
-			callname = "YDLocal1Get";
-		}
-		else
-		{
-			callname = "YDLocal2Get";
-
-		}
+		callname = "YDLocal1Get";
 	}
 	else
 	{
@@ -1249,15 +1240,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 	std::string handle;
 	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
 	{
-		auto varTable = branch->getLastVarTable();
-		if (varTable->find(name) != varTable->end())
-		{
-			callname = "YDLocal1ArrayGet";
-		}
-		else
-		{
-			callname = "YDLocal2ArrayGet";
-		}
+		callname = "YDLocal1ArrayGet";
 	}
 	else
 	{
