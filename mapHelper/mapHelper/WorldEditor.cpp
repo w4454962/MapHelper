@@ -142,49 +142,58 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 	clock_t start = clock();
 		
-	
-	saveW3i();
-	saveImp();
-	saveW3e();
-	saveShd();
-	saveWpm();
-	saveMiniMap();//不可多线程
-	saveMmp();
-	saveObject();//不可多线程
 	if (ret == 6)
 	{
 		customSaveWts(getTempSavePath());
+
+		saveW3i();
+		saveImp();
+		saveW3e();
+		saveShd();
+		saveWpm();
+		saveMiniMap();
+		saveMmp();
+		saveObject();
+
 		customSaveDoodas(getTempSavePath());
-	}
-	else
-	{
-		saveWts();
-		saveDoodas();//不可多线程
-	}
 
-	saveUnits(); //不可多线程
-	saveRect();
-	saveCamara();
-	saveSound();
+		saveUnits();
+		saveRect();
+		saveCamara();
+		saveSound();
 
-	if (ret == 6)
-	{
 		triggerEditor.saveTriggers(getTempSavePath());
 		triggerEditor.saveScriptTriggers(getTempSavePath());
 		triggerEditor.saveSctipt(getTempSavePath());
-	
+
 		//更新标签
 		updateSaveFlags();
 	}
 	else
 	{
+		saveWts();
+
+		saveW3i();
+		saveImp();
+		saveW3e();
+		saveShd();
+		saveWpm();
+		saveMiniMap();
+		saveMmp();
+		saveObject();
+
+		saveDoodas();
+
+		saveUnits();
+		saveRect();
+		saveCamara();
+		saveSound();
+
 		saveTrigger();
 		saveScript();
 	}
 
-
 	saveArchive();
-
 
 		
 	printf("地图所有数据保存完成 总耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
@@ -531,6 +540,10 @@ int WorldEditor::customSaveDoodas(const char* path)
 
 	writer.write<uint32_t>(doodas->unit_count); 
 
+
+	uint32_t object = *(uint32_t*)(((uint32_t)doodas) + 0xE0);
+	uint32_t addr = *(uint32_t*)((*(uint32_t*)(doodas)) + 0xc8);
+
 	for (size_t i = 0;i<doodas->unit_count;i++)
 	{
 		Unit* unit = &doodas->array[i]; 
@@ -540,12 +553,36 @@ int WorldEditor::customSaveDoodas(const char* path)
 		writer.write<float>(unit->x); 
 		writer.write<float>(unit->y); 
 		writer.write<float>(unit->z); 
-		writer.write<float>(unit->angle); 
+		writer.write<float>(unit->angle);  
 		writer.write<float>(unit->scale_x); 
 		writer.write<float>(unit->scale_y); 
 		writer.write<float>(unit->scale_z); 
 
-		writer.write<uint8_t>(2); 
+	
+	
+		//计算装饰物状态
+		uint8_t flag = 0;
+
+		//判断是否在可用地图内  在边界为true
+		if (!this_call<int>(getAddress(0x005E73A0), object, &unit->x))
+			flag = 1;
+
+		//未知 正常情况下都是2
+		if (!this_call<int>(addr, doodas, i))
+		{
+			flag |= 0x2;
+		}
+		else
+		{
+			flag &= 0xfd;
+		}
+		//是否带飞行高度 在地形编辑器上用 ctrl + pageup or pagedown 设置过高度的装饰物
+		if (*(uint8_t*)((uint32_t)unit + 0x84) & 0x8)
+		{
+			flag |= 0x4;
+		}
+		
+		writer.write<uint8_t>(flag);
 		writer.write<uint8_t>(unit->doodas_life); 
 		writer.write<int32_t>(unit->item_table_index); 
 		writer.write<uint32_t>(unit->item_setting_count2); 
