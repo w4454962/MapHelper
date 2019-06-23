@@ -271,10 +271,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 
 		std::map<std::string, std::string> hashVarTable;
-
-		//当前这一层需要传参的变量表
-		std::map<std::string, std::string> thisVarTable;
-
 		
 		//找到上一层函数的逆天局部变量表
 		auto mapPtr = node->getLastVarTable();
@@ -321,7 +317,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		for (auto&[n, t] : hashVarTable)
 		{	
-			thisVarTable.erase(n);
 			if (mapPtr)
 			{
 				mapPtr->erase(n);
@@ -384,9 +379,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		std::map<std::string, std::string> hashVarTable;
 
-		//当前这一层需要传参的变量表
-		std::map<std::string, std::string> thisVarTable;
-
 		//找到上一层函数的逆天局部变量表
 		auto mapPtr = node->getLastVarTable();
 
@@ -444,7 +436,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 			if (child->getActionId() == 2)//如果是动作区
 			{
-				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
 				action_text += editor.spaces[stack];
 				action_text += editor.convertAction(child, pre_actions, false) + "\n";
 			}
@@ -454,7 +445,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		for (auto&[n, t] : hashVarTable)
 		{
-			thisVarTable.erase(n);
 			if (mapPtr)
 			{
 				mapPtr->erase(n);
