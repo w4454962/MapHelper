@@ -78,6 +78,8 @@ public:
 
 	Action::Type getActionType();
 
+	VarTablePtr getVarTable();
+
 	VarTablePtr getLastVarTable();
 
 	VarTablePtr getLocalTable();

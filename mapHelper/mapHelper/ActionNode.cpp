@@ -258,8 +258,14 @@ Parameter* ActionNode::operator()(size_t n) const
 	return m_action->parameters[n];
 }
 
-
-
+VarTablePtr ActionNode::getVarTable()
+{
+	if (m_hashVarTablePtr.get() == nullptr)
+	{
+		m_hashVarTablePtr = VarTablePtr(new std::map<std::string, std::string>);
+	}
+	return m_hashVarTablePtr;
+}
 
 VarTablePtr ActionNode::getLastVarTable()
 {
@@ -271,6 +277,14 @@ VarTablePtr ActionNode::getLastVarTable()
 		if (node->m_hashVarTablePtr.get())
 		{
 			retval = node->m_hashVarTablePtr;
+			break;
+		}
+		else if(node->m_action != m_action && (node->isRootNode()
+			|| node->m_nameId == "YDWETimerStartMultiple"s_hash
+			|| node->m_nameId == "YDWERegisterTriggerMultiple"s_hash))
+		{
+			retval = VarTablePtr(new std::map<std::string, std::string>);
+			node->m_hashVarTablePtr = retval;
 			break;
 		}
 		node = node->m_parent.get();

@@ -312,7 +312,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 			{
 				Action* childAction = child->getAction();
 
-				seachHashLocal(childAction->parameters, childAction->param_count, &thisVarTable);
 				action_text += editor.spaces[stack];
 				action_text += editor.convertAction(child, pre_actions, false) + "\n";
 			}
@@ -334,23 +333,21 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
 
 		//如果当前这层有需要申请的变量
-		if (mapPtr->size() > 0)
+		auto table = node->getVarTable();
+		if (table->size() > 0)
 		{
-			for (auto&[n, t] : *mapPtr)
+			for (auto&[n, t] : *table)
 			{
 				output += editor.spaces[stack];
 				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
-			}
-			mapPtr->clear();
-		}
-		
-		//将这一层需要传参的变量 传递给上一层
-		for (auto&[n, t] : thisVarTable)
-		{
-			output += editor.spaces[stack];
-			output += setLocal(temp, n, t, getLocal(node, n, t),true) + "\n";
 
-			mapPtr->emplace(n, t);
+				//将这一层需要传参的变量 传递给上一层
+				if (mapPtr.get() != table.get())
+				{
+					mapPtr->emplace(n, t);
+				}
+			}
+			table->clear();
 		}
 
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
@@ -469,22 +466,21 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
 
 		//如果当前这层有需要申请的变量
-		if (mapPtr->size() > 0)
+		auto table = node->getVarTable();
+		if (table->size() > 0)
 		{
-			for (auto&[n, t] : *mapPtr)
+			for (auto&[n, t] : *table)
 			{
 				output += editor.spaces[stack];
 				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+
+				//将这一层需要传参的变量 传递给上一层
+				if (mapPtr.get() != table.get())
+				{
+					mapPtr->emplace(n, t);
+				}
 			}
-		}
-
-		//将这一层需要传参的变量 传递给上一层
-		for (auto&[n, t] : thisVarTable)
-		{
-			output += editor.spaces[stack];
-			output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
-
-			mapPtr->emplace(n, t);
+			table->clear();
 		}
 
 
@@ -735,6 +731,8 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			std::string var_name = parameters[0]->value;
 			std::string var_type = paramter->type_name;
 
+			auto mapPtr = node->getLastVarTable();
+			mapPtr->emplace(var_name, var_type);
 			output += getLocal(node, var_name, var_type);
 			return true;
 		}
@@ -743,7 +741,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			std::string var_name = parameters[0]->value;
 			std::string var_type = paramter->type_name;
 			std::string index = editor.convertParameter(parameters[1], node, pre_actions);
-	
+			
 			output += getLocalArray(node, var_name, var_type,index);
 			return true;
 		}
