@@ -1047,6 +1047,18 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		default:
 		{
 			callname = "YDLocal2Set";
+			ActionNodePtr ptr = parent;
+			while (!ptr->isRootNode())
+			{
+				ActionNodePtr parentPtr = ptr->getParentNode();
+				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				{
+					return setLocal(ptr, name, type,value,add);
+				}
+				ptr = parentPtr;
+			}
+			break;
 		}
 		}
 	}
@@ -1116,6 +1128,18 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 		default:
 		{
 			callname = "YDLocal2Get";
+
+			ActionNodePtr ptr = parent;
+			while (!ptr->isRootNode())
+			{
+				ActionNodePtr parentPtr = ptr->getParentNode();
+				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				{
+					return getLocal(ptr,name,type);
+				}
+				ptr = parentPtr;
+			}
 			break;
 		}
 		}
@@ -1192,6 +1216,19 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 		default:
 		{
 			callname = "YDLocal2ArraySet";
+
+			ActionNodePtr ptr = parent;
+			while (!ptr->isRootNode())
+			{
+				ActionNodePtr parentPtr = ptr->getParentNode();
+				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				{
+					return setLocalArray(ptr, name, type,index, value);
+				}
+				ptr = parentPtr;
+			}
+
 		}
 
 		}
@@ -1268,6 +1305,19 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 		{
 
 			callname = "YDLocal2ArrayGet";
+
+			ActionNodePtr ptr = parent;
+			while (!ptr->isRootNode())
+			{
+				ActionNodePtr parentPtr = ptr->getParentNode();
+				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				{
+					return getLocalArray(ptr, name, type, index);
+				}
+
+				ptr = parentPtr;
+			}
 			break;
 		}
 		}
