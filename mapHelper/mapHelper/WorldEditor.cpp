@@ -567,19 +567,19 @@ int WorldEditor::customSaveDoodas(const char* path)
 
 		
 		//注释掉的这些是效率太低 没太大必要的判断 
-		////判断是否在可用地图内  在边界为true
-		//if (!this_call<int>(getAddress(0x005E73A0), object, &unit->x))
-		//	flag = 1;
-		//
+		//判断是否在可用地图内  在边界为true
+		if (!this_call<int>(getAddress(0x005E73A0), object, &unit->x))
+			flag = 1;
+		
 		//未知 正常情况下都是2
-		//if (!this_call<int>(addr, doodas, i))
-		//{
+		if (!this_call<int>(addr, doodas, i))
+		{
 			flag |= 0x2;
-		//}
-		//else
-		//{
-		//	flag &= 0xfd;
-		//}
+		}
+		else
+		{
+			flag &= 0xfd;
+		}
 		//是否带飞行高度 在地形编辑器上用 ctrl + pageup or pagedown 设置过高度的装饰物
 		if (*(uint8_t*)((uint32_t)unit + 0x84) & 0x8)
 		{
