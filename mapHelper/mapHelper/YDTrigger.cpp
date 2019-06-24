@@ -601,7 +601,12 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "ReturnAction"s_hash:
 	{
 		output += editor.spaces[stack];
-		onActionsToFuncEnd(output, node);
+		ActionNodePtr branch = node->getBranchNode();
+		if (branch->isRootNode() || branch->getParentNode()->isRootNode())
+		{
+			onActionsToFuncEnd(output, node->getRootNode());
+		}
+		
 		output += "return\n";
 		return true;
 	}
@@ -924,6 +929,11 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 				break;
 			}
 
+			default:
+				if (action->child_count > 0)
+				{
+					next(true);
+				}
 			}
 #undef next
 		}
