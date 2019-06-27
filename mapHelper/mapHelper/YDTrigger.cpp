@@ -1036,7 +1036,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		//如果是在逆天触发器里
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
-			if (branch->getActionId() == 0)
+			if (branch->getActionId() < 2 || add)
 			{
 				handle = "ydl_trigger";
 			}
@@ -1204,7 +1204,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 		//如果是在逆天触发器里
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
-			if (branch->getNameId() == 0)
+			if (branch->getNameId() < 2 )
 			{
 				handle = "ydl_trigger";
 			}
