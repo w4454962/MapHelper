@@ -2200,16 +2200,12 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 	case "EnumItemsInRectBJ"s_hash:
 	case "ForForce"s_hash:
 	case "ForGroup"s_hash:
+	case "DzFrameSetScriptByCode"s_hash:
 	{
-
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
 
 		auto name = node->getName();
 
-
 		output += "call " + name + "(";
-
-		uint32_t codeIndex = -1;
 
 		for (size_t k = 0; k < action->param_count; k++)
 		{
@@ -2217,24 +2213,25 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 			if (strcmp(param->type_name, "code") != 0)
 			{
 				output += convertParameter(param, node, pre_actions);
-				output += ",";
 			}
 			else
 			{
-				codeIndex = k;
+				const std::string function_name = generate_function_name(node->getTriggerNamePtr());
+
+				output += " function " + function_name + "";
+
+				auto tttt = convertParameter(param, node, pre_actions);
+
+				pre_actions += "function " + function_name + " takes nothing returns nothing\n";
+				pre_actions += "\tcall " + tttt + "\n";
+				pre_actions += "endfunction\n\n";
+			}
+			if (k < action->param_count - 1)
+			{
+				output += ",";
 			}
 		}
-		if (codeIndex != -1)
-		{
-			output += " function " + function_name + ")\n";
-
-			auto tttt = convertParameter(parameters[codeIndex], node, pre_actions);
-
-			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-			pre_actions += "\tcall " + tttt + "\n";
-			pre_actions += "endfunction\n\n";
-		}
-	
+		output += ")\n";
 		return output;
 	}
 
