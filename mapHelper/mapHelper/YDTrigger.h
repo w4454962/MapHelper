@@ -59,7 +59,7 @@ private:
 	bool seachHashLocal(Parameter** parameters, uint32_t count, std::map<std::string, std::string>* mapPtr = NULL);
 protected: 
 	bool m_bEnable;
-	bool m_isInYdweEnumUnit;
+	int m_enumUnitStack;
 	bool m_hasAnyPlayer;
 
 	int m_funcStack;

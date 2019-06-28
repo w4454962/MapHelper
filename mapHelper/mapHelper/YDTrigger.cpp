@@ -6,7 +6,8 @@
 
 YDTrigger::YDTrigger()
 	:m_bEnable(true),
-	 m_funcStack(0)
+	 m_funcStack(0),
+	m_enumUnitStack(0)
 {
 	
 }
@@ -128,6 +129,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	{
 	case "YDWEForLoopLocVarMultiple"s_hash:
 	{
+		
 		std::string variable = std::string("ydul_") + action->parameters[0]->value;
 		output += editor.spaces[stack];
 		output += "set " + variable + " = ";
@@ -164,7 +166,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	}
 	case "YDWEEnumUnitsInRangeMultiple"s_hash:
 	{
-
+		m_enumUnitStack++;
 		output += "set ydl_group = CreateGroup()\n";
 		output += editor.spaces[stack];
 		output += "call GroupEnumUnitsInRange(ydl_group,";
@@ -197,7 +199,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += "endloop\n";
 		output += editor.spaces[stack];
 		output += "call DestroyGroup(ydl_group)\n";
-
+		m_enumUnitStack--;
 		return true;
 	}
 	case "YDWESaveAnyTypeDataByUserData"s_hash:
@@ -693,7 +695,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 		}
 		case "GetEnumUnit"s_hash:
 		{
-			if (m_isInYdweEnumUnit)
+			if (m_enumUnitStack > 0)
 			{
 				output += "ydl_unit";
 			}
@@ -705,7 +707,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 		}
 		case "GetFilterUnit"s_hash:
 		{
-			if (m_isInYdweEnumUnit)
+			if (m_enumUnitStack > 0)
 			{
 				output += "ydl_unit";
 			}
