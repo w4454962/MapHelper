@@ -156,6 +156,8 @@ ActionNodePtr ActionNode::getBranchNode()
 			case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
 			case "DzFrameSetUpdateCallbackMultiple"s_hash:
 			case "DzFrameSetScriptMultiple"s_hash:
+
+			case "YDWEEnumUnitsInRangeMultiple"s_hash://这个节点不会生成函数 但是要用来判断是否处于该节点下
 				isBreak = true; break;
 			default:
 				break;

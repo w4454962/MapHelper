@@ -695,7 +695,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 		}
 		case "GetEnumUnit"s_hash:
 		{
-			if (m_enumUnitStack > 0)
+			if (m_enumUnitStack > 0 && node->getBranchNode()->getParentNode()->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash)
 			{
 				output += "ydl_unit";
 			}
@@ -707,7 +707,7 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 		}
 		case "GetFilterUnit"s_hash:
 		{
-			if (m_enumUnitStack > 0)
+			if (m_enumUnitStack > 0 && node->getBranchNode()->getParentNode()->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash)
 			{
 				output += "ydl_unit";
 			}

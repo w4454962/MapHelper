@@ -2220,8 +2220,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 				output += " function " + function_name + "";
 
-				ActionNodePtr temp(new ActionNode(param->funcParam, node));
-				auto tttt = convertAction(temp, pre_actions,false);
+				auto tttt = convertParameter(param, node, pre_actions);
 
 				pre_actions += "function " + function_name + " takes nothing returns nothing\n";
 				pre_actions += "\tcall " + tttt + "\n";
