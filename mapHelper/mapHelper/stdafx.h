@@ -13,7 +13,7 @@
 
 
 // 在此处引用程序需要的其他标头
-
+#include <iostream>
 #include <string>
 #include <map>
 #include <vector>
@@ -37,6 +37,7 @@ namespace fs = std::filesystem;
 
 
 #pragma  warning( disable: 4307 4455 )
+//控制台流
 
 std::string string_replaced(const std::string& source, const std::string& from, const std::string& to);
 void convert_name(std::string& name);

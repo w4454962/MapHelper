@@ -30,7 +30,7 @@ public:
 
 	void detach();//∑÷¿Î
 
-	int getConfig();
+	int getConfig() const;
 private: 
 
 	//±£¥ÊµÿÕº

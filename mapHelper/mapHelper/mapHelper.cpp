@@ -1,10 +1,12 @@
 ﻿// mapHelper.cpp : 定义 DLL 应用程序的导出函数。
 //
-
+#include <io.h>
+#include <fcntl.h>
 #include "stdafx.h"
 #include "mapHelper.h"
 #include "singleton.h"
 
+#pragma warning(disable:4996)
 
 const char* g_path;
 uintptr_t g_object;
@@ -172,28 +174,35 @@ void Helper::detach()
 
 	hook::uninstall(m_hookSaveMap);
 	hook::uninstall(m_hookConvertTrigger);
+	//释放控制台避免崩溃
+	FreeConsole();
 }
 
 
 void Helper::enableConsole()
 {
-	HWND h = ::GetConsoleWindow();
+	const HWND v_hwnd_console = ::GetConsoleWindow();
 
-	if (h)
+	if (nullptr != v_hwnd_console)
 	{
-		::ShowWindow(h, SW_SHOW);
+		::ShowWindow(v_hwnd_console, SW_SHOW);
 	}
 	else
-	{
-		FILE* new_file;
-		::AllocConsole();
-		freopen_s(&new_file, "CONIN$", "r", stdin);
-		freopen_s(&new_file, "CONOUT$", "w", stdout);
-		freopen_s(&new_file, "CONOUT$", "w", stderr);
+	{	
+		auto v_is_ok = AllocConsole();
+		if (v_is_ok)
+		{
+			FILE* fp;
+			freopen_s(&fp, "CONOUT$", "r", stdin);
+			freopen_s(&fp, "CONOUT$", "w", stdout);
+			freopen_s(&fp, "CONOUT$", "w", stderr);
+			fclose(fp);
+			std::cout.clear();
+		}
 	}
 }
 
-int Helper::getConfig()
+int Helper::getConfig() const
 {
 	return GetPrivateProfileIntA("ScriptCompiler", "EnableYDTrigger", -1, m_configPath.string().c_str());
 }

@@ -41,7 +41,7 @@ void TriggerEditor::loadTriggers(TriggerData* data)
 void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 {
 	m_configData = data;
-	std::cout<<"读取配置文件\n"<<std::endl;
+	std::cout<<"cout读取配置文件"<<std::endl;
 	for (size_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
