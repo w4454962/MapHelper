@@ -54,10 +54,12 @@ void convert_name(std::string& name)
 		if (c && !isalnum(c) && c != '_')
 			name[i] = '_';
 	}
+	name = name.c_str();
+
 	//如果末尾是以下划线结尾的 要加上u
 	if (name.length() > 0 && name[name.length() - 1] == '_')
 	{
 		name += 'u';
 	}
-	name = name.c_str();
+	
 }
