@@ -1682,7 +1682,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		output += "endloop";
 		return output;
 	}
-	
+
 	case "ForLoopAMultiple"s_hash:
 		is_loopa = true;
 	case "ForLoopBMultiple"s_hash:
@@ -2162,6 +2162,28 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		output += convertParameter(parameters[1], node, pre_actions) + ")";
 		return output;
 	}
+	case "ForLoopA"s_hash:
+	case "ForLoopB"s_hash:
+	{
+		std::string variable = "bj_forLoopAIndex";
+		if (node->getNameId() == "ForLoopB"s_hash)
+		{
+			variable = "bj_forLoopBIndex";
+		}
+		output += "set " + variable + " = ";
+		output += convertParameter(parameters[0], node, pre_actions) + "\n";
+		output += spaces[space_stack];
+		output += "loop\n";
+		output += spaces[space_stack + 1];
+		output += "exitwhen " + variable + " > " + convertParameter(parameters[1], node, pre_actions) + "\n";
+		output += spaces[space_stack + 1];
+		output += convertParameter(parameters[2], node, pre_actions, true) + "\n";
+		output += spaces[space_stack + 1];
+		output += "set " + variable + " = " + variable + " + 1\n";
+		output += spaces[space_stack];
+		output += "endloop\n";
+		return output;
+	}
 
 	case "ForLoopVar"s_hash:
 	{
@@ -2170,10 +2192,15 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 		output += "set " + variable + " = ";
 		output += convertParameter(parameters[1], node, pre_actions) + "\n";
+		output += spaces[space_stack];
 		output += "loop\n";
+		output += spaces[space_stack + 1];
 		output += "exitwhen " + variable + " > " + convertParameter(parameters[2], node, pre_actions) + "\n";
+		output += spaces[space_stack + 1];
 		output += convertParameter(parameters[3], node, pre_actions, true) + "\n";
+		output += spaces[space_stack + 1];
 		output += "set " + variable + " = " + variable + " + 1\n";
+		output += spaces[space_stack];
 		output += "endloop\n";
 		return output;
 	}
@@ -2203,6 +2230,8 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 	case "EnumItemsInRectBJ"s_hash:
 	case "ForForce"s_hash:
 	case "ForGroup"s_hash:
+	case "EnumDestructablesInCircleBJ"s_hash:
+	case "EnumDestructablesInRectAll"s_hash:
 	case "DzFrameSetScriptByCode"s_hash:
 	{
 

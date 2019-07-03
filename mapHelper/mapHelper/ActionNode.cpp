@@ -139,6 +139,8 @@ ActionNodePtr ActionNode::getBranchNode()
 			case "EnumItemsInRectBJ"s_hash:
 			case "ForForce"s_hash:
 			case "ForGroup"s_hash:
+			case "EnumDestructablesInCircleBJ"s_hash:
+			case "EnumDestructablesInRectAll"s_hash:
 			case "DzFrameSetScriptByCode"s_hash:
 			case "ForForceMultiple"s_hash:
 			case "ForGroupMultiple"s_hash:
