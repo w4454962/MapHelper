@@ -1957,26 +1957,29 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		if (flag)
 		{
 			output += "null,";
-		}
-		for (size_t k = 1; k < action->param_count; k++)
-		{
-			auto param = action->parameters[k];
-			if (strcmp(param->type_name, "code") != 0)
+			for (size_t k = 1; k < action->param_count; k++)
 			{
-				output += convertParameter(param, node, pre_actions);
-				output += ",";
+				auto param = action->parameters[k];
+				if (strcmp(param->type_name, "code") != 0)
+				{
+					output += convertParameter(param, node, pre_actions);
+					output += ",";
+				}
 			}
-		}
-		if (flag)
-		{
 			output += "false,";
 		}
-
-		output += " function " + function_name;
 		
 		if (node->getNameId() == "DzFrameSetScriptMultiple"s_hash)
 		{
+			output += convertParameter(action->parameters[2], node, pre_actions);
+			output += ",";
+			output += convertParameter(action->parameters[1], node, pre_actions);
+			output += ", function " + function_name;
 			output += ",false";
+		}
+		else
+		{
+			output += " function " + function_name;
 		}
 
 		output += ")\n";
