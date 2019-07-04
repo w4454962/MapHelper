@@ -401,11 +401,23 @@ void TriggerEditor::saveSctipt(const char* path)
 					{
 						value = "null";
 					}
-					
 				}
-				
 			}
-			writer.write_string("\t" + base + " " + name + " = " + value + "\n");
+			else
+			{
+				if (base == "string")
+				{
+					value.clear();
+				}
+			}
+			if (value.empty())
+			{
+				writer.write_string("\t" + base + " " + name + "\n");
+			}
+			else
+			{
+				writer.write_string("\t" + base + " " + name + " = " + value + "\n");
+			}
 		}
 	}
 
@@ -437,12 +449,12 @@ void TriggerEditor::saveSctipt(const char* path)
 	{
 		Variable* var = &data->variables->array[i];
 		std::string name = var->name;
-		 
+		std::string type = var->type;
+		std::string base = getBaseType(type);
+
 		if (var->is_array )
 		{
 			//获取默认值
-			std::string type = var->type;
-
 			std::string defaultValue;
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
@@ -456,9 +468,16 @@ void TriggerEditor::saveSctipt(const char* path)
 			if (var->is_init) 
 			{
 				std::string value = var->value;
-				if (type == "string" && value.empty()) 
+				if (base == "string")
 				{
-					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+					if (value.empty())
+					{
+						writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+					}
+					else
+					{
+						writer.write_string("\t\tset udg_" + name + "[i] = \"" + value + "\"\n");
+					}
 				}
 				else 
 				{
@@ -467,7 +486,7 @@ void TriggerEditor::saveSctipt(const char* path)
 			}
 			else 
 			{
-				if (type == "string") 
+				if (base == "string")
 				{
 					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
 				}
@@ -481,7 +500,22 @@ void TriggerEditor::saveSctipt(const char* path)
 		}
 		else if (var->is_init) 
 		{
-			writer.write_string("\tset udg_" + name + " = " + var->value + "\n");
+			std::string value = var->value;
+			if (base == "string")
+			{
+				if (value.empty())
+				{
+					writer.write_string("\tset udg_" + name + " = \"\"\n");
+				}
+				else
+				{
+					writer.write_string("\tset udg_" + name + " = \"" + value + "\"\n");
+				}
+			}
+			else
+			{
+				writer.write_string("\tset udg_" + name + " = " + value + "\n");
+			}
 		}
 	}
 	writer.write_string("endfunction\n\n");
@@ -2104,6 +2138,10 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			if (it != m_typesTable.end())
 				is_import_path = it->second->is_import_path;;
 
+			if (type == "scriptcode")
+			{
+				return value;
+			}
 			if (is_import_path || getBaseType(type) == "string") {
 				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
 			}
