@@ -317,8 +317,14 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		stack = s;
 
+		//如果当前这层有需要申请的变量
+		auto table = node->getVarTable();
+
+
 		for (auto&[n, t] : hashVarTable)
 		{	
+			table->erase(n);
+
 			if (mapPtr)
 			{
 				mapPtr->erase(n);
@@ -329,8 +335,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
 
-		//如果当前这层有需要申请的变量
-		auto table = node->getVarTable();
+
 		if (table->size() > 0)
 		{
 			for (auto&[n, t] : *table)
@@ -445,8 +450,14 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		stack = s;
 
+		//如果当前这层有需要申请的变量
+		auto table = node->getVarTable();
+
+
 		for (auto&[n, t] : hashVarTable)
 		{
+			table->erase(n);
+
 			if (mapPtr)
 			{
 				mapPtr->erase(n);
@@ -457,8 +468,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
 
-		//如果当前这层有需要申请的变量
-		auto table = node->getVarTable();
 		if (table->size() > 0)
 		{
 			for (auto&[n, t] : *table)
