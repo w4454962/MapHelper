@@ -168,7 +168,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	}
 	case "YDWEEnumUnitsInRangeMultiple"s_hash:
 	{
-		m_enumUnitStack++;
+		
 		output += "set ydl_group = CreateGroup()\n";
 		output += editor.spaces[stack];
 		output += "call GroupEnumUnitsInRange(ydl_group,";
@@ -189,7 +189,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 		output += editor.spaces[stack];
 		output += "call GroupRemoveUnit(ydl_group, ydl_unit)\n";
-
+		m_enumUnitStack++;
 		node->getChildNodeList(list);
 		for (auto& child : list)
 		{
@@ -197,11 +197,12 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 			//循环里的子动作 沿用外面相同的父节点
 			output += editor.convertAction(child, pre_actions, false) + "\n";
 		}
+		m_enumUnitStack--;
 		output += editor.spaces[--stack];
 		output += "endloop\n";
 		output += editor.spaces[stack];
 		output += "call DestroyGroup(ydl_group)\n";
-		m_enumUnitStack--;
+		
 		return true;
 	}
 	case "YDWESaveAnyTypeDataByUserData"s_hash:
@@ -605,10 +606,16 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		}
 		else
 		{
-			output += editor.spaces[stack];
-			output += "call YDLocalReset()\n";
+			ActionNodePtr root = node->getRootNode();
+			if (parent.get() == nullptr || parent->isRootNode())
+			{
+				if (root->m_haveHashLocal)
+				{
+					output += editor.spaces[stack];
+					output += "call YDLocalReset()\n";
+				}
+			}
 		}
-			
 		return true;
 	}
 	case "ReturnAction"s_hash:

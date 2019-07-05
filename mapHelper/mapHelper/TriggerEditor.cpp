@@ -830,10 +830,10 @@ endfunction
 				writer.write_string("\tcall SetSoundDistanceCutoff(" + sound_name + ", " + std::string(buffer) + ")\n");
 				
 				sprintf(buffer, "%.1f,%.1f,%d", sound->inside, sound->outside, sound->outsideVolume);
-				writer.write_string("\tcall SetSoundConeAngles(gg_snd_UndeadVictory," + std::string(buffer) + ")\n");
+				writer.write_string("\tcall SetSoundConeAngles(" + sound_name + ", " + std::string(buffer) + ")\n");
 
 				sprintf(buffer, "%.1f,%.1f,%.1f", sound->x,sound->y,sound->z);
-				writer.write_string("\tcall SetSoundConeOrientation(gg_snd_UndeadVictory," + std::string(buffer) + ")\n");
+				writer.write_string("\tcall SetSoundConeOrientation(" + sound_name + ", " + std::string(buffer) + ")\n");
 			}
 
 		}
