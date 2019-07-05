@@ -2102,7 +2102,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			auto& world = get_world_editor();
 			const auto preset_type = world.getConfigData("TriggerParams", value, 1);
 
-			if (getBaseType(preset_type) == "string") {
+			if (getBaseType(preset_type) == "string" || preset_type == "OrderType") {
 				return string_replaced(world.getConfigData("TriggerParams",value, 2), "`", "\"");
 			}
 			return world.getConfigData("TriggerParams", value, 2);
@@ -2151,11 +2151,10 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			case "buffcode"s_hash:
 			case "destructablecode"s_hash:
 			case "itemcode"s_hash:
-			case "ordercode"s_hash:
+			//case "ordercode"s_hash:
 			case "techcode"s_hash:
 			case "unitcode"s_hash:
 				return "'" + value + "'";
-			
 			default:
 				return value;
 			}

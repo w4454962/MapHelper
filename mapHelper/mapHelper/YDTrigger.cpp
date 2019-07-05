@@ -131,6 +131,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	{
 		
 		std::string variable = std::string("ydul_") + action->parameters[0]->value;
+		convert_loop_var_name(variable);
+
 		output += editor.spaces[stack];
 		output += "set " + variable + " = ";
 		output += editor.convertParameter(parameters[1], node, pre_actions) + "\n";
@@ -892,8 +894,9 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			}
 			case "YDWEForLoopLocVarMultiple"s_hash:
 			{
-				std::string varname = action->parameters[0]->value;
-				addLocalVar("ydul_" + varname, "integer");
+				std::string varname = std::string("ydul_") + action->parameters[0]->value;
+				convert_loop_var_name(varname);
+				addLocalVar(varname, "integer");
 				next(true);
 				break;
 			}

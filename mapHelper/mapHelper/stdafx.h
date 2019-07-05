@@ -41,7 +41,7 @@ namespace fs = std::filesystem;
 
 std::string string_replaced(const std::string& source, const std::string& from, const std::string& to);
 void convert_name(std::string& name);
-
+void convert_loop_var_name(std::string& name, int limit = 260);
 
 typedef std::uint32_t hash_t;
 
