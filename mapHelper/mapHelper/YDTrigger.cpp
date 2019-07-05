@@ -730,8 +730,9 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 		}
 		case "YDWEForLoopLocVarIndex"s_hash:
 		{
-			std::string varname = action->parameters[0]->value;
-			output = "ydul_" + varname;
+			std::string variable = std::string("ydul_") + action->parameters[0]->value;
+			convert_loop_var_name(variable);
+			output += variable;
 			return true;
 		}
 		case "YDWEGetAnyTypeLocalVariable"s_hash:
