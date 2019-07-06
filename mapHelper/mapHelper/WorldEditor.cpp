@@ -157,7 +157,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		saveMmp();
 		saveObject();
 
-		customSaveDoodas(getTempSavePath());
+		
 
 		saveUnits();
 		saveRect();
@@ -167,6 +167,8 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		triggerEditor.saveTriggers(getTempSavePath());
 		triggerEditor.saveScriptTriggers(getTempSavePath());
 		triggerEditor.saveSctipt(getTempSavePath());
+
+		customSaveDoodas(getTempSavePath());
 
 		//更新标签
 		updateSaveFlags();
@@ -524,6 +526,10 @@ int WorldEditor::customSaveDoodas(const char* path)
 	clock_t start = clock();
 	auto doodas = getEditorData()->doodas; 
 
+	auto& editor = get_trigger_editor();
+
+	auto& variableTable = editor.variableTable;
+
 	BinaryWriter writer; 
 
 
@@ -546,6 +552,8 @@ int WorldEditor::customSaveDoodas(const char* path)
 	uint32_t object = *(uint32_t*)(((uint32_t)doodas) + 0xE0);
 	uint32_t addr = *(uint32_t*)((*(uint32_t*)(doodas)) + 0xc8);
 
+	char buffer[0x100];
+
 	for (size_t i = 0;i<doodas->unit_count;i++)
 	{
 		Unit* unit = &doodas->array[i]; 
@@ -560,7 +568,8 @@ int WorldEditor::customSaveDoodas(const char* path)
 		writer.write<float>(unit->scale_y); 
 		writer.write<float>(unit->scale_z); 
 
-	
+		sprintf(buffer, "gg_dest_%.04s_%04d", unit->name, unit->index);
+
 	
 		//计算装饰物状态
 		uint8_t flag = 0;
@@ -568,11 +577,14 @@ int WorldEditor::customSaveDoodas(const char* path)
 		
 		//注释掉的这些是效率太低 没太大必要的判断 
 		//判断是否在可用地图内  在边界为true
-		if (!this_call<int>(getAddress(0x005E73A0), object, &unit->x))
-			flag = 1;
+
+		//if (!this_call<int>(getAddress(0x005E73A0), object, &unit->x))
+		//	flag = 1;
 		
-		//未知 正常情况下都是2
-		if (!this_call<int>(addr, doodas, i))
+		//判断是否被全局变量引用 
+		//if (!this_call<int>(addr, doodas, i)) 
+
+		if (variableTable.find(buffer) == variableTable.end())
 		{
 			flag |= 0x2;
 		}
@@ -580,12 +592,12 @@ int WorldEditor::customSaveDoodas(const char* path)
 		{
 			flag &= 0xfd;
 		}
+
 		//是否带飞行高度 在地形编辑器上用 ctrl + pageup or pagedown 设置过高度的装饰物
 		if (*(uint8_t*)((uint32_t)unit + 0x84) & 0x8)
 		{
 			flag |= 0x4;
 		}
-		
 		writer.write<uint8_t>(flag);
 		writer.write<uint8_t>(unit->doodas_life); 
 		writer.write<int32_t>(unit->item_table_index); 

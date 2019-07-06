@@ -352,7 +352,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	auto worldData = worldEditor.getEditorData();
 
 	char buffer[0x400];
-	std::map<std::string, Variable*> variableTable;
+	variableTable.clear();
 
 	writer.write_string(seperator);
 	writer.write_string("//*\n");

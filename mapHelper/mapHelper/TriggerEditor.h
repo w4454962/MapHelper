@@ -63,6 +63,9 @@ protected:
 	std::unordered_map<Trigger*, bool> m_initTriggerTable;
 
 public:
+
+	std::map<std::string, Variable*> variableTable;
+
 	std::string spaces[200];
 	int space_stack;
 };
