@@ -64,11 +64,10 @@ void convert_name(std::string& name)
 }
 
 
-void convert_loop_var_name(std::string& name,int limit)
+void convert_loop_var_name(std::string& name, size_t limit)
 {
 	std::string retval;
 
-	uint32_t j;
 	uint32_t addup = 0;
 
 	static unsigned char ConvertToAlnum[] = {
