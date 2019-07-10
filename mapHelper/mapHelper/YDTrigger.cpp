@@ -767,6 +767,123 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			output += parameters[0]->value;
 			return true;
 		}
+		case "GetTriggeringTrigger"s_hash:
+		case "GetTriggerEventId"s_hash:
+		case "GetEventGameState"s_hash:
+		case "GetWinningPlayer"s_hash:
+		case "GetTriggeringRegion"s_hash:
+		case "GetEnteringUnit"s_hash:
+		case "GetLeavingUnit"s_hash:
+		case "GetTriggeringTrackable"s_hash:
+		case "GetClickedButton"s_hash:
+		case "GetClickedDialog"s_hash:
+		case "GetTournamentFinishSoonTimeRemaining"s_hash:
+		case "GetTournamentFinishNowRule"s_hash:
+		case "GetTournamentFinishNowPlayer"s_hash:
+		case "GetSaveBasicFilename"s_hash:
+		case "GetTriggerPlayer"s_hash:
+		case "GetLevelingUnit"s_hash:
+		case "GetLearningUnit"s_hash:
+		case "GetLearnedSkill"s_hash:
+		case "GetLearnedSkillLevel"s_hash:
+		case "GetRevivableUnit"s_hash:
+		case "GetRevivingUnit"s_hash:
+		case "GetAttacker"s_hash:
+		case "GetRescuer"s_hash:
+		case "GetDyingUnit"s_hash:
+		case "GetKillingUnit"s_hash:
+		case "GetDecayingUnit"s_hash:
+		case "GetConstructingStructure"s_hash:
+		case "GetCancelledStructure"s_hash:
+		case "GetConstructedStructure"s_hash:
+		case "GetResearchingUnit"s_hash:
+		case "GetResearched"s_hash:
+		case "GetTrainedUnitType"s_hash:
+		case "GetTrainedUnit"s_hash:
+		case "GetDetectedUnit"s_hash:
+		case "GetSummoningUnit"s_hash:
+		case "GetSummonedUnit"s_hash:
+		case "GetTransportUnit"s_hash:
+		case "GetLoadedUnit"s_hash:
+		case "GetSellingUnit"s_hash:
+		case "GetSoldUnit"s_hash:
+		case "GetBuyingUnit"s_hash:
+		case "GetSoldItem"s_hash:
+		case "GetChangingUnit"s_hash:
+		case "GetChangingUnitPrevOwner"s_hash:
+		case "GetManipulatingUnit"s_hash:
+		case "GetManipulatedItem"s_hash:
+		case "GetOrderedUnit"s_hash:
+		case "GetIssuedOrderId"s_hash:
+		case "GetOrderPointX"s_hash:
+		case "GetOrderPointY"s_hash:
+		case "GetOrderPointLoc"s_hash:
+		case "GetOrderTarget"s_hash:
+		case "GetOrderTargetDestructable"s_hash:
+		case "GetOrderTargetItem"s_hash:
+		case "GetOrderTargetUnit"s_hash:
+		case "GetSpellAbilityUnit"s_hash:
+		case "GetSpellAbilityId"s_hash:
+		case "GetSpellAbility"s_hash:
+		case "GetSpellTargetLoc"s_hash:
+		case "GetSpellTargetDestructable"s_hash:
+		case "GetSpellTargetItem"s_hash:
+		case "GetSpellTargetUnit"s_hash:
+		case "GetEventPlayerState"s_hash:
+		case "GetEventPlayerChatString"s_hash:
+		case "GetEventPlayerChatStringMatched"s_hash:
+		case "GetTriggerUnit"s_hash:
+		case "GetEventUnitState"s_hash:
+		case "GetEventDamage"s_hash:
+		case "GetEventDamageSource"s_hash:
+		case "GetEventDetectingPlayer"s_hash:
+		case "GetEventTargetUnit"s_hash:
+		case "GetTriggerWidget"s_hash:
+		case "GetTriggerDestructable"s_hash:
+		{
+			//判断这些接口是否在触发器最外层被引用 自动传递参数
+
+			
+
+			ActionNodePtr ptr = node;
+
+			while (!ptr->isRootNode())
+			{
+				ActionNodePtr parentPtr = ptr->getParentNode();
+				int flag = 0;
+				switch (parentPtr->getNameId())
+				{
+				case "YDWEExecuteTriggerMultiple"s_hash:
+					flag = 1; 
+					break;
+				case "YDWETimerStartMultiple"s_hash:
+					flag = ptr->getActionId() == 0 ? 1 : 2;
+					break;
+				case "YDWERegisterTriggerMultiple"s_hash:
+					flag = ptr->getActionId() < 2 ? 1 : 2;
+					break;
+				}
+				if (flag > 0)
+				{
+					std::string var_name = action->name;
+					std::string var_type = "AUTO_" + editor.getBaseType(paramter->type_name);
+
+					auto mapPtr = parentPtr->getVarTable();
+
+					mapPtr->emplace(var_name, var_type);
+
+					//如果flag = 1 表示是在传参区 跟父节点是相同的环境
+					//flag == 2 表示是在 传参后的动作区 则返回局部变量代码
+					if (flag == 2)
+					{
+						output += getLocal(ptr, var_name, var_type);
+						return true;
+					}
+				}
+				
+				ptr = parentPtr;
+			}
+		}
 		}
 	}
 
@@ -1032,6 +1149,10 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	std::string callname;
 	std::string handle;
 
+	//如果是自动传递GetTriggerUnit() 这些函数值的话
+	bool isauto = type.length() > 5 && strncmp(type.c_str(), "AUTO_", 5) == 0;
+
+
 	if (parent.get() == NULL || parent->isRootNode())//如果是在触发中
 	{
 		callname = "YDLocal1Set";
@@ -1097,17 +1218,22 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	}
 
 	std::string output;
+	std::string var_type;
+	if (isauto)
+	{
+		var_type = std::string(type.begin() + 5, type.end());
+	}
+	else
+	{
+		var_type = type;
+	}
 
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
 		output += handle + ",";
 	}
-	output += type + ",\"" + name + "\",";
-	output += value;
-	output += ")";
-
-	
+	output += var_type + ",\"" + name + "\"," + value + ")";
 
 	return output;
 }
@@ -1121,12 +1247,23 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 	//根据当前设置逆天局部变量的位置 来决定生成的代码
 	std::string callname;
 	std::string handle;
+
+	//如果是自动传递GetTriggerUnit() 这些函数值的话
+	bool isauto = type.length() > 5 && strncmp(type.c_str(), "AUTO_", 5) == 0;
+
+
 	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
 	{
+		//如果是自动传递GetTriggerUnit() 这些函数值的话
+		if (isauto)
+		{
+			return name + "()";
+		}
 		callname = "YDLocal1Get";
 	}
 	else
 	{
+		
 		switch (parent->getNameId())
 		{
 			//如果是在逆天计时器里
@@ -1160,7 +1297,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 		//否则 在其他未定义的动作组中
 		default:
 		{
-			callname = "YDLocal2Get";
+			
 
 			ActionNodePtr ptr = parent;
 			while (!ptr->isRootNode())
@@ -1174,6 +1311,14 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 				}
 				ptr = parentPtr;
 			}
+
+			//如果是自动传递GetTriggerUnit() 这些函数值的话
+			if (isauto)
+			{
+				return name + "()";
+			}
+
+			callname = "YDLocal2Get";
 			break;
 		}
 		}
@@ -1181,12 +1326,22 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 
 	std::string output;
 
+	std::string var_type;
+	if (isauto)
+	{
+		var_type = std::string(type.begin() + 5, type.end());
+	}
+	else
+	{
+		var_type = type;
+	}
+
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
 		output += handle + ",";
 	}
-	output += type + ",\"" + name + "\")";
+	output += var_type + ",\"" + name + "\")";
 
 	return output;
 }
