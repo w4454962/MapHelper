@@ -122,6 +122,9 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 
 
+#if defined(EMBED_YDWE)
+	int ret = 6;
+#else
 	int ret = 0;
 	auto& v_helper = get_helper();
 	const auto result = v_helper.getConfig();
@@ -138,7 +141,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	{
 		ret = 6;
 	}
-	
+#endif
 
 	clock_t start = clock();
 		

@@ -120,15 +120,19 @@ void Helper::attach()
 	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
 	g_convertAddr = addr;
 
+#if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
 	{
 		enableConsole();
 	}
-	
+#endif
 }
 
 int Helper::onSelectConvartMode()
 {
+#if defined(EMBED_YDWE)
+	return 0;
+#else
 	int result = getConfig();
 	if (result == -1)
 	{
@@ -150,6 +154,7 @@ int Helper::onSelectConvartMode()
 		}
 		return 1;
 	}
+#endif
 }
 
 int Helper::onConvertTrigger(Trigger* trigger)
@@ -174,8 +179,10 @@ void Helper::detach()
 
 	hook::uninstall(m_hookSaveMap);
 	hook::uninstall(m_hookConvertTrigger);
+#if !defined(EMBED_YDWE)
 	//释放控制台避免崩溃
 	FreeConsole();
+#endif
 }
 
 
