@@ -147,6 +147,7 @@ ActionNodePtr ActionNode::getBranchNode()
 			case "EnumDestructablesInRectAllMultiple"s_hash:
 			case "EnumDestructablesInCircleBJMultiple"s_hash:
 			case "EnumItemsInRectBJMultiple"s_hash:
+			case "YDWEExecuteTriggerMultiple"s_hash:
 			case "YDWETimerStartMultiple"s_hash:
 			case "YDWERegisterTriggerMultiple"s_hash:
 			case "AndMultiple"s_hash:
@@ -289,6 +290,7 @@ VarTablePtr ActionNode::getLastVarTable()
 		}
 		else if(node->m_action != m_action && (node->isRootNode()
 			|| node->m_nameId == "YDWETimerStartMultiple"s_hash
+			|| node->m_nameId == "YDWEExecuteTriggerMultiple"s_hash
 			|| node->m_nameId == "YDWERegisterTriggerMultiple"s_hash))
 		{
 			retval = VarTablePtr(new std::map<std::string, std::string>);

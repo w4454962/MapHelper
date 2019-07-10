@@ -1084,6 +1084,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
 				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
 					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
 				{
 					return setLocal(ptr, name, type,value,add);
@@ -1166,6 +1167,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
 				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
 					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
 				{
 					return getLocal(ptr,name,type);
@@ -1254,6 +1256,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
 				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
 					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
 				{
 					return setLocalArray(ptr, name, type,index, value);
@@ -1343,6 +1346,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
 				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
+					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
 					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
 				{
 					return getLocalArray(ptr, name, type, index);

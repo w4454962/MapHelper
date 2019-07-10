@@ -2150,6 +2150,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			switch (hash_(type.c_str()))
 			{
 			case "abilcode"s_hash:
+			case "heroskillcode"s_hash:
 			case "buffcode"s_hash:
 			case "destructablecode"s_hash:
 			case "itemcode"s_hash:

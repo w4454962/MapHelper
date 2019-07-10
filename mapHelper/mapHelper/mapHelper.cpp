@@ -206,13 +206,14 @@ void Helper::enableConsole()
 	{
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0首发版本");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0a");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168\n"
 			<< "参与测试人员： 幽影、夜夜、七罪、五爷、妖精\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
 			<< "                         ----2019/07/09\n";
+
 	}
 }
 
