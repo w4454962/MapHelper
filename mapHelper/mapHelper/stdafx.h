@@ -32,7 +32,6 @@ namespace fs = std::filesystem;
 #endif
 
 #include "fp_call.h"
-#include "unicode.h"
 #include "BinaryWriter.h"
 
 

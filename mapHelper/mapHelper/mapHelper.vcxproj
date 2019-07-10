@@ -161,10 +161,6 @@
     <ClInclude Include="..\3rd\Detours\src\detver.h" />
     <ClInclude Include="ActionNode.h" />
     <ClInclude Include="BinaryWriter.h" />
-    <ClInclude Include="detail\ansi_codecvt.h" />
-    <ClInclude Include="detail\codecvt.h" />
-    <ClInclude Include="detail\utf8_codecvt.h" />
-    <ClInclude Include="dynarray.h" />
     <ClInclude Include="EditorData.h" />
     <ClInclude Include="fp_call.h" />
     <ClInclude Include="inline.h" />
@@ -172,10 +168,8 @@
     <ClInclude Include="noncopyable.h" />
     <ClInclude Include="singleton.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="string_view.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TriggerEditor.h" />
-    <ClInclude Include="unicode.h" />
     <ClInclude Include="WorldEditor.h" />
     <ClInclude Include="YDTrigger.h" />
   </ItemGroup>
@@ -203,16 +197,8 @@
     <ClCompile Include="TriggerEditor.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="unicode.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="WorldEditor.cpp" />
     <ClCompile Include="YDTrigger.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="detail\ansi_codecvt.inl" />
-    <None Include="detail\codecvt.inl" />
-    <None Include="detail\utf8_codecvt.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

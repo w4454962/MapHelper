@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="源文件\detail">
-      <UniqueIdentifier>{eb4e903a-ec1c-42fb-8f52-3eacadfcac72}</UniqueIdentifier>
-    </Filter>
     <Filter Include="源文件\utils">
       <UniqueIdentifier>{91f2d287-a554-4cdb-ad26-9ddaa46deb13}</UniqueIdentifier>
     </Filter>
@@ -36,15 +33,6 @@
     <ClInclude Include="fp_call.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="detail\ansi_codecvt.h">
-      <Filter>源文件\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="detail\codecvt.h">
-      <Filter>源文件\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="detail\utf8_codecvt.h">
-      <Filter>源文件\detail</Filter>
-    </ClInclude>
     <ClInclude Include="TriggerEditor.h">
       <Filter>源文件</Filter>
     </ClInclude>
@@ -52,15 +40,6 @@
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="BinaryWriter.h">
-      <Filter>源文件\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="dynarray.h">
-      <Filter>源文件\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="string_view.h">
-      <Filter>源文件\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="unicode.h">
       <Filter>源文件\utils</Filter>
     </ClInclude>
     <ClInclude Include="inline.h">
@@ -104,9 +83,6 @@
     <ClCompile Include="WorldEditor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="unicode.cpp">
-      <Filter>源文件\utils</Filter>
-    </ClCompile>
     <ClCompile Include="inline.cpp">
       <Filter>源文件\utils</Filter>
     </ClCompile>
@@ -146,16 +122,5 @@
     <ClCompile Include="..\3rd\Detours\src\modules.cpp">
       <Filter>源文件\detours</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="detail\ansi_codecvt.inl">
-      <Filter>源文件\detail</Filter>
-    </None>
-    <None Include="detail\codecvt.inl">
-      <Filter>源文件\detail</Filter>
-    </None>
-    <None Include="detail\utf8_codecvt.inl">
-      <Filter>源文件\detail</Filter>
-    </None>
   </ItemGroup>
 </Project>
