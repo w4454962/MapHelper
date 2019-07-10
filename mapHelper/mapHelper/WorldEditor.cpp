@@ -667,5 +667,5 @@ void WorldEditor::updateSaveFlags()
 
 WorldEditor& get_world_editor()
 {
-	return base::singleton_nonthreadsafe<WorldEditor>::instance();
+	return base::singleton<WorldEditor>::instance();
 }

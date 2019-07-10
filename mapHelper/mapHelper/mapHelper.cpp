@@ -164,7 +164,7 @@ int Helper::onConvertTrigger(Trigger* trigger)
 
 Helper& get_helper()
 {
-	return base::singleton_nonthreadsafe<Helper>::instance();
+	return base::singleton<Helper>::instance();
 }
 
 void Helper::detach()

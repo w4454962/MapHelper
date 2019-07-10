@@ -281,7 +281,7 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 
 TriggerEditor& get_trigger_editor()
 {
-	return base::singleton_nonthreadsafe<TriggerEditor>::instance();
+	return base::singleton<TriggerEditor>::instance();
 }
 
 
