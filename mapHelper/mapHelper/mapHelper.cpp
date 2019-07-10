@@ -213,7 +213,7 @@ void Helper::enableConsole()
 	{
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0a");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0b");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168\n"

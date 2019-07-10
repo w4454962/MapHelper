@@ -133,7 +133,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		std::string variable = std::string("ydul_") + action->parameters[0]->value;
 		convert_loop_var_name(variable);
 
-		output += editor.spaces[stack];
 		output += "set " + variable + " = ";
 		output += editor.convertParameter(parameters[1], node, pre_actions) + "\n";
 		output += editor.spaces[stack];
@@ -156,6 +155,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	}
 	case "YDWERegionMultiple"s_hash:
 	{
+		output += "// --------------------\n";
+		output += editor.spaces[stack];
+		output += "//" + std::string(parameters[0]->value) + "\n";
 
 		node->getChildNodeList(list);
 		for (auto& child : list)
@@ -163,6 +165,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 			output += editor.spaces[stack];
 			output += editor.convertAction(child, pre_actions, false) + "\n";
 		}
+		output += editor.spaces[stack];
+		output += "// --------------------\n";
 
 		return true;
 	}
@@ -1466,7 +1470,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 		{
 			if (branch->getActionId() == 0) //0是参数区
 			{
-				return getLocal(parent, name, type);
+				return getLocalArray(parent, name, type,index);
 			}
 			else //否则是动作区
 			{
@@ -1481,7 +1485,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 
 			if (branch->getActionId() < 2) //0是事件区 1是参数区
 			{
-				return getLocal(parent, name, type);
+				return getLocalArray(parent, name, type, index);
 			}
 			else
 			{//否则是动作区
