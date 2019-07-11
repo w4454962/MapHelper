@@ -9,9 +9,12 @@
 #pragma warning(disable:4996)
 
 const char* g_path;
-uintptr_t g_object;
-uintptr_t g_addr;
-uintptr_t g_convertAddr;
+static uintptr_t g_object;
+static uintptr_t g_addr;
+static uintptr_t g_convertAddr;
+
+static uintptr_t g_createUIAddr;
+static uintptr_t g_setParamerTypeAddr;
 
 Helper::Helper()
 	: m_bAttach(false)
@@ -81,13 +84,58 @@ static void __declspec(naked) insertConvertTrigger()
 
 }
 
+
+//根据指定参数值 修改目标参数类型
+static void setParamerType(Action* action, int flag, int type_param_index, int target_param_index)
+{
+	Parameter* param = action->parameters[type_param_index];
+	if (!param || strncmp(param->value,"typename_",8) != 0)
+		return;
+	const char* type = param->value + 11; //typename_01_integer  + 11 = integer
+
+	//printf("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
+	this_call<int>(g_setParamerTypeAddr, action, target_param_index, type, flag);
+}
+
+//插入到创建UI中 根据动作参数改变对应UI类型
+static void __fastcall insertCreateUI(Action* action,uint32_t edx, int flag)
+{
+	
+	switch (hash_(action->name))
+	{
+	case "YDWESetAnyTypeLocalVariable"s_hash:
+		setParamerType(action, flag, 0, 2);
+		break;
+	case "YDWESetAnyTypeLocalArray"s_hash:
+		setParamerType(action, flag, 0, 3);
+		break;
+	case "YDWESaveAnyTypeDataByUserData"s_hash:
+		setParamerType(action, flag, 0, 1);
+		setParamerType(action, flag, 3, 4);
+
+		break;
+	case "YDWELoadAnyTypeDataByUserData"s_hash:
+	case "YDWEHaveSavedAnyTypeDataByUserData"s_hash:
+	case "YDWEFlushAnyTypeDataByUserData"s_hash:
+	case "YDWEFlushAllByUserData"s_hash:
+		setParamerType(action, flag, 0, 1);
+		break;
+	case "YDWEGetObjectPropertyInteger"s_hash:
+	case "YDWEGetObjectPropertyReal"s_hash:
+	case "YDWEGetObjectPropertyString"s_hash:
+		setParamerType(action, flag, 0, 1);
+		break;
+	}
+
+	this_call<int>(g_createUIAddr, action, flag);
+}
+
 uintptr_t Helper::onSaveMap()
 {
 	auto& editor = get_world_editor();
 	editor.onSaveMap(g_path);
 	return editor.getAddress(0x0055D175);
 }
-
 
 
 void Helper::attach()
@@ -111,14 +159,27 @@ void Helper::attach()
 
 	auto& editor = get_world_editor();
 
+	//当保存或测试地图时保存生成数据
 	uintptr_t addr = editor.getAddress(0x0055CDE6);
-
 	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertSaveMapData),m_hookSaveMap);
 
-	addr = editor.getAddress(static_cast<uintptr_t>(0x005CB4C0));
 
+	//当t转j时 生成脚本
+	addr = editor.getAddress(static_cast<uintptr_t>(0x005CB4C0));
 	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
 	g_convertAddr = addr;
+	g_setParamerTypeAddr = editor.getAddress(0x005D7C00);
+
+
+
+	
+
+	//当创建触发器UI时 修改指定类型
+	addr = editor.getAddress(static_cast<uintptr_t>(0x005D82C0));
+	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertCreateUI), m_hookConvertTrigger);
+	g_createUIAddr = addr;
+
+	
 
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
@@ -157,6 +218,23 @@ int Helper::onSelectConvartMode()
 #endif
 }
 
+
+void Helper::detach()
+{
+	if (!m_bAttach) return;
+	m_bAttach = false;
+
+	hook::uninstall(m_hookSaveMap);
+	hook::uninstall(m_hookConvertTrigger);
+	hook::uninstall(m_hookCreateUI);
+#if !defined(EMBED_YDWE)
+	//释放控制台避免崩溃
+	FreeConsole();
+#endif
+}
+
+
+
 int Helper::onConvertTrigger(Trigger* trigger)
 {
 	auto& v_we = get_world_editor();
@@ -170,19 +248,6 @@ int Helper::onConvertTrigger(Trigger* trigger)
 Helper& get_helper()
 {
 	return base::singleton<Helper>::instance();
-}
-
-void Helper::detach()
-{
-	if (!m_bAttach) return; 
-	m_bAttach = false;
-
-	hook::uninstall(m_hookSaveMap);
-	hook::uninstall(m_hookConvertTrigger);
-#if !defined(EMBED_YDWE)
-	//释放控制台避免崩溃
-	FreeConsole();
-#endif
 }
 
 

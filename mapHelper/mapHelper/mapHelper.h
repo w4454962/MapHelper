@@ -42,11 +42,15 @@ private:
 	//当自定义转换触发时
 	int onConvertTrigger(Trigger* trg);
 
+
 protected:
 	bool m_bAttach;
 
 	hook::hook_t* m_hookSaveMap;
 	hook::hook_t* m_hookConvertTrigger;
+
+	hook::hook_t* m_hookCreateUI;
+
 
 	fs::path m_configPath;
 };
