@@ -2324,10 +2324,13 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		else if (child_type == "code")
 		{
 			const auto function_name = generate_function_name(node->getTriggerNamePtr());
-			auto tttt = convertParameter(param, node, pre_actions);
+
+			auto childNode{ std::make_shared<ActionNode>(param->funcParam, param, node) };
+
+			auto tttt = convertAction(childNode, pre_actions, add_call);
 
 			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-			pre_actions += "\tcall " + tttt + "\n";
+			pre_actions += "\t" + tttt + "\n";
 			pre_actions += "endfunction\n\n";
 			output += "function " + function_name;
 		}
