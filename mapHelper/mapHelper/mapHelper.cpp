@@ -134,14 +134,16 @@ static int __fastcall fakeGetString(Action* action, uint32_t edx,int index, char
 	return fast_call<int>(real::getWEString, it->second[index].name.c_str(), buffer, len, 0);
 }
 
+
 static int __fastcall fakeGetActionType(Action* action, uint32_t edx, int index)
 {
 	auto it = g_actionInfoTable.find(std::string(action->name));
-	if (it != g_actionInfoTable.end())
+	if (it == g_actionInfoTable.end())
 	{
-		return it->second.size();
+		return fast_call<int>(real::getActionType, action, edx, index);
 	}
-	return this_call<int>(real::getChildCount, action);
+	index = (std::min)(index, (int)it->second.size() - 1);
+	return it->second[index].type_id;
 }
 
 //根据指定参数值 修改目标参数类型
@@ -244,6 +246,8 @@ void Helper::attach()
 	hook::install(&real::getString, reinterpret_cast<uintptr_t>(&fakeGetString), m_hookGetString);
 
 
+	real::getActionType = editor.getAddress(0x005DAE70);
+	hook::install(&real::getActionType, reinterpret_cast<uintptr_t>(&fakeGetActionType), m_hookGetActionType);
 
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
@@ -399,6 +403,8 @@ void Helper::detach()
 	hook::uninstall(m_hookCreateUI);
 	hook::uninstall(m_hookGetChildCount);
 	hook::uninstall(m_hookGetString);
+	hook::uninstall(m_hookGetActionType);
+	
 
 #if !defined(EMBED_YDWE)
 	//释放控制台避免崩溃
