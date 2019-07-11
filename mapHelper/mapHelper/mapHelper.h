@@ -46,14 +46,25 @@ private:
 protected:
 	bool m_bAttach;
 
+	//自定义jass生成器的hook
 	hook::hook_t* m_hookSaveMap;
 	hook::hook_t* m_hookConvertTrigger;
 
+	//动态参数类型 返回类型的hook
 	hook::hook_t* m_hookCreateUI;
+	hook::hook_t* m_hookReturnTypeStrcmp;
+
+	//自定义动作组的hook
 	hook::hook_t* m_hookGetChildCount;
 	hook::hook_t* m_hookGetString;
 	hook::hook_t* m_hookGetActionType;
 	
+	//角度弧度互换的hook操作
+	hook::hook_t* m_hookParamTypeStrncmp1;
+	hook::hook_t* m_hookParamTypeStrncmp2;
+	hook::hook_t* m_hookGetParamType;
+
+
 	fs::path m_configPath;
 };
 extern Helper g_CHelper;

@@ -17,13 +17,28 @@ static uintptr_t g_addr;
 
 namespace real
 {
-	uintptr_t convertTrigger;
-	uintptr_t createUI;
-	uintptr_t setParamType;
-	uintptr_t getChildCount;
-	uintptr_t getString;
-	uintptr_t getWEString;
-	uintptr_t getActionType;
+	uintptr_t ConvertTrigger;
+
+	uintptr_t CreateUI;
+	uintptr_t SetParamType;
+
+	uintptr_t ReturnTypeStrcmp;
+	uintptr_t ReturnTypeStrcmpEnd;
+
+	uintptr_t GetChildCount;
+	uintptr_t GetString;
+	uintptr_t GetWEString;
+	uintptr_t GetActionType;
+	
+	uintptr_t ParamTypeStrncmp1;
+	uintptr_t ParamTypeStrncmpEnd1;
+
+	uintptr_t ParamTypeStrncmp2;
+	uintptr_t ParamTypeStrncmpEnd2;
+
+	uintptr_t GetParamType;
+
+	uintptr_t ParamTypeId = 0;
 }
 
 
@@ -90,7 +105,7 @@ static void __declspec(naked) insertConvertTrigger()
 		je pos
 
 		mov ecx,g_object
-		jmp real::convertTrigger
+		jmp real::ConvertTrigger
 		
 	pos:
 
@@ -119,7 +134,7 @@ static int __fastcall fakeGetChildCount(Action* action)
 	{
 		return it->second.size();
 	}
-	return this_call<int>(real::getChildCount, action);
+	return this_call<int>(real::GetChildCount, action);
 }
 
 //修改特定的UI名字
@@ -128,19 +143,19 @@ static int __fastcall fakeGetString(Action* action, uint32_t edx,int index, char
 	auto it = g_actionInfoTable.find(std::string(action->name));
 	if (it == g_actionInfoTable.end())
 	{
-		return fast_call<int>(real::getString, action, edx, index, buffer, len);
+		return fast_call<int>(real::GetString, action, edx, index, buffer, len);
 		
 	}
-	return fast_call<int>(real::getWEString, it->second[index].name.c_str(), buffer, len, 0);
+	return fast_call<int>(real::GetWEString, it->second[index].name.c_str(), buffer, len, 0);
 }
 
-
+//返回动作组的动作类型
 static int __fastcall fakeGetActionType(Action* action, uint32_t edx, int index)
 {
 	auto it = g_actionInfoTable.find(std::string(action->name));
 	if (it == g_actionInfoTable.end())
 	{
-		return fast_call<int>(real::getActionType, action, edx, index);
+		return fast_call<int>(real::GetActionType, action, edx, index);
 	}
 	index = (std::min)(index, (int)it->second.size() - 1);
 	return it->second[index].type_id;
@@ -155,7 +170,7 @@ static void setParamerType(Action* action, int flag, int type_param_index, int t
 	const char* type = param->value + 11; //typename_01_integer  + 11 = integer
 
 	//printf("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
-	this_call<int>(real::setParamType, action, target_param_index, type, flag);
+	this_call<int>(real::SetParamType, action, target_param_index, type, flag);
 }
 
 //插入到创建UI中 根据动作参数改变对应UI类型
@@ -188,8 +203,94 @@ static void __fastcall insertCreateUI(Action* action,uint32_t edx, int flag)
 		break;
 	}
 
-	this_call<int>(real::createUI, action, flag);
+	this_call<int>(real::CreateUI, action, flag);
 }
+
+//任意返回类型的操作
+static int __fastcall fakeReturnTypeStrcmp(const char* type1,const char* type2)
+{
+	//类型相等 或者type1 是任意类型 即返回字符串相同的结果
+	if (strcmp(type1, type2) == 0 || strcmp(type1, "AnyReturnType") == 0)
+	{
+		return 0;
+	}
+	return 1;
+}
+
+static int __declspec(naked) insertReturnTypeStrcmp()
+{
+	__asm
+	{
+		lea  edx, [esi + 64h]
+		mov  ecx, eax
+		call fakeReturnTypeStrcmp
+		jmp real::ReturnTypeStrcmpEnd
+	}
+}
+
+static int __stdcall fakeParamTypeStrncmp1(const char* type1, const char* type2, size_t size)
+{
+	if (strcmp(type1, "degree") == 0)
+	{
+		real::ParamTypeId = 1;
+		return 0;
+	}
+	else if (strcmp(type1, "radian") == 0)
+	{
+		real::ParamTypeId = 2;
+		return 0;
+	}
+	return strcmp(type1, type2);
+}
+static int __stdcall fakeParamTypeStrncmp2(const char* type1, const char* type2, size_t size)
+{
+	if (real::ParamTypeId != 0)
+	{
+		real::ParamTypeId = 0;
+		return 0;
+	}
+	return strcmp(type1, type2);
+}
+static void __declspec(naked) insertParamTypeStrncmp1()
+{
+	__asm
+	{
+		call fakeParamTypeStrncmp1
+		jmp real::ParamTypeStrncmpEnd1
+	}
+}
+static void __declspec(naked) insertParamTypeStrncmp2()
+{
+	__asm
+	{
+		call fakeParamTypeStrncmp2
+		jmp real::ParamTypeStrncmpEnd2
+	}
+}
+
+static int __fastcall fakeGetParamType(
+	uintptr_t pThis,
+	uint32_t edx,
+	const char* type,
+	uint32_t unk1,
+	uint32_t unk2,
+	uint32_t unk3)
+{
+#define get(str) fast_call<int>(real::GetParamType,pThis,edx,str,unk1,unk2,unk3)
+
+	if (real::ParamTypeId == 1)
+	{
+		return get("degree");
+	}
+	else if (real::ParamTypeId == 2)
+	{
+		return get("radian");
+	}
+	return get(type);
+#undef get
+}
+
+
 
 uintptr_t Helper::onSaveMap()
 {
@@ -220,35 +321,68 @@ void Helper::attach()
 
 	auto& editor = get_world_editor();
 
+	//------------------自定义脚本生成器的操作----------------
+
 	//当保存或测试地图时保存生成数据
 	uintptr_t addr = editor.getAddress(0x0055CDE6);
 	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertSaveMapData),m_hookSaveMap);
 
 
 	//当t转j时 生成脚本
-	real::setParamType = editor.getAddress(0x005D7C00);
-	real::convertTrigger = editor.getAddress(0x005CB4C0);
-	hook::install(&real::convertTrigger, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
+	real::SetParamType = editor.getAddress(0x005D7C00);
+	real::ConvertTrigger = editor.getAddress(0x005CB4C0);
+	hook::install(&real::ConvertTrigger, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
 
+	//---------------------end-----------------------------
+
+
+
+	//------------------动态参数类型 以及 返回类型的操作----------------
 
 	//当创建触发器UI时 修改指定类型
-	real::createUI = editor.getAddress(0x005D82C0);
-	hook::install(&real::createUI, reinterpret_cast<uintptr_t>(&insertCreateUI), m_hookCreateUI);
+	real::CreateUI = editor.getAddress(0x005D82C0);
+	hook::install(&real::CreateUI, reinterpret_cast<uintptr_t>(&insertCreateUI), m_hookCreateUI);
 
+
+	real::ReturnTypeStrcmp = editor.getAddress(0x00688B0D);
+	real::ReturnTypeStrcmpEnd = editor.getAddress(0x00688B1C);
+	hook::install(&real::ReturnTypeStrcmp, reinterpret_cast<uintptr_t>(&insertReturnTypeStrcmp), m_hookReturnTypeStrcmp);
+
+	//---------------------end-----------------------------
+
+
+
+	//-----------自定义动作组 所需的 hook操作---------------
+
+	//hook获取子动作数量
+	real::GetChildCount = editor.getAddress(0x005DAE20);
+	hook::install(&real::GetChildCount, reinterpret_cast<uintptr_t>(&fakeGetChildCount), m_hookGetChildCount);
 	
-	
-	real::getChildCount = editor.getAddress(0x005DAE20);
-	hook::install(&real::getChildCount, reinterpret_cast<uintptr_t>(&fakeGetChildCount), m_hookGetChildCount);
-	
+	//hook获取动作组的名字
+	real::GetWEString = editor.getAddress(0x004EEC00);
+	real::GetString = editor.getAddress(0x005DAEE0);
+	hook::install(&real::GetString, reinterpret_cast<uintptr_t>(&fakeGetString), m_hookGetString);
 
-	real::getWEString = editor.getAddress(0x004EEC00);
-	real::getString = editor.getAddress(0x005DAEE0);
-	hook::install(&real::getString, reinterpret_cast<uintptr_t>(&fakeGetString), m_hookGetString);
+	//hook获取动作组类型 事件 条件 动作
+	real::GetActionType = editor.getAddress(0x005DAE70);
+	hook::install(&real::GetActionType, reinterpret_cast<uintptr_t>(&fakeGetActionType), m_hookGetActionType);
+
+	//-------------------end-----------------------------
 
 
-	real::getActionType = editor.getAddress(0x005DAE70);
-	hook::install(&real::getActionType, reinterpret_cast<uintptr_t>(&fakeGetActionType), m_hookGetActionType);
+	//-----------弧度角度之间互相转换的操作---------------
+	real::ParamTypeStrncmp1 = editor.getAddress(0x0068C391);
+	real::ParamTypeStrncmpEnd1 = editor.getAddress(0x0068C396);
+	hook::install(&real::ParamTypeStrncmp1, reinterpret_cast<uintptr_t>(&insertParamTypeStrncmp1), m_hookParamTypeStrncmp1);
 
+	real::ParamTypeStrncmp2 = editor.getAddress(0x0068778E);
+	real::ParamTypeStrncmpEnd2 = editor.getAddress(0x00687793);
+	hook::install(&real::ParamTypeStrncmp2, reinterpret_cast<uintptr_t>(&insertParamTypeStrncmp2), m_hookParamTypeStrncmp2);
+
+	real::GetParamType = editor.getAddress(0x00687650);
+	hook::install(&real::GetParamType, reinterpret_cast<uintptr_t>(&fakeGetParamType), m_hookGetParamType);
+
+	//-------------------end-----------------------------
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
 	{
@@ -358,10 +492,40 @@ void Helper::attach()
 	{
 		for (auto& value : list)
 		{
-			std::cout << name << "  :  " << value.type_id << "  " << value.name << "\n";
+			//std::cout << name << "  :  " << value.type_id << "  " << value.name << "\n";
 		}
 	}
 }
+
+
+
+void Helper::detach()
+{
+	if (!m_bAttach) return;
+	m_bAttach = false;
+
+	hook::uninstall(m_hookSaveMap);
+	hook::uninstall(m_hookConvertTrigger);
+
+	hook::uninstall(m_hookCreateUI);
+	hook::uninstall(m_hookReturnTypeStrcmp);
+
+	hook::uninstall(m_hookGetChildCount);
+	hook::uninstall(m_hookGetString);
+	hook::uninstall(m_hookGetActionType);
+
+	hook::uninstall(m_hookParamTypeStrncmp1);
+	hook::uninstall(m_hookParamTypeStrncmp2);
+	hook::uninstall(m_hookGetParamType);
+	
+
+
+#if !defined(EMBED_YDWE)
+	//释放控制台避免崩溃
+	FreeConsole();
+#endif
+}
+
 
 int Helper::onSelectConvartMode()
 {
@@ -393,24 +557,6 @@ int Helper::onSelectConvartMode()
 }
 
 
-void Helper::detach()
-{
-	if (!m_bAttach) return;
-	m_bAttach = false;
-
-	hook::uninstall(m_hookSaveMap);
-	hook::uninstall(m_hookConvertTrigger);
-	hook::uninstall(m_hookCreateUI);
-	hook::uninstall(m_hookGetChildCount);
-	hook::uninstall(m_hookGetString);
-	hook::uninstall(m_hookGetActionType);
-	
-
-#if !defined(EMBED_YDWE)
-	//释放控制台避免崩溃
-	FreeConsole();
-#endif
-}
 
 
 

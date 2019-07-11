@@ -2267,46 +2267,6 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		return output;
 	}
 
-	case "EnumItemsInRectBJ"s_hash:
-	case "ForForce"s_hash:
-	case "ForGroup"s_hash:
-	case "EnumDestructablesInCircleBJ"s_hash:
-	case "EnumDestructablesInRectAll"s_hash:
-	case "DzFrameSetScriptByCode"s_hash:
-	{
-
-		auto name = node->getName();
-
-		output += "call " + name + "(";
-
-		for (size_t k = 0; k < action->param_count; k++)
-		{
-			auto param = action->parameters[k];
-			if (strcmp(param->type_name, "code") != 0)
-			{
-				output += convertParameter(param, node, pre_actions);
-			}
-			else
-			{
-				const std::string function_name = generate_function_name(node->getTriggerNamePtr());
-
-				output += " function " + function_name + "";
-
-				auto tttt = convertParameter(param, node, pre_actions);
-
-				pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-				pre_actions += "\tcall " + tttt + "\n";
-				pre_actions += "endfunction\n\n";
-			}
-			if (k < action->param_count - 1)
-			{
-				output += ",";
-			}
-		}
-		output += ")\n";
-		return output;
-	}
-
 	case "GetBooleanAnd"s_hash:
 	{
 
@@ -2359,6 +2319,16 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 			pre_actions += "\treturn " + tttt + "\n";
 			pre_actions += "endfunction\n\n";
 
+			output += "function " + function_name;
+		}
+		else if (child_type == "code")
+		{
+			const auto function_name = generate_function_name(node->getTriggerNamePtr());
+			auto tttt = convertParameter(param, node, pre_actions);
+
+			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
+			pre_actions += "\tcall " + tttt + "\n";
+			pre_actions += "endfunction\n\n";
 			output += "function " + function_name;
 		}
 		else {
