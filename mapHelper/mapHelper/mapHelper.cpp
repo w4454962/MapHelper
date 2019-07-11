@@ -6,6 +6,9 @@
 #include "mapHelper.h"
 #include "singleton.h"
 
+#include "json.hpp"
+#include <sstream>
+
 #pragma warning(disable:4996)
 
 const char* g_path;
@@ -15,6 +18,20 @@ static uintptr_t g_convertAddr;
 
 static uintptr_t g_createUIAddr;
 static uintptr_t g_setParamerTypeAddr;
+
+
+struct ActionInfo
+{
+	int type_id;
+	std::string name;
+};
+
+typedef std::vector<ActionInfo> ActionInfoList;
+typedef std::map<std::string, ActionInfoList> ActionInfoMap;
+
+ActionInfoMap g_actionInfoTable;
+
+
 
 Helper::Helper()
 	: m_bAttach(false)
@@ -165,28 +182,129 @@ void Helper::attach()
 
 
 	//当t转j时 生成脚本
-	addr = editor.getAddress(static_cast<uintptr_t>(0x005CB4C0));
-	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
-	g_convertAddr = addr;
 	g_setParamerTypeAddr = editor.getAddress(0x005D7C00);
+	g_convertAddr = editor.getAddress(0x005CB4C0);
+	hook::install(&g_convertAddr, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
 
-
-
-	
 
 	//当创建触发器UI时 修改指定类型
-	addr = editor.getAddress(static_cast<uintptr_t>(0x005D82C0));
-	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertCreateUI), m_hookConvertTrigger);
-	g_createUIAddr = addr;
+	g_createUIAddr = editor.getAddress(0x005D82C0);
+	hook::install(&g_createUIAddr, reinterpret_cast<uintptr_t>(&insertCreateUI), m_hookConvertTrigger);
 
 	
-
+	
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
 	{
 		enableConsole();
 	}
 #endif
+
+
+	//std::ifstream file("D:\\war3\\test.json",std::ios::binary);
+	//
+	//if (!file.is_open())
+	//{
+	//	return;
+	//}
+	//
+	//
+	//std::stringstream stream;
+	std::string text;
+	std::string error;
+	//
+	//stream << file.rdbuf();
+	//
+	//text = stream.str();
+	//
+	//file.close();
+
+	text = R"(
+{
+    "YDWETimerStartMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+
+    "YDWERegisterTriggerMultiple" : [
+        { "Event" : "WESTRING_EVENTS" },
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+
+    "YDWEEnumUnitsInRangeMultiple" : [
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+
+    "YDWEForLoopLocVarMultiple" : [
+        { "Action" : "WESTRING_TRIGSUBFUNC_FORLOOPACTIONS" }
+    ],
+
+    "YDWERegionMultiple" : [
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+
+    "YDWEExecuteTriggerMultiple" : [
+        { "Action" : "WESTRING_ACTIONS" }
+    ]
+}
+)";
+
+	using json::Json;
+
+	Json json = Json::parse(text, error);
+
+	auto items = json.object_items();
+
+	for (auto&[str, child] : items)
+	{
+
+		if (child.is_array())
+		{
+			if (g_actionInfoTable.find(str) == g_actionInfoTable.end())
+				g_actionInfoTable[str] = ActionInfoList();
+
+			auto& mul_list = g_actionInfoTable[str];
+
+			auto list = child.array_items();
+			for (int i = 0; i < list.size(); i++)
+			{
+				auto& item = list[i].object_items();
+
+				for (auto& [key, value] : item)
+				{
+					std::string s = key;
+					transform(s.begin(), s.end(), s.begin(), ::tolower);
+					int type_id = -1;
+					switch (hash_(s.c_str()))
+					{
+					case "event"s_hash:
+						type_id = Action::Type::event;
+						break;
+					case "condition"s_hash:
+						type_id = Action::Type::condition;
+						break;
+					case "action"s_hash:
+						type_id = Action::Type::action;
+						break;
+					}
+					if (type_id != -1)
+					{
+						mul_list.push_back(ActionInfo({ type_id,value.string_value() }));
+					}
+				}
+
+			}
+		}
+	}
+
+	for (auto& [name,list] : g_actionInfoTable)
+	{
+		for (auto& value : list)
+		{
+			std::cout << name << "  :  " << value.type_id << "  " << value.name << "\n";
+		}
+	}
 }
 
 int Helper::onSelectConvartMode()

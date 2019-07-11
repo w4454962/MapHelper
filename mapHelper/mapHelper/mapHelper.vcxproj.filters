@@ -63,6 +63,9 @@
     <ClInclude Include="singleton.h">
       <Filter>源文件\utils</Filter>
     </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>源文件\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -118,6 +121,9 @@
     </ClCompile>
     <ClCompile Include="..\3rd\Detours\src\modules.cpp">
       <Filter>源文件\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="json.cpp">
+      <Filter>源文件\utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
