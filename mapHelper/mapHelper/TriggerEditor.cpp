@@ -1684,7 +1684,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	std::string logo = u8"//自定义jass生成器 作者： 阿七  \n//有bug到魔兽地图编辑器吧 @w4454962 \n";
 
 
-	return seperator + "// Trigger: " + root->getName() + "\n" + logo + seperator + conditions + pre_actions  + actions + seperator + events;
+	return seperator + "// Trigger: " + root->getName() + "\n" + logo + seperator + pre_actions + conditions + actions + seperator + events;
 }
 
 
