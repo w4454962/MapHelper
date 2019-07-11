@@ -14,10 +14,19 @@
 const char* g_path;
 static uintptr_t g_object;
 static uintptr_t g_addr;
-static uintptr_t g_convertAddr;
 
-static uintptr_t g_createUIAddr;
-static uintptr_t g_setParamerTypeAddr;
+namespace real
+{
+	uintptr_t convertTrigger;
+	uintptr_t createUI;
+	uintptr_t setParamType;
+	uintptr_t getChildCount;
+	uintptr_t getString;
+	uintptr_t getWEString;
+	uintptr_t getActionType;
+}
+
+
 
 
 struct ActionInfo
@@ -81,7 +90,7 @@ static void __declspec(naked) insertConvertTrigger()
 		je pos
 
 		mov ecx,g_object
-		jmp g_convertAddr
+		jmp real::convertTrigger
 		
 	pos:
 
@@ -102,6 +111,39 @@ static void __declspec(naked) insertConvertTrigger()
 }
 
 
+//修改特定UI的子动作数量
+static int __fastcall fakeGetChildCount(Action* action)
+{
+	auto it = g_actionInfoTable.find(std::string(action->name));
+	if (it != g_actionInfoTable.end())
+	{
+		return it->second.size();
+	}
+	return this_call<int>(real::getChildCount, action);
+}
+
+//修改特定的UI名字
+static int __fastcall fakeGetString(Action* action, uint32_t edx,int index, char* buffer, int len)
+{
+	auto it = g_actionInfoTable.find(std::string(action->name));
+	if (it == g_actionInfoTable.end())
+	{
+		return fast_call<int>(real::getString, action, edx, index, buffer, len);
+		
+	}
+	return fast_call<int>(real::getWEString, it->second[index].name.c_str(), buffer, len, 0);
+}
+
+static int __fastcall fakeGetActionType(Action* action, uint32_t edx, int index)
+{
+	auto it = g_actionInfoTable.find(std::string(action->name));
+	if (it != g_actionInfoTable.end())
+	{
+		return it->second.size();
+	}
+	return this_call<int>(real::getChildCount, action);
+}
+
 //根据指定参数值 修改目标参数类型
 static void setParamerType(Action* action, int flag, int type_param_index, int target_param_index)
 {
@@ -111,7 +153,7 @@ static void setParamerType(Action* action, int flag, int type_param_index, int t
 	const char* type = param->value + 11; //typename_01_integer  + 11 = integer
 
 	//printf("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
-	this_call<int>(g_setParamerTypeAddr, action, target_param_index, type, flag);
+	this_call<int>(real::setParamType, action, target_param_index, type, flag);
 }
 
 //插入到创建UI中 根据动作参数改变对应UI类型
@@ -144,7 +186,7 @@ static void __fastcall insertCreateUI(Action* action,uint32_t edx, int flag)
 		break;
 	}
 
-	this_call<int>(g_createUIAddr, action, flag);
+	this_call<int>(real::createUI, action, flag);
 }
 
 uintptr_t Helper::onSaveMap()
@@ -182,17 +224,27 @@ void Helper::attach()
 
 
 	//当t转j时 生成脚本
-	g_setParamerTypeAddr = editor.getAddress(0x005D7C00);
-	g_convertAddr = editor.getAddress(0x005CB4C0);
-	hook::install(&g_convertAddr, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
+	real::setParamType = editor.getAddress(0x005D7C00);
+	real::convertTrigger = editor.getAddress(0x005CB4C0);
+	hook::install(&real::convertTrigger, reinterpret_cast<uintptr_t>(&insertConvertTrigger), m_hookConvertTrigger);
 
 
 	//当创建触发器UI时 修改指定类型
-	g_createUIAddr = editor.getAddress(0x005D82C0);
-	hook::install(&g_createUIAddr, reinterpret_cast<uintptr_t>(&insertCreateUI), m_hookConvertTrigger);
+	real::createUI = editor.getAddress(0x005D82C0);
+	hook::install(&real::createUI, reinterpret_cast<uintptr_t>(&insertCreateUI), m_hookCreateUI);
 
 	
 	
+	real::getChildCount = editor.getAddress(0x005DAE20);
+	hook::install(&real::getChildCount, reinterpret_cast<uintptr_t>(&fakeGetChildCount), m_hookGetChildCount);
+	
+
+	real::getWEString = editor.getAddress(0x004EEC00);
+	real::getString = editor.getAddress(0x005DAEE0);
+	hook::install(&real::getString, reinterpret_cast<uintptr_t>(&fakeGetString), m_hookGetString);
+
+
+
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
 	{
@@ -345,6 +397,9 @@ void Helper::detach()
 	hook::uninstall(m_hookSaveMap);
 	hook::uninstall(m_hookConvertTrigger);
 	hook::uninstall(m_hookCreateUI);
+	hook::uninstall(m_hookGetChildCount);
+	hook::uninstall(m_hookGetString);
+
 #if !defined(EMBED_YDWE)
 	//释放控制台避免崩溃
 	FreeConsole();

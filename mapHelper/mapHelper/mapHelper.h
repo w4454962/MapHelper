@@ -50,8 +50,10 @@ protected:
 	hook::hook_t* m_hookConvertTrigger;
 
 	hook::hook_t* m_hookCreateUI;
-
-
+	hook::hook_t* m_hookGetChildCount;
+	hook::hook_t* m_hookGetString;
+	hook::hook_t* m_hookGetActionType;
+	
 	fs::path m_configPath;
 };
 extern Helper g_CHelper;
