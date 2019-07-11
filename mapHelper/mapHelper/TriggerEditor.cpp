@@ -2327,7 +2327,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 			auto childNode{ std::make_shared<ActionNode>(param->funcParam, param, node) };
 
-			auto tttt = convertAction(childNode, pre_actions, add_call);
+			auto tttt = convertAction(childNode, pre_actions, false);
 
 			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
 			pre_actions += "\t" + tttt + "\n";
