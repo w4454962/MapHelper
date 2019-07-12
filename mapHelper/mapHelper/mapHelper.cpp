@@ -436,9 +436,41 @@ void Helper::attach()
 
     "YDWEExecuteTriggerMultiple" : [
         { "Action" : "WESTRING_ACTIONS" }
+    ],
+
+    "DzTriggerRegisterMouseEventMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+	],
+
+    "DzTriggerRegisterKeyEventMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+    "DzTriggerRegisterMouseMoveEventMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+    "DzTriggerRegisterMouseWheelEventMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+    "DzTriggerRegisterWindowResizeEventMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+    "DzFrameSetUpdateCallbackMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
+    ],
+    "DzFrameSetScriptMultiple" : [
+        { "Action" : "WESTRING_PARAMETERS" },
+        { "Action" : "WESTRING_ACTIONS" }
     ]
 }
 )";
+
+
 
 	using json::Json;
 
