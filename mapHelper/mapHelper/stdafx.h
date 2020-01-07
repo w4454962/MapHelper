@@ -25,9 +25,9 @@
 #include <functional>
 #include <memory>
 #ifdef _HAS_CXX17
-namespace fs = std::experimental::filesystem;
-#else
 namespace fs = std::filesystem;
+#else
+namespace fs = std::experimental::filesystem;
 
 #endif
 
