@@ -444,8 +444,8 @@ int WorldEditor::saveArchive()
 	path.remove_filename();
 
 	std::string name = path.filename().string();
-	if (name.length() < 4)
-		return 0;
+	/*if (name.length() < 4)
+		return 0;*/
 
 	name = name.substr(0,name.length() - 4);
 

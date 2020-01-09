@@ -795,7 +795,7 @@ endfunction
 		auto it = variableTable.find(sound_name);
 		if (it != variableTable.end() && getBaseType(it->second->type) == "string")
 		{
-			writer.write_string("\tset " + sound_name + " = \"" + string_replaced(sound->file, "\\", "\\\\") + "\"\n");
+			writer.write_string("\tset " + sound_name + " = \"" + string_replaced_Symbol(sound->file) + "\"\n");
 			continue;
 		}
 	
@@ -2145,7 +2145,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 				return value;
 			}
 			if (is_import_path || getBaseType(type) == "string") {
-				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
+				return "\"" + string_replaced_Symbol(value) + "\"";
 			}
 			switch (hash_(type.c_str()))
 			{
