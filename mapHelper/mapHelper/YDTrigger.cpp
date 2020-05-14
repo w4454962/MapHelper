@@ -3,6 +3,11 @@
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
 
+std::string UTF8_To_string(const std::string& str);
+LPCSTR SaveLoadCheck_Get(LPCSTR lpszKey);
+BOOL SaveLoadCheck_Set(LPCSTR lpszKey, LPCSTR lpszName);
+int _fastcall
+Utf8toAscii(char src[], char dst[], unsigned int limit);
 
 YDTrigger::YDTrigger()
 	:m_bEnable(true),
@@ -1232,6 +1237,13 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		var_type = type;
 	}
 
+	std::string var_name = UTF8_To_string(name);
+	var_type = UTF8_To_string(var_type);
+
+	if (!SaveLoadCheck_Set((LPCSTR)var_name.c_str(), (LPCSTR)var_type.c_str()))
+	{
+		output += "XiYu Error : 你使用了局部变量“ " + var_name + "”(类型 : " + var_type + ")，但你在其他地方使用的是局部变量“" + var_name + "”(类型 : " + (std::string)SaveLoadCheck_Get((LPCSTR)var_name.c_str()) + ")。";
+	}
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1340,6 +1352,14 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name,cons
 		var_type = type;
 	}
 
+	std::string var_name = UTF8_To_string(name);
+	var_type = UTF8_To_string(var_type);
+
+	if (!SaveLoadCheck_Set((LPCSTR)var_name.c_str(), (LPCSTR)var_type.c_str()))
+	{
+		output += "XiYu Error : 你使用了局部变量“ " + var_name + "”(类型 : " + var_type + ")，但你在其他地方使用的是局部变量“" + var_name + "”(类型 : " + (std::string)SaveLoadCheck_Get((LPCSTR)var_name.c_str()) + ")。";
+	}
+
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1429,6 +1449,14 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	}
 
 	std::string output;
+	std::string var_name = UTF8_To_string(name);
+	std::string var_type = UTF8_To_string(type);
+
+	if (!SaveLoadCheck_Set((LPCSTR)var_name.c_str(), (LPCSTR)var_type.c_str()))
+	{
+
+		output += "XiYu Error : 你使用了局部变量“ " + var_name + "”(类型 : " + var_type + ")，但你在其他地方使用的是局部变量“" + var_name + "”(类型 : " + (std::string)SaveLoadCheck_Get((LPCSTR)var_name.c_str()) + ")。";
+	}
 
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
@@ -1518,6 +1546,14 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 		}
 	}
 	std::string output;
+	std::string var_name = UTF8_To_string(name);
+	std::string var_type = UTF8_To_string(type);
+
+	if (!SaveLoadCheck_Set((LPCSTR)var_name.c_str(), (LPCSTR)var_type.c_str()))
+	{
+
+		output += "XiYu Error : 你使用了局部变量“ " + var_name + "”(类型 : " + var_type + ")，但你在其他地方使用的是局部变量“" + var_name + "”(类型 : " + (std::string)SaveLoadCheck_Get((LPCSTR)var_name.c_str()) + ")。";
+	}
 
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的

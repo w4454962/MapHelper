@@ -635,12 +635,16 @@ void Helper::enableConsole()
 	{
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0b");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.1a");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168\n"
 			<< "参与测试人员： 幽影、夜夜、七罪、五爷、妖精\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
+			<< "加速器可能不会导入自定义jass库,请自行#include导入\n"
+			<< "比如你用了Dzapi,结果提示你未定义，你就要在最前方加入#include \"dzapi\"\n"
+			<< "------1.1a修复日志------\n"
+			<< "1.修复逆天局部变量类型编译不报错的bug\n"
 			<< "                         ----2019/07/09\n";
 
 	}

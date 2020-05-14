@@ -438,25 +438,26 @@ int WorldEditor::saveScript()
 
 int WorldEditor::saveArchive()
 {
-
-
 	fs::path path = fs::path(getTempSavePath());
+
+	std::string path1 = path.string().substr(0, path.string().length() - 12);
+	std::string name = fs::path(path1).filename().string();
+
+	//去掉war3map = %name%Temp
 	path.remove_filename();
-
-	std::string name = path.filename().string();
-	/*if (name.length() < 4)
-		return 0;*/
-
-	name = name.substr(0,name.length() - 4);
+	
+	//去掉末尾12字节，取地图保存名
+	name = name.substr(0,name.length() - 12);//%name%Temp\war3map -12 = %name%
 
 	fs::path pathTemp = path / name;
+
+	path = fs::path(path.string().substr(0, path.string().length() - 1));
+	path.remove_filename();
 
 	printf("打包将文件夹打包成mpq结构\n");
 
 	printf("路径 %s\n", path.string().c_str());
-
 	clock_t start = clock();
-
 
 	int ret = this_call<int>(getAddress(0x0055D720), getEditorData(), pathTemp.string().c_str(), 1);
 
@@ -465,17 +466,16 @@ int WorldEditor::saveArchive()
 		path.remove_filename();
 
 		fs::path path2 = path / name;
+		printf("地图路径 %s\n", pathTemp.string().c_str());
 
 		//移动文件目录
 		ret = fast_call<int>(getAddress(0x004D0F60), pathTemp.string().c_str(), path2.string().c_str(), 1, 0);
 
+		printf("地图移动至 %s\n", path2.string().c_str());
 		printf("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 		return ret;
-
 	}
-
-	
 	return 0;
 }
 

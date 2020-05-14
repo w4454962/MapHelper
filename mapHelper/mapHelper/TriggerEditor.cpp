@@ -7,6 +7,7 @@
 #include <iostream>
 #include <regex>
 #include "singleton.h"
+using namespace std;
 
 TriggerEditor::TriggerEditor()
 	:m_editorData(nullptr),
@@ -1546,10 +1547,10 @@ endfunction
 
 	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
+	
 	std::ofstream out(std::string(path) + ".j", std::ios::binary);
 	writer.finish(out);
 	out.close();
-
 
 	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
@@ -1560,17 +1561,19 @@ endfunction
 
 }
 
+void SaveLoadCheck_Reset();
 
 std::string TriggerEditor::convertTrigger(Trigger* trigger) 
 {
 	
+	SaveLoadCheck_Reset();
 
 	ActionNodePtr root(new ActionNode(trigger));
 
 	std::string trigger_name = *root->getTriggerNamePtr();
 
 	std::string trigger_variable_name = "gg_trg_" + trigger_name;
-	std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
+	std::string trigger_action_name = "Trig_" + trigger_name + "Actions";
 
 
 	std::string events;
@@ -2140,12 +2143,14 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			if (it != m_typesTable.end())
 				is_import_path = it->second->is_import_path;;
 
+			value = string_replaced_Symbol(value);
+
 			if (type == "scriptcode")
 			{
 				return value;
 			}
 			if (is_import_path || getBaseType(type) == "string") {
-				return "\"" + string_replaced_Symbol(value) + "\"";
+				return "\"" + value + "\"";
 			}
 			switch (hash_(type.c_str()))
 			{
