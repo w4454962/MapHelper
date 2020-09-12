@@ -27,7 +27,7 @@ WorldEditor::~WorldEditor()
 
 uintptr_t WorldEditor::getAddress(uintptr_t addr)
 {
-	auto base = reinterpret_cast<uintptr_t>(GetModuleHandle(nullptr));
+	const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
 	return addr - 0x00400000 + base;
 }
 
@@ -68,7 +68,7 @@ const char* WorldEditor::getCurrentMapPath()
 
 	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + count * 4);
 
-
+	printf("当前地图路径%X\n", object);
 	return (const char*)object;
 }
 
@@ -109,7 +109,10 @@ bool WorldEditor::getSkillObjectData(uint32_t id,uint32_t level,std::string text
 
 void WorldEditor::onSaveMap(const char* tempPath)
 {
+	//m_tmp_path = fs::path(tempPath);
 	m_tempPath = tempPath;
+	//printf("m_tmp_path%s\n", m_tmp_path.string().c_str());
+	//memcpy(&m_tempPath, m_tmp_path.string().c_str(), m_tmp_path.string().size());
 
 	printf("当前地图路径%s\n", getCurrentMapPath());
 	printf("保存地图路径 %s\n", getTempSavePath());
@@ -444,8 +447,8 @@ int WorldEditor::saveArchive()
 	path.remove_filename();
 
 	std::string name = path.filename().string();
-	if (name.length() < 4)
-		return 0;
+	//if (name.length() < 4)
+	//	return 0;
 
 	name = name.substr(0,name.length() - 4);
 

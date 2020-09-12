@@ -63,6 +63,7 @@ protected:
 
 
 	uintptr_t m_editorObject;
+	//fs::path m_tmp_path{};
 	const char* m_tempPath;
 	bool m_bInit;
 

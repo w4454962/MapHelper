@@ -12,7 +12,7 @@
 #pragma warning(disable:4996)
 
 const char* g_path;
-static uintptr_t g_object;
+static uintptr_t g_object{};
 static uintptr_t g_addr;
 
 namespace real
@@ -304,15 +304,16 @@ void Helper::attach()
 {
 	if (m_bAttach) return;
 
-	char buffer[0x400];
+	char buffer[MAX_PATH];
 
-	GetModuleFileNameA(nullptr, buffer, 0x400);
+	GetModuleFileNameA(nullptr, buffer, MAX_PATH);
 
 	std::string name = fs::path(buffer).filename().string();
-	if (name.find("worldedit") == std::string::npos)
+	if (std::string::npos == name.find("worldedit")
+		&& std::string::npos == name.find("WorldEdit"))
 		return;
 	
-	GetModuleFileNameA(GetModuleHandleA("ydbase.dll"), buffer, 0x400);
+	GetModuleFileNameA(GetModuleHandleA("ydbase.dll"), buffer, MAX_PATH);
 	
 	m_configPath = fs::path(buffer).remove_filename() / "EverConfig.cfg";
 
