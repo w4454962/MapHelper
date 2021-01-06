@@ -552,7 +552,6 @@ void TriggerEditor::saveSctipt(const char* path)
 				const char* ptr = group->names[b];
 				std::string value = "-1";
 				// 判断了个寂寞
-				// 可恶，只能正则么
 				std::string id = std::string(ptr, ptr + 0x4);
 				if ( *(uint32_t*)(ptr) > 0 )
 					value = "'" + id + "'";
