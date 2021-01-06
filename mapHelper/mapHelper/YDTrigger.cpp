@@ -328,7 +328,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		//如果当前这层有需要申请的变量
 		auto table = node->getVarTable();
 		
-		
 
 		for (auto&[n, t] : hashVarTable)
 		{	
@@ -1243,7 +1242,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		tmp = tmp.substr(5, tmp.size());
 	}
 	
-	auto table = node->getParentNode()->getVarTable();
+	auto table = node->getParentNode()->getVarTypeTable();
 	if (var_type.substr(0,5) != "AUTO_" && 
 		var_type != "StringExt" &&
 		table->find(tmp) != table->end() &&

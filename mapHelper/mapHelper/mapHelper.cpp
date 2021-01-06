@@ -655,6 +655,7 @@ void Helper::enableConsole()
 			<< "修复未设置过地图镜头范围会导致保存设置镜头范围为0的bug\n"
 			<< "修复we随机组，物品组生成错误代码的bug\n"
 			<< "修复了字符串类型StringExt传参的bug(这个和string一样的东西意义到底在哪里啊)\n"
+			<< "类型检测有点问题，果然不能偷懒\n"
 			<< "!!!!\n"
 			<< "因为不确定bug修没修完，保存请另存为改名字。或先备份一份地图\n"
 			<< "如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1\n"
