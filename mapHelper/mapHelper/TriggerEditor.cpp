@@ -551,17 +551,21 @@ void TriggerEditor::saveSctipt(const char* path)
 			{
 				const char* ptr = group->names[b];
 				std::string value = "-1";
-				if (*ptr) value = "'" + std::string(ptr, ptr + 0x4) + "'";
+				// 判断了个寂寞
+				// 可恶，只能正则么
+				std::string id = std::string(ptr, ptr + 0x4);
+				if ( *(uint32_t*)(ptr) > 0 )
+					value = "'" + id + "'";
 				
 				sprintf(buffer, "\t\tset gg_rg_%03d[%i] = %s\n", i, b, value.c_str());
-				writer.write_string(buffer);
+				writer.write_string(std::string(buffer));
 			}
 		}
 		writer.write_string("\telse\n");
 		for (uint32_t b = 0; b < groupData->param_count; b++)
 		{
 			sprintf(buffer, "\t\tset gg_rg_%03d[%i] = -1\n", i, b);
-			writer.write_string(buffer);
+			writer.write_string(std::string(buffer));
 		}
 		writer.write_string("\tendif\n");
 	}
@@ -608,8 +612,11 @@ void TriggerEditor::saveSctipt(const char* path)
 			{
 				ItemTableInfo* info = &itemSetting->item_infos[b];
 				std::string id = std::string(info->name, info->name + 0x4);
-
-				writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+				// 处理下设置空物品的问题
+				if (*(uint32_t*)(info->name) > 0)
+					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+				else
+					writer.write_string("\t\tcall RandomDistAddItem(-1, " + std::to_string(info->rate) + ")\n");
 			}
 			writer.write_string(R"(
 		set itemID=RandomDistChoose()
@@ -684,7 +691,11 @@ endfunction
 				{
 					ItemTableInfo* info = &itemSetting->item_infos[b];
 					std::string id = std::string(info->name, info->name + 0x4);
-					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+					// 处理下设置空物品的问题
+					if (*(uint32_t*)(info->name) > 0)
+						writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+					else
+						writer.write_string("\t\tcall RandomDistAddItem(-1, " + std::to_string(info->rate) + ")\n");
 				}
 
 				writer.write_string(R"(
@@ -754,7 +765,11 @@ endfunction
 				{
 					ItemTableInfo* info = &itemSetting->item_infos[b];
 					std::string id = std::string(info->name, info->name + 0x4);
-					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+					// 处理下设置空物品的问题
+					if (*(uint32_t*)(info->name) > 0)
+						writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
+					else
+						writer.write_string("\t\tcall RandomDistAddItem(-1, " + std::to_string(info->rate) + ")\n");
 				}
 
 				writer.write_string(R"(
@@ -1458,7 +1473,22 @@ endfunction
 	writer.write_string(seperator);
 
 	writer.write_string("function main takes nothing returns nothing\n");
-	
+
+	// 修正未设置地图镜头范围导致，获取数据均为0的bug
+	if (worldData->camera_left_bottom_x == 0 && worldData->camera_left_bottom_y == 0
+		&& worldData->camera_right_top_x == 0 && worldData->camera_right_top_y == 0
+		&& worldData->camera_left_top_x == 0 && worldData->camera_left_top_y == 0
+		&& worldData->camera_right_bottom_x == 0 && worldData->camera_right_bottom_y == 0
+		) {
+		worldData->camera_left_bottom_x = -3328.0;
+		worldData->camera_left_bottom_y = -3584.0;
+		worldData->camera_right_top_x = 3328.0;
+		worldData->camera_right_top_y = 3072.0;
+		worldData->camera_left_top_x = -3328.0;
+		worldData->camera_left_top_y = 3072.0;
+		worldData->camera_right_bottom_x = 3328.0;
+		worldData->camera_right_bottom_y = -3584.0;
+	}
 	std::string soto = "\tcall SetCameraBounds(" +
 		std::to_string(worldData->camera_left_bottom_x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
 		std::to_string(worldData->camera_left_bottom_y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM), " +
@@ -1602,6 +1632,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	std::vector<ActionNodePtr> list;
 	root->getChildNodeList(list);
 
+	// 逐条解析动作
 	for (auto& node : list)
 	{
 		Action* action = node->getAction();
@@ -2145,7 +2176,8 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 				return value;
 			}
 			if (is_import_path || getBaseType(type) == "string") {
-				return "\"" + string_replaced(value, "\\", "\\\\") + "\"";
+				value = string_replaced(value, "\\", "\\\\");
+				return "\"" + string_replaced(value, "\"", "\\\"") + "\"";
 			}
 			switch (hash_(type.c_str()))
 			{
@@ -2156,6 +2188,8 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			case "itemcode"s_hash:
 			//case "ordercode"s_hash:
 			case "techcode"s_hash:
+			// 处理下装饰物没有判断的问题
+			case "doodadcode"s_hash:
 			case "unitcode"s_hash:
 				return "'" + value + "'";
 			default:
@@ -2319,7 +2353,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 			pre_actions += "\treturn " + tttt + "\n";
 			pre_actions += "endfunction\n\n";
 
-			output += "function " + function_name;
+			output += "Condition(function " + function_name + ")";
 		}
 		else if (child_type == "code")
 		{

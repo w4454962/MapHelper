@@ -12,7 +12,7 @@
 #pragma warning(disable:4996)
 
 const char* g_path;
-static uintptr_t g_object;
+static uintptr_t g_object{};
 static uintptr_t g_addr;
 
 namespace real
@@ -635,13 +635,32 @@ void Helper::enableConsole()
 	{
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0b");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0C");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
-			<< "参与开发者 ：w4454962、 神话、 actboy168\n"
-			<< "参与测试人员： 幽影、夜夜、七罪、五爷、妖精\n"
+			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞 \n"
+			<< "参与测试人员： 幽影、夜夜、七罪、五爷、妖精、tom、迷失\n"
+			<< "感谢7佬的最初版本\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
-			<< "                         ----2019/07/09\n";
+			<< "                         ----2021/01/05\n"
+			<< "修复逆天类型检测没有的bug\n"
+			<< "修复播放装饰物动作，装饰物未加上 '' 的bug\n"
+			<< "修复地形装饰物掉落含空物品 会导致保存错误的bug\n"
+			<< "修复部分电脑上保存不会生成地图的bug\n"
+			<< "修复t中字符串 \"\" 保存未生成转义符号\"\n"
+			<< "修复布尔值表达式未加上Condition的bug？\n"
+			<< "修复逆天触发器不论在任何情况都会自动传递获取触发单位等变量的bug\n"
+			<< "修复bj优化失效的bug\n"
+			<< "修复特定情况下逆天触发器自动传参失败的bug\n"
+			<< "修复未设置过地图镜头范围会导致保存设置镜头范围为0的bug\n"
+			<< "修复we随机组，物品组生成错误代码的bug\n"
+			<< "修复了字符串类型StringExt传参的bug(这个和string一样的东西意义到底在哪里啊)\n"
+			<< "!!!!\n"
+			<< "因为不确定bug修没修完，保存请另存为改名字。或先备份一份地图\n"
+			<< "如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1\n"
+			<< "EnableYDTrigger = -1 为默认开启控制台与对话框\n"
+			<< "EnableYDTrigger = 0 为使用原本的保存方式\n"
+			<< "EnableYDTrigger = 1 默认开启加速保存\n";
 
 	}
 }
