@@ -1156,9 +1156,6 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	ActionNodePtr parent = branch->getParentNode();
 	//根据当前设置逆天局部变量的位置 来决定生成的代码
 
-	std::vector<ActionNodePtr> list;
-	branch->getChildNodeList(list);
-
 	std::string callname;
 	std::string handle;
 
