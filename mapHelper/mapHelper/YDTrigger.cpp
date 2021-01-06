@@ -1249,7 +1249,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		table->at(tmp) != var_type && 
 		table->at(tmp).substr(0,5) != "AUTO_" &&
 		table->at(tmp) != "StringExt")
-		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table->at(tmp) + ")" + val;
+		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table->at(tmp) + ")\n" + val;
 	else
 		table->emplace(tmp, var_type);
 
@@ -1354,16 +1354,24 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 
 	std::string var_type;
 	if (isauto)
-	{
 		var_type = std::string(type.begin() + 5, type.end());
-	}
 	else
-	{
 		var_type = type;
-	}
+
 	std::string tmp = name;
 	if (tmp.substr(0, 5) == "error")
 		tmp = tmp.substr(5, tmp.size());
+
+	auto table = node->getParentNode()->getVarTypeTable();
+	if (var_type.substr(0, 5) != "AUTO_" &&
+		var_type != "StringExt" &&
+		table->find(tmp) != table->end() &&
+		table->at(tmp) != var_type &&
+		table->at(tmp).substr(0, 5) != "AUTO_" &&
+		table->at(tmp) != "StringExt")
+		output += "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table->at(tmp) + ")\n";
+	else
+		table->emplace(tmp, var_type);
 
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
