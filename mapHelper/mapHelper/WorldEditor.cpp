@@ -446,6 +446,9 @@ int WorldEditor::saveArchive()
 	fs::path path = fs::path(getTempSavePath());
 	path.remove_filename();
 
+	if (path.string().substr(path.string().size() - 1) == "\\")
+		path = fs::path(path.string().substr(0, path.string().size() - 1));
+
 	std::string name = path.filename().string();
 	//if (name.length() < 4)
 	//	return 0;
@@ -617,7 +620,14 @@ int WorldEditor::customSaveDoodas(const char* path)
 			for (size_t b = 0; b < setting->info_count2; b++)
 			{
 				ItemTableInfo* info = &setting->item_infos[b]; 
-				writer.write_string(std::string(info->name)); 
+				// 空物品这坑爹玩意
+				// 怕是其他位置还得改
+				// 这边是直接物编单位，可破坏物那边设置的掉落
+				if (*(uint32_t*)(info->name) > 0) {
+					writer.write_string(std::string(info->name, info->name + 0x4));
+				}
+				else
+					writer.write_string("\0\0\0\0");
 				writer.write<uint32_t>(info->rate); 
 			}
 		}
@@ -631,7 +641,9 @@ int WorldEditor::customSaveDoodas(const char* path)
 	for (size_t i = 0; i< doodas->special_table->special_doodas_count;i++)
 	{
 		SpecialDoodas* unit = &doodas->special_table->special[i];
-		writer.write_string(std::string(unit->name, 0x4)); 
+		std::string id = std::string(unit->name, 0x4);
+		// 这边是装饰物
+		writer.write_string(id);
 		writer.write<uint32_t>(unit->variation); 
 		writer.write<uint32_t>(unit->x); 
 		writer.write<uint32_t>(unit->y); 

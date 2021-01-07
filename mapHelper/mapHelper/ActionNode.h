@@ -84,6 +84,7 @@ public:
 
 	VarTablePtr getLocalTable();
 
+	VarTablePtr getVarTypeTable();
 
 	bool m_haveHashLocal;
 private:
@@ -105,6 +106,9 @@ protected:
 
 	//用来记录多层次逆天计时器的局部变量 以便再上一层函数中申明
 	std::shared_ptr<std::map<std::string, std::string>> m_hashVarTablePtr;
+
+	//用来记录当层逆天计时器设置局部变量，用来检测类型冲突
+	std::shared_ptr<std::map<std::string, std::string>> m_hashVarTypeTablePtr;
 
 	//记录局部变量的map指针
 	std::shared_ptr<std::map<std::string, std::string>> m_localTablePtr;
