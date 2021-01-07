@@ -54,7 +54,7 @@ void TriggerEditor::saveTriggers(const char* path)
 {
 	if (!m_editorData)
 	{
-		std::cout<<"缺少触发器数据"<<std::endl;
+		//std::cout << "缺少触发器数据" << std::endl;
 		return;
 	}
 
@@ -242,6 +242,8 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 		writer.write(child->child_flag);
 
 		writeAction(writer, child);
+		
+
 	}
 }
 
@@ -1722,7 +1724,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 {
 	Action* action = node->getAction();
 
-	if (!action->enable)
+	if (!action->enable  || !action->unk_object)
 		return "";
 
 	std::string output;
