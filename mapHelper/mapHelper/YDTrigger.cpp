@@ -1260,7 +1260,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	}
 	output += var_type + ",\"" + tmp + "\"," + val + ")";
 
-
+  
 	return output;
 }
 
@@ -1380,6 +1380,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 	}
 	output += var_type + ",\"" + tmp + "\")";
 
+
 	return output;
 }
 
@@ -1470,7 +1471,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	}
 	output += type;
 	output += ",\"";
-	output += name;
+	string_replaced_Symbol(name);
 	output += "\",";
 	output += index;
 	output += ",";
@@ -1559,7 +1560,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 	}
 	output += type;
 	output += ",\"";
-	output += name;
+	output += string_replaced_Symbol(name);
 	output += "\",";
 	output += index;
 	output += ")";

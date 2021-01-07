@@ -41,7 +41,7 @@ void TriggerEditor::loadTriggers(TriggerData* data)
 void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 {
 	m_configData = data;
-	std::cout<<"cout¶ÁÈ¡ÅäÖÃÎÄ¼ş"<<std::endl;
+	std::cout<<"coutè¯»å–é…ç½®æ–‡ä»¶"<<std::endl;
 	for (size_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
@@ -54,11 +54,11 @@ void TriggerEditor::saveTriggers(const char* path)
 {
 	if (!m_editorData)
 	{
-		std::cout<<"È±ÉÙ´¥·¢Æ÷Êı¾İ"<<std::endl;
+		std::cout<<"ç¼ºå°‘è§¦å‘å™¨æ•°æ®"<<std::endl;
 		return;
 	}
 
-	std::cout << "×Ô¶¨Òå±£´æwtgÎÄ¼ş"<< std::endl;
+	std::cout << "è‡ªå®šä¹‰ä¿å­˜wtgæ–‡ä»¶"<< std::endl;
 
 	auto start = clock();
 
@@ -81,7 +81,7 @@ void TriggerEditor::saveTriggers(const char* path)
 	writer.finish(out);
 	out.close();
 
-	printf("wtg ±£´æÍê³É ºÄÊ± : %f Ãë\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	printf("wtg ä¿å­˜å®Œæˆ è€—æ—¶ : %f ç§’\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 void TriggerEditor::writeCategoriy(BinaryWriter& writer)
@@ -115,7 +115,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 
 
 	uint32_t unknow = 2;
-	//Î´Öª ×ÜÊÇĞ´2
+	//æœªçŸ¥ æ€»æ˜¯å†™2
 	writer.write(unknow);
 
 	uint32_t variable_count = 0;
@@ -123,7 +123,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 	for(size_t i = 0; i < variables->globals_count ; i++)
 	{
 		Variable* data = &variables->array[i];
-		//Ãû×Ö·Çgg_¿ªÍ·µÄ±äÁ¿
+		//åå­—égg_å¼€å¤´çš„å˜é‡
 		if (data && strncmp(data->name, "gg_", 3))
 			variable_count++;
 	}
@@ -132,7 +132,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 
 	writer.write(variable_count);
 
-	//½«·Çgg_µÄ±äÁ¿Êı¾İĞ´Èë
+	//å°†égg_çš„å˜é‡æ•°æ®å†™å…¥
 	for (size_t i = 0; i < variables->globals_count; i++)
 	{
 		auto data = &variables->array[i];
@@ -143,7 +143,7 @@ void TriggerEditor::writeVariable(BinaryWriter& writer)
 			writer.write_c_string(data->name);
 			writer.write_c_string(data->type);
 
-			uint32_t uknow2 = 1;//Î´Öª ×ÜÊÇĞ´1
+			uint32_t uknow2 = 1;//æœªçŸ¥ æ€»æ˜¯å†™1
 			writer.write(uknow2);
 
 			writer.write(data->is_array);
@@ -221,7 +221,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 	
 	uint32_t count = action->param_count;
 
-	//Ñ­»·Ğ´²ÎÊı
+	//å¾ªç¯å†™å‚æ•°
 	for (size_t i = 0; i < count; i++)
 	{
 		auto param = action->parameters[i];
@@ -230,7 +230,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 
 	const auto child_count = action->child_count;
 	writer.write(child_count);
-	//Èç¹ûÊÇ ¶¯×÷×é ÔòÑ­»·½«×Ó¶¯×÷Ğ´Èë
+	//å¦‚æœæ˜¯ åŠ¨ä½œç»„ åˆ™å¾ªç¯å°†å­åŠ¨ä½œå†™å…¥
 	for (size_t i = 0; i < child_count; i++)
 	{
 		const auto child = action->child_actions[i];
@@ -270,7 +270,7 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 	const uint32_t is_array = param->arrayParam != nullptr;
 	writer.write(is_array);
 
-	//Èç¹ûÊÇÊı×é ÔòĞ´ÈëÊı×éÖĞµÄ²ÎÊı
+	//å¦‚æœæ˜¯æ•°ç»„ åˆ™å†™å…¥æ•°ç»„ä¸­çš„å‚æ•°
 	if (is_array)
 	{
 		auto child = param->arrayParam;
@@ -287,7 +287,7 @@ TriggerEditor& get_trigger_editor()
 
 void TriggerEditor::saveScriptTriggers(const char* path)
 {
-	printf("×Ô¶¨Òå±£´æwctÎÄ¼ş\n");
+	printf("è‡ªå®šä¹‰ä¿å­˜wctæ–‡ä»¶\n");
 
 	const auto start = clock();
 
@@ -331,14 +331,14 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	writer.finish(out);
 	out.close();
 
-	printf("wct ±£´æÍê³É ºÄÊ± : %f Ãë\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	printf("wct ä¿å­˜å®Œæˆ è€—æ—¶ : %f ç§’\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 
 void TriggerEditor::saveSctipt(const char* path)
 {
 
-	printf("×Ô¶¨Òå±£´æjassÎÄ¼ş\n");
+	printf("è‡ªå®šä¹‰ä¿å­˜jassæ–‡ä»¶\n");
 
 	auto start = clock();
 
@@ -382,7 +382,7 @@ void TriggerEditor::saveSctipt(const char* path)
 		}
 		else
 		{
-			//·Çgg_¿ªÍ·µÄ×Ô¶¨Òå±äÁ¿
+			//égg_å¼€å¤´çš„è‡ªå®šä¹‰å˜é‡
 			if (strncmp(var->name, "gg_", 3))
 				name = "udg_" + name;
 			std::string value = var->value;
@@ -421,7 +421,7 @@ void TriggerEditor::saveSctipt(const char* path)
 		}
 	}
 
-	//ÉêÃ÷Ëæ»ú×éµÄÈ«¾Ö±äÁ¿
+	//ç”³æ˜éšæœºç»„çš„å…¨å±€å˜é‡
 	if (worldData->random_group_count > 0)
 	{
 
@@ -441,7 +441,7 @@ void TriggerEditor::saveSctipt(const char* path)
 		writer.write_string("endglobals\n");
 	}
 
-	//¿ªÊ¼³õÊ¼»¯È«¾Ö±äÁ¿
+	//å¼€å§‹åˆå§‹åŒ–å…¨å±€å˜é‡
 	writer.write_string("function InitGlobals takes nothing returns nothing\n");
 	writer.write_string("\tlocal integer i = 0\n");
 
@@ -454,7 +454,7 @@ void TriggerEditor::saveSctipt(const char* path)
 
 		if (var->is_array )
 		{
-			//»ñÈ¡Ä¬ÈÏÖµ
+			//è·å–é»˜è®¤å€¼
 			std::string defaultValue;
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
@@ -551,7 +551,7 @@ void TriggerEditor::saveSctipt(const char* path)
 			{
 				const char* ptr = group->names[b];
 				std::string value = "-1";
-				// ÅĞ¶ÏÁË¸ö¼ÅÄ¯
+				// åˆ¤æ–­äº†ä¸ªå¯‚å¯
 				std::string id = std::string(ptr, ptr + 0x4);
 				if ( *(uint32_t*)(ptr) > 0 )
 					value = "'" + id + "'";
@@ -611,7 +611,7 @@ void TriggerEditor::saveSctipt(const char* path)
 			{
 				ItemTableInfo* info = &itemSetting->item_infos[b];
 				std::string id = std::string(info->name, info->name + 0x4);
-				// ´¦ÀíÏÂÉèÖÃ¿ÕÎïÆ·µÄÎÊÌâ
+				// å¤„ç†ä¸‹è®¾ç½®ç©ºç‰©å“çš„é—®é¢˜
 				if (*(uint32_t*)(info->name) > 0)
 					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
 				else
@@ -690,7 +690,7 @@ endfunction
 				{
 					ItemTableInfo* info = &itemSetting->item_infos[b];
 					std::string id = std::string(info->name, info->name + 0x4);
-					// ´¦ÀíÏÂÉèÖÃ¿ÕÎïÆ·µÄÎÊÌâ
+					// å¤„ç†ä¸‹è®¾ç½®ç©ºç‰©å“çš„é—®é¢˜
 					if (*(uint32_t*)(info->name) > 0)
 						writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
 					else
@@ -764,7 +764,7 @@ endfunction
 				{
 					ItemTableInfo* info = &itemSetting->item_infos[b];
 					std::string id = std::string(info->name, info->name + 0x4);
-					// ´¦ÀíÏÂÉèÖÃ¿ÕÎïÆ·µÄÎÊÌâ
+					// å¤„ç†ä¸‹è®¾ç½®ç©ºç‰©å“çš„é—®é¢˜
 					if (*(uint32_t*)(info->name) > 0)
 						writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
 					else
@@ -809,7 +809,7 @@ endfunction
 		auto it = variableTable.find(sound_name);
 		if (it != variableTable.end() && getBaseType(it->second->type) == "string")
 		{
-			writer.write_string("\tset " + sound_name + " = \"" + string_replaced(sound->file, "\\", "\\\\") + "\"\n");
+			writer.write_string("\tset " + sound_name + " = \"" + string_replaced_Symbol(sound->file) + "\"\n");
 			continue;
 		}
 	
@@ -911,7 +911,7 @@ endfunction
 	writer.write_string("\tlocal integer itemID\n");
 
 
-	//ËùÓĞÎïÆ·ÀàĞÍµÄjass±äÁ¿Ãû
+	//æ‰€æœ‰ç‰©å“ç±»å‹çš„jasså˜é‡å
 	std::string randomTypes[] = {
 		"ITEM_TYPE_ANY",
 		"ITEM_TYPE_PERMANENT",
@@ -926,25 +926,25 @@ endfunction
 	for (size_t i = 0; i < worldData->units->unit_count; i++)
 	{
 		Unit* unit = &worldData->units->array[i];
-		if (unit->type == 1) //±éÀúµØĞÎÉÏµÄµ¥Î» ÅĞ¶ÏÕâ¸öµ¥Î»ÊÇÎïÆ·
+		if (unit->type == 1) //éå†åœ°å½¢ä¸Šçš„å•ä½ åˆ¤æ–­è¿™ä¸ªå•ä½æ˜¯ç‰©å“
 		{
 			bool b = strncmp(unit->name, "iDNR", 0x4) == 0;
-			if (b)//ÅĞ¶ÏÊÇ·ñÊÇËæ»úÎïÆ·
+			if (b)//åˆ¤æ–­æ˜¯å¦æ˜¯éšæœºç‰©å“
 			{
-				if (unit->random_item_mode == 0)//´ÓËùÓĞÎïÆ·ÀïËæ»ú
+				if (unit->random_item_mode == 0)//ä»æ‰€æœ‰ç‰©å“é‡Œéšæœº
 				{
 					writer.write_string("\tset itemID=ChooseRandomItemEx(" + randomTypes[unit->random_item_type % 8] + ", " + std::to_string(unit->random_item_level) + ")\n");
 				}
 				else if (unit->random_item_mode == 1)
 				{
-					//Ëæ»ú×éÀïÃæ»ñÈ¡
+					//éšæœºç»„é‡Œé¢è·å–
 					sprintf(buffer, "\t set itemID=gg_rg_%03d[%i]\n", unit->random_group_index,unit->random_group_child_index);
 
 					writer.write_string(buffer);
 				}
 				else if (unit->random_item_mode == 2)
 				{
-					//´Ó×Ô¶¨ÒåÁĞ±íÖĞ»ñÈ¡
+					//ä»è‡ªå®šä¹‰åˆ—è¡¨ä¸­è·å–
 					writer.write_string("\tcall RandomDistReset()\n");
 					for (size_t a = 0; a < unit->random_item_count; a++)
 					{
@@ -963,13 +963,13 @@ endfunction
 		
 			}
 			
-			//·ñÔòÊÇÒ»°ãÎïÆ· 
+			//å¦åˆ™æ˜¯ä¸€èˆ¬ç‰©å“ 
 			sprintf(buffer, "gg_item_%04s_%04d", unit->name, unit->index);
 			std::string var_name = buffer;
 			sprintf(buffer, "'%04s',%.1f,%.1f", unit->name, unit->x, unit->y);
 
 			auto it = variableTable.find(var_name);
-			if (it != variableTable.end())//ÅĞ¶ÏÊÇ·ñÓĞ±äÁ¿ÒıÓÃ
+			if (it != variableTable.end())//åˆ¤æ–­æ˜¯å¦æœ‰å˜é‡å¼•ç”¨
 			{
 				writer.write_string("\tset " + var_name + " = CreateItem(" + std::string(buffer) + ")\n");
 			}
@@ -998,7 +998,7 @@ endfunction
 	{
 		Unit* unit = &worldData->units->array[i];
 
-		//ÀàĞÍ ²»ÊÇµ¥Î» »òÕß ÊÇÍæ¼Ò¿ªÊ¼µã ÔòÌø¹ı
+		//ç±»å‹ ä¸æ˜¯å•ä½ æˆ–è€… æ˜¯ç©å®¶å¼€å§‹ç‚¹ åˆ™è·³è¿‡
 		if (unit->type != 0 || strncmp(unit->name,"sloc",4) == 0)
 			continue;
 
@@ -1206,7 +1206,7 @@ endfunction
 	std::regex reg("function\\s+(InitTrig_\\w+)\\s+takes");
 	auto words_end = std::sregex_iterator();
 
-	//Ğ´ÈëÈ«¾Öjass
+	//å†™å…¥å…¨å±€jass
 	if (trigger_data->globals_jass_size > 0)
 	{
 		std::string globals_jass = std::string(trigger_data->globals_jass_script, trigger_data->globals_jass_size - 1 );
@@ -1215,7 +1215,7 @@ endfunction
 
 		auto words_begin = std::sregex_iterator(globals_jass.begin(), globals_jass.end(), reg);
 	
-		//ÕıÔò±í´ïÊ½Æ¥Åä È«¾ÖjassÖĞ ·ûºÏ³õÊ¼»¯´¥·¢Æ÷Ãû×ÖµÄº¯Êı
+		//æ­£åˆ™è¡¨è¾¾å¼åŒ¹é… å…¨å±€jassä¸­ ç¬¦åˆåˆå§‹åŒ–è§¦å‘å™¨åå­—çš„å‡½æ•°
 		for (; words_begin != words_end; ++words_begin)
 		{
 			m_initFuncTable[words_begin->str(1)] = true;
@@ -1473,7 +1473,7 @@ endfunction
 
 	writer.write_string("function main takes nothing returns nothing\n");
 
-	// ĞŞÕıÎ´ÉèÖÃµØÍ¼¾µÍ··¶Î§µ¼ÖÂ£¬»ñÈ¡Êı¾İ¾ùÎª0µÄbug
+	// ä¿®æ­£æœªè®¾ç½®åœ°å›¾é•œå¤´èŒƒå›´å¯¼è‡´ï¼Œè·å–æ•°æ®å‡ä¸º0çš„bug
 	if (worldData->camera_left_bottom_x == 0 && worldData->camera_left_bottom_y == 0
 		&& worldData->camera_right_top_x == 0 && worldData->camera_right_top_y == 0
 		&& worldData->camera_left_top_x == 0 && worldData->camera_left_top_y == 0
@@ -1580,7 +1580,7 @@ endfunction
 	out.close();
 
 
-	printf("×Ô¶¨Òåjass ±£´æÍê³É ºÄÊ± : %f Ãë\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	printf("è‡ªå®šä¹‰jass ä¿å­˜å®Œæˆ è€—æ—¶ : %f ç§’\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 
 	m_initFuncTable.clear();
@@ -1631,7 +1631,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	std::vector<ActionNodePtr> list;
 	root->getChildNodeList(list);
 
-	// ÖğÌõ½âÎö¶¯×÷
+	// é€æ¡è§£æåŠ¨ä½œ
 	for (auto& node : list)
 	{
 		Action* action = node->getAction();
@@ -1642,7 +1642,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 		case Action::Type::event:
 			if (m_ydweTrigger->isEnable())
 			{
-				//·µ»Øfalse Ìø¹ı×¢²áÊÂ¼ş
+				//è¿”å›false è·³è¿‡æ³¨å†Œäº‹ä»¶
 				if (!m_ydweTrigger->onRegisterEvent(events,node))
 					continue;
 
@@ -1711,7 +1711,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 
-	std::string logo = u8"//×Ô¶¨ÒåjassÉú³ÉÆ÷ ×÷Õß£º °¢Æß  \n//ÓĞbugµ½Ä§ÊŞµØÍ¼±à¼­Æ÷°É @w4454962 \n";
+	std::string logo = u8"//è‡ªå®šä¹‰jassç”Ÿæˆå™¨ ä½œè€…ï¼š é˜¿ä¸ƒ  \n//æœ‰bugåˆ°é­”å…½åœ°å›¾ç¼–è¾‘å™¨å§ @w4454962 \n";
 
 
 	return seperator + "// Trigger: " + root->getName() + "\n" + logo + seperator + pre_actions + conditions + actions + seperator + events;
@@ -2187,7 +2187,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			case "itemcode"s_hash:
 			//case "ordercode"s_hash:
 			case "techcode"s_hash:
-			// ´¦ÀíÏÂ×°ÊÎÎïÃ»ÓĞÅĞ¶ÏµÄÎÊÌâ
+			// å¤„ç†ä¸‹è£…é¥°ç‰©æ²¡æœ‰åˆ¤æ–­çš„é—®é¢˜
 			case "doodadcode"s_hash:
 			case "unitcode"s_hash:
 				return "'" + value + "'";
@@ -2438,12 +2438,12 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 
 	trigger->is_custom_srcipt = 1;
 
-	//Ğ´Èë×Ö·û´®µ½´¥·¢Æ÷ÖĞ
+	//å†™å…¥å­—ç¬¦ä¸²åˆ°è§¦å‘å™¨ä¸­
 	this_call<int>(world.getAddress(0x005CB280), trigger, script.c_str(), script.size());
 
 	if (trigger->line_count > 0)
 	{
-		//±éÀúÏú»ÙËùÓĞ¶¯×÷
+		//éå†é”€æ¯æ‰€æœ‰åŠ¨ä½œ
 		for (size_t i = 0; i < trigger->line_count; i++)
 		{
 			const auto action = trigger->actions[i];
@@ -2456,7 +2456,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 		if (trigger->actions)
 		{
 #define SMemFreeIndex 403
-			//Ïú»Ù¶¯×÷ÈİÆ÷
+			//é”€æ¯åŠ¨ä½œå®¹å™¨
 			const auto SMemFreeAddr = reinterpret_cast<uintptr_t>(GetProcAddress(
 				GetModuleHandleW(L"Storm.dll"), reinterpret_cast<const char*>(SMemFreeIndex)));
 			std_call<BOOL>(SMemFreeAddr, trigger->actions, ".PAVCWETriggerFunction@@", -0x2, 0);	
