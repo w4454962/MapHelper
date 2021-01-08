@@ -211,18 +211,17 @@ static void __fastcall insertCreateUI(Action* action,uint32_t edx, int flag)
 static int __fastcall fakeReturnTypeStrcmp(const char* type1,const char* type2)
 {
 	//类型相等 或者type1 是任意类型 即返回字符串相同的结果
-	if (strcmp(type1, type2) == 0)
+	if (strcmp(type1, type2) != 0)
 	{
 		if (strcmp(type1, "AnyReturnType") == 0) {
-			// 只有原生类型才会返回 true
 			for (int i = 1; i < 39; i++) {
-				if (strcmp(type1, TypeName[i]) == 0)
-					return 1;
+				if (strcmp(type2, TypeName[i]) == 0)
+					return 0;
 			}
 		}
-		return 0;
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 static int __declspec(naked) insertReturnTypeStrcmp()
