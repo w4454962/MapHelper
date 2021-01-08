@@ -30,10 +30,6 @@ std::string string_replaced(const std::string& source, const std::string& from, 
 
 	return new_string;
 }
-std::string string_replaced_Symbol(const std::string& source)
-{
-	return string_replaced(string_replaced(source, "\\", "\\\\"), "\"", "\\\"");
-}
 
 void convert_name(std::string& name)
 {

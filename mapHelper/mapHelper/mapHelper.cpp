@@ -658,6 +658,7 @@ void Helper::enableConsole()
 			<< "修复了字符串类型StringExt传参的bug(这个和string一样的东西意义到底在哪里啊)\n"
 			<< "类型检测有点问题，果然不能偷懒，类型检测有点严格，懒得修成yd那样了\n"
 			<< "修复创建可破坏未转化弧度为角度的bug\n"
+			<< "修复逆天数组传参，参数错误的bug\n"
 			<< "!!!!\n"
 			<< "因为不确定bug修没修完，保存请另存为改名字。或先备份一份地图\n"
 			<< "如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1\n"

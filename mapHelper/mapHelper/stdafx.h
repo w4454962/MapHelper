@@ -39,7 +39,6 @@ namespace fs = std::experimental::filesystem;
 //控制台流
 
 std::string string_replaced(const std::string& source, const std::string& from, const std::string& to);
-std::string string_replaced_Symbol(const std::string& source);
 void convert_name(std::string& name);
 void convert_loop_var_name(std::string& name, size_t limit = 260);
 

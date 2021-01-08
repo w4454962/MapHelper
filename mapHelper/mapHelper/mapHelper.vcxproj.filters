@@ -66,6 +66,9 @@
     <ClInclude Include="json.hpp">
       <Filter>源文件\utils</Filter>
     </ClInclude>
+    <ClInclude Include="SaveLoadCheck.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -124,6 +127,9 @@
     </ClCompile>
     <ClCompile Include="json.cpp">
       <Filter>源文件\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="SaveLoadCheck.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

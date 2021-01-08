@@ -98,7 +98,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <OutputFile>D:\war3\mapHelper.asi</OutputFile>
+      <OutputFile>E:\yd_test_war3\MapHelper.asi</OutputFile>
+      <AssemblyDebug>true</AssemblyDebug>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -171,6 +172,7 @@
     <ClInclude Include="inline.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="mapHelper.h" />
+    <ClInclude Include="SaveLoadCheck.h" />
     <ClInclude Include="singleton.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -194,6 +196,7 @@
     <ClCompile Include="inline.cpp" />
     <ClCompile Include="json.cpp" />
     <ClCompile Include="mapHelper.cpp" />
+    <ClCompile Include="SaveLoadCheck.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

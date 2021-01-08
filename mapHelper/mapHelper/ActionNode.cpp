@@ -269,12 +269,10 @@ VarTablePtr ActionNode::getVarTable()
 	return m_hashVarTablePtr;
 }
 
-VarTablePtr ActionNode::getVarTypeTable()
+CSaveLoadCheck ActionNode::getVarTypeTable()
 {
-	if (m_hashVarTypeTablePtr.get() == nullptr)
-	{
-		m_hashVarTypeTablePtr = VarTablePtr(new std::map<std::string, std::string>);
-	}
+	if (m_hashVarTypeTablePtr.m_map.get() == nullptr)
+		m_hashVarTypeTablePtr.m_map = VarTablePtr(new std::map<std::string, std::string>);
 	return m_hashVarTypeTablePtr;
 }
 

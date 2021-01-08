@@ -1243,15 +1243,9 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	}
 	
 	auto table = node->getParentNode()->getVarTypeTable();
-	if (var_type.substr(0,5) != "AUTO_" && 
-		var_type != "StringExt" &&
-		table->find(tmp) != table->end() &&
-		table->at(tmp) != var_type && 
-		table->at(tmp).substr(0,5) != "AUTO_" &&
-		table->at(tmp) != "StringExt")
-		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table->at(tmp) + ")\n" + val;
-	else
-		table->emplace(tmp, var_type);
+	if (table.emplace(tmp, var_type) == false)
+		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table.get(tmp) + ")。" + val;
+
 
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
@@ -1363,15 +1357,8 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 		tmp = tmp.substr(5, tmp.size());
 
 	auto table = node->getParentNode()->getVarTypeTable();
-	if (var_type.substr(0, 5) != "AUTO_" &&
-		var_type != "StringExt" &&
-		table->find(tmp) != table->end() &&
-		table->at(tmp) != var_type &&
-		table->at(tmp).substr(0, 5) != "AUTO_" &&
-		table->at(tmp) != "StringExt")
-		output += "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table->at(tmp) + ")\n";
-	else
-		table->emplace(tmp, var_type);
+	if (table.emplace(tmp, var_type) == false)
+		output += "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table.get(tmp) + ")。";
 
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
@@ -1407,7 +1394,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 			//如果是在逆天计时器里
 		case "YDWETimerStartMultiple"s_hash:
 		{
-			if (branch->getNameId() == 0)
+			if (branch->getActionId() == 0)
 			{
 				handle = "ydl_timer";
 			}
@@ -1421,7 +1408,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 		//如果是在逆天触发器里
 		case "YDWERegisterTriggerMultiple"s_hash:
 		{
-			if (branch->getNameId() < 2 )
+			if (branch->getActionId() < 2 )
 			{
 				handle = "ydl_trigger";
 			}
@@ -1471,7 +1458,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	}
 	output += type;
 	output += ",\"";
-	string_replaced_Symbol(name);
+	output += name;
 	output += "\",";
 	output += index;
 	output += ",";
@@ -1560,7 +1547,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 	}
 	output += type;
 	output += ",\"";
-	output += string_replaced_Symbol(name);
+	output += name;
 	output += "\",";
 	output += index;
 	output += ")";

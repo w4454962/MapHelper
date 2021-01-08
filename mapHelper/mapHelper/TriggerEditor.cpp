@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "YDTrigger.h"
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
@@ -811,7 +811,7 @@ endfunction
 		auto it = variableTable.find(sound_name);
 		if (it != variableTable.end() && getBaseType(it->second->type) == "string")
 		{
-			writer.write_string("\tset " + sound_name + " = \"" + string_replaced_Symbol(sound->file) + "\"\n");
+			writer.write_string("\tset " + sound_name + " = \"" + string_replaced(sound->file, "\\", "\\\\") + "\"\n");
 			continue;
 		}
 	
@@ -1724,7 +1724,9 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 {
 	Action* action = node->getAction();
 
-	if (!action->enable  || !action->unk_object)
+	// 虽然t转j没问题了。但是保存会出问题，占时注释掉
+	//if (!action->enable  || !action->unk_object)
+	if (!action->enable)
 		return "";
 
 	std::string output;

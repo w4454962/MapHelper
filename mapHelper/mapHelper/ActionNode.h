@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "EditorData.h"
+#include "SaveLoadCheck.h"
 
 //动作节点
 
@@ -84,7 +85,7 @@ public:
 
 	VarTablePtr getLocalTable();
 
-	VarTablePtr getVarTypeTable();
+	CSaveLoadCheck getVarTypeTable();
 
 	bool m_haveHashLocal;
 private:
@@ -108,7 +109,7 @@ protected:
 	std::shared_ptr<std::map<std::string, std::string>> m_hashVarTablePtr;
 
 	//用来记录当层逆天计时器设置局部变量，用来检测类型冲突
-	std::shared_ptr<std::map<std::string, std::string>> m_hashVarTypeTablePtr;
+	CSaveLoadCheck m_hashVarTypeTablePtr;
 
 	//记录局部变量的map指针
 	std::shared_ptr<std::map<std::string, std::string>> m_localTablePtr;
