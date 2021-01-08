@@ -8,6 +8,7 @@
 
 #include "json.hpp"
 #include <sstream>
+#include "Wc3VarType.h"
 
 #pragma warning(disable:4996)
 
@@ -210,8 +211,15 @@ static void __fastcall insertCreateUI(Action* action,uint32_t edx, int flag)
 static int __fastcall fakeReturnTypeStrcmp(const char* type1,const char* type2)
 {
 	//类型相等 或者type1 是任意类型 即返回字符串相同的结果
-	if (strcmp(type1, type2) == 0 || strcmp(type1, "AnyReturnType") == 0)
+	if (strcmp(type1, type2) == 0)
 	{
+		if (strcmp(type1, "AnyReturnType") == 0) {
+			// 只有原生类型才会返回 true
+			for (int i = 1; i < 39; i++) {
+				if (strcmp(type1, TypeName[i]) == 0)
+					return 1;
+			}
+		}
 		return 0;
 	}
 	return 1;
@@ -659,6 +667,7 @@ void Helper::enableConsole()
 			<< "类型检测有点问题，果然不能偷懒，类型检测有点严格，懒得修成yd那样了\n"
 			<< "修复创建可破坏未转化弧度为角度的bug\n"
 			<< "修复逆天数组传参，参数错误的bug\n"
+			<< "修复逆天类型，逆天变量名任然可以传递逆天参数的bug\n"
 			<< "!!!!\n"
 			<< "因为不确定bug修没修完，保存请另存为改名字。或先备份一份地图\n"
 			<< "如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1\n"
