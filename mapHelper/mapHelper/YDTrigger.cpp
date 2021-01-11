@@ -1242,7 +1242,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		tmp = tmp.substr(5, tmp.size());
 	}
 	
-	auto table = node->getRootNode()->getVarTypeTable();
+	auto table = node->getParentNode()->getVarTypeTable();
 	if (table.emplace(tmp, var_type) == false)
 		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table.get(tmp) + ")。" + val;
 
@@ -1290,6 +1290,10 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 		{
 			if (branch->getActionId() == 0) //0是参数区
 			{
+				return getLocal(parent, name, type);
+			}
+			// 逆天计时器第二个参数如果转换传参会bug
+			else if (branch->getActionId() == 0xFFFFFFFF) {
 				return getLocal(parent, name, type);
 			}
 			else //否则是动作区
@@ -1355,7 +1359,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 	if (tmp.substr(0, 5) == "error")
 		tmp = tmp.substr(5, tmp.size());
 
-	auto table = node->getRootNode()->getVarTypeTable();
+	auto table = node->getParentNode()->getVarTypeTable();
 	if (table.emplace(tmp, var_type) == false)
 		output += "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table.get(tmp) + ")。";
 
