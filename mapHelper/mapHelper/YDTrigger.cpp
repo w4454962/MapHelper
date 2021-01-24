@@ -1242,9 +1242,8 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		tmp = tmp.substr(5, tmp.size());
 	}
 	
-	auto table = node->getParentNode()->getVarTypeTable();
-	if (table.emplace(tmp, var_type) == false)
-		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table.get(tmp) + ")。" + val;
+	if (SaveLoadCheck_Set(tmp, var_type) == false)
+		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + SaveLoadCheck_Get(tmp) + ")。" + val;
 
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
@@ -1359,9 +1358,8 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 	if (tmp.substr(0, 5) == "error")
 		tmp = tmp.substr(5, tmp.size());
 
-	auto table = node->getParentNode()->getVarTypeTable();
-	if (table.emplace(tmp, var_type) == false)
-		output += "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + table.get(tmp) + ")。";
+	if (SaveLoadCheck_Set(tmp, var_type) == false)
+		output += "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + SaveLoadCheck_Get(tmp) + ")。";
 
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
@@ -1454,6 +1452,10 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 
 	std::string output;
 
+	auto val = value;
+	if (SaveLoadCheck_Set(name, type) == false)
+		val = "YDTrigger Error: 你使用了局部变量“" + name + "”(类型:" + type + ")，但你在其他地方使用的是局部变量“" + name + "”(类型:" + SaveLoadCheck_Get(name) + ")。" + val;
+
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1465,7 +1467,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	output += "\",";
 	output += index;
 	output += ",";
-	output += value;
+	output += val;
 	output += ")";
 
 
@@ -1542,6 +1544,9 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 		}
 	}
 	std::string output;
+
+	if (SaveLoadCheck_Set(name, type) == false)
+		output += "YDTrigger Error: 你使用了局部变量“" + name + "”(类型:" + type + ")，但你在其他地方使用的是局部变量“" + name + "”(类型:" + SaveLoadCheck_Get(name) + ")。";
 
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的

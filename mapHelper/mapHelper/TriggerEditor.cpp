@@ -1104,7 +1104,7 @@ endfunction
 		}
 		else if(unit->item_table_index != -1)
 		{
-			sprintf(buffer, "ItemTable%06d_DropItems", unit->item_table_index);
+			sprintf(buffer, "ItemTable_%06d_DropItems", unit->item_table_index);
 			dropName = buffer;
 		}
 		if (!dropName.empty())
@@ -1594,7 +1594,7 @@ endfunction
 
 std::string TriggerEditor::convertTrigger(Trigger* trigger) 
 {
-	
+	SaveLoadCheck_Reset();
 
 	ActionNodePtr root(new ActionNode(trigger));
 
