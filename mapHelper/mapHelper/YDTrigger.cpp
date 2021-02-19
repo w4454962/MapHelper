@@ -2,7 +2,7 @@
 #include "YDTrigger.h"
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
-
+#include "SaveLoadCheck.h"
 
 YDTrigger::YDTrigger()
 	:m_bEnable(true),
@@ -855,7 +855,6 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 			
 
 			ActionNodePtr ptr = node;
-
 			while (!ptr->isRootNode())
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
@@ -869,10 +868,10 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 					flag = ptr->getActionId() == 0 ? 1 : 2;
 					break;
 				// 逆天触发器并不会自动传参
-				//case "YDWERegisterTriggerMultiple"s_hash:
-				//	flag = ptr->getActionId() < 2 ? 1 : 2;
-				//	break;
+				case "YDWERegisterTriggerMultiple"s_hash:
+					return false;
 				}
+				//如果当前节点为注册逆天触发则不进行传参
 				if (flag > 0)
 				{
 					std::string var_name = action->name;
@@ -1149,7 +1148,6 @@ bool YDTrigger::hasDisableRegister(Trigger* trigger)
 
 std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, const std::string& type, const std::string& value,bool add)
 {
-
 	ActionNodePtr branch = node->getBranchNode();
 
 	ActionNodePtr parent = branch->getParentNode();
@@ -1243,8 +1241,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	}
 	
 	if (SaveLoadCheck_Set(tmp, var_type) == false)
-		val = "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + SaveLoadCheck_Get(tmp) + ")。" + val;
-
+		val = SaveLoadError(node, tmp, var_type) + val;
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1359,8 +1356,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 		tmp = tmp.substr(5, tmp.size());
 
 	if (SaveLoadCheck_Set(tmp, var_type) == false)
-		output += "YDTrigger Error: 你使用了局部变量“" + tmp + "”(类型:" + var_type + ")，但你在其他地方使用的是局部变量“" + tmp + "”(类型:" + SaveLoadCheck_Get(tmp) + ")。";
-
+		output += SaveLoadError(node, tmp, var_type);
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1454,8 +1450,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 
 	auto val = value;
 	if (SaveLoadCheck_Set(name, type) == false)
-		val = "YDTrigger Error: 你使用了局部变量“" + name + "”(类型:" + type + ")，但你在其他地方使用的是局部变量“" + name + "”(类型:" + SaveLoadCheck_Get(name) + ")。" + val;
-
+		val = SaveLoadError(node, name, type) + val;
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1546,8 +1541,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 	std::string output;
 
 	if (SaveLoadCheck_Set(name, type) == false)
-		output += "YDTrigger Error: 你使用了局部变量“" + name + "”(类型:" + type + ")，但你在其他地方使用的是局部变量“" + name + "”(类型:" + SaveLoadCheck_Get(name) + ")。";
-
+		output += SaveLoadError(node, name, type);
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{

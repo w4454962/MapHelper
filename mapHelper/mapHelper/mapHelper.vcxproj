@@ -128,8 +128,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;MAPHELPER_EXPORTS;_WINDOWS;_USRDLL;ASMJIT_BUILD_RELEASE;ASMJIT_BUILD_X86;ASMJIT_BUILD_EMBED;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>EMBED_YDWE;WIN32;NDEBUG;MAPHELPER_EXPORTS;_WINDOWS;_USRDLL;ASMJIT_BUILD_RELEASE;ASMJIT_BUILD_X86;ASMJIT_BUILD_EMBED;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>..\3rd\Detours\src;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -138,7 +138,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <OutputFile>E:\yd_test_war3\MapHelper.asi</OutputFile>
+      <OutputFile>$(TargetPath)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -167,6 +167,10 @@
     <ClInclude Include="..\3rd\Detours\src\detver.h" />
     <ClInclude Include="ActionNode.h" />
     <ClInclude Include="BinaryWriter.h" />
+    <ClInclude Include="detail\ansi_codecvt.h" />
+    <ClInclude Include="detail\codecvt.h" />
+    <ClInclude Include="detail\dynarray.h" />
+    <ClInclude Include="detail\utf8_codecvt.h" />
     <ClInclude Include="EditorData.h" />
     <ClInclude Include="fp_call.h" />
     <ClInclude Include="inline.h" />
@@ -177,6 +181,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TriggerEditor.h" />
+    <ClInclude Include="unicode.h" />
     <ClInclude Include="Wc3VarType.h" />
     <ClInclude Include="WorldEditor.h" />
     <ClInclude Include="YDTrigger.h" />
@@ -207,9 +212,15 @@
     <ClCompile Include="TriggerEditor.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="unicode.cpp" />
     <ClCompile Include="Wc3VarType.cpp" />
     <ClCompile Include="WorldEditor.cpp" />
     <ClCompile Include="YDTrigger.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="detail\ansi_codecvt.inl" />
+    <None Include="detail\codecvt.inl" />
+    <None Include="detail\utf8_codecvt.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

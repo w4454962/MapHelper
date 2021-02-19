@@ -19,6 +19,9 @@
     <Filter Include="源文件\detours">
       <UniqueIdentifier>{999b5ae1-fa36-421a-959c-dd01d86d9941}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\utils\detail">
+      <UniqueIdentifier>{7155ec44-b223-4884-9006-da6a97e4f960}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -71,6 +74,21 @@
     </ClInclude>
     <ClInclude Include="Wc3VarType.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="unicode.h">
+      <Filter>源文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="detail\ansi_codecvt.h">
+      <Filter>源文件\utils\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="detail\codecvt.h">
+      <Filter>源文件\utils\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="detail\utf8_codecvt.h">
+      <Filter>源文件\utils\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="detail\dynarray.h">
+      <Filter>源文件\utils\detail</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -137,5 +155,19 @@
     <ClCompile Include="Wc3VarType.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="unicode.cpp">
+      <Filter>源文件\utils</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="detail\ansi_codecvt.inl">
+      <Filter>源文件\utils\detail</Filter>
+    </None>
+    <None Include="detail\codecvt.inl">
+      <Filter>源文件\utils\detail</Filter>
+    </None>
+    <None Include="detail\utf8_codecvt.inl">
+      <Filter>源文件\utils\detail</Filter>
+    </None>
   </ItemGroup>
 </Project>

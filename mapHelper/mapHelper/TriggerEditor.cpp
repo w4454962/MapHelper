@@ -7,6 +7,7 @@
 #include <iostream>
 #include <regex>
 #include "singleton.h"
+#include "SaveLoadCheck.h"
 
 TriggerEditor::TriggerEditor()
 	:m_editorData(nullptr),
@@ -453,7 +454,6 @@ void TriggerEditor::saveSctipt(const char* path)
 		std::string name = var->name;
 		std::string type = var->type;
 		std::string base = getBaseType(type);
-
 		if (var->is_array )
 		{
 			//获取默认值
@@ -461,13 +461,13 @@ void TriggerEditor::saveSctipt(const char* path)
 			auto it = m_typesTable.find(type);
 			if (it != m_typesTable.end())
 				defaultValue = it->second->value;
-			if (!var->is_init && defaultValue.empty()) 
+			if (!var->is_init && base != "string" && defaultValue.empty())
 				continue;
 			writer.write_string("\tset i = 0\n");
 			writer.write_string("\tloop\n");
 			writer.write_string("\t\texitwhen(i > " + std::to_string(var->array_size) + ")\n");
 
-			if (var->is_init) 
+			if (var->is_init)
 			{
 				std::string value = var->value;
 				if (base == "string")
