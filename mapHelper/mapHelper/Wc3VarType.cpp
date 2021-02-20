@@ -40,4 +40,7 @@ const char* TypeName[] = {
   "fogmodifier",
   "radian",
   "degree",
+  "gamekey",
+  "frame",
+  "seffect",
 };

@@ -869,7 +869,8 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 					flag = ptr->getActionId() == 0 ? 1 : 2;
 					break;
 				// 逆天触发器并不会自动传参
-				//case "YDWERegisterTriggerMultiple"s_hash:
+				case "YDWERegisterTriggerMultiple"s_hash:
+					return false;
 				//	flag = ptr->getActionId() < 2 ? 1 : 2;
 				//	break;
 				}
