@@ -870,6 +870,8 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 				// 逆天触发器并不会自动传参
 				case "YDWERegisterTriggerMultiple"s_hash:
 					return false;
+				//	flag = ptr->getActionId() < 2 ? 1 : 2;
+				//	break;
 				}
 				//如果当前节点为注册逆天触发则不进行传参
 				if (flag > 0)

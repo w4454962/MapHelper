@@ -60,6 +60,15 @@ private:
 		if (src == "itemcode") {
 			return "integer";
 		}
+		if (src == "gamekey") {
+			return "integer";
+		}
+		if (src == "frame") {
+			return "integer";
+		}
+		if (src == "seffect") {
+			return "integer";
+		}
 		if (src.substr(0, 5) == "AUTO_") {
 			return src.substr(5, src.size());
 		}
