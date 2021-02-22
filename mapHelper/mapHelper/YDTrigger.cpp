@@ -1243,7 +1243,8 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	}
 	
 	if (SaveLoadCheck_Set(tmp, var_type) == false)
-		val = SaveLoadError(node, tmp, var_type) + val;
+		SaveLoadError(node, tmp, var_type);
+		//val = SaveLoadError(node, tmp, var_type) + val;
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1358,7 +1359,8 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 		tmp = tmp.substr(5, tmp.size());
 
 	if (SaveLoadCheck_Set(tmp, var_type) == false)
-		output += SaveLoadError(node, tmp, var_type);
+		SaveLoadError(node, tmp, var_type);
+		//output += SaveLoadError(node, tmp, var_type);
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1452,7 +1454,8 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 
 	auto val = value;
 	if (SaveLoadCheck_Set(name, type) == false)
-		val = SaveLoadError(node, name, type) + val;
+		SaveLoadError(node, name, type);
+		//val = SaveLoadError(node, name, type) + val;
 	output += "call " + callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{
@@ -1543,7 +1546,8 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 	std::string output;
 
 	if (SaveLoadCheck_Set(name, type) == false)
-		output += SaveLoadError(node, name, type);
+		SaveLoadError(node, name, type);
+		//output += SaveLoadError(node, name, type);
 	output += callname + "(";
 	if (!handle.empty()) //带handle参数的
 	{

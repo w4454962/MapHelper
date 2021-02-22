@@ -214,7 +214,7 @@ static int __fastcall fakeReturnTypeStrcmp(const char* type1,const char* type2)
 	if (strcmp(type1, type2) != 0)
 	{
 		if (strcmp(type1, "AnyReturnType") == 0) {
-			for (int i = 1; i < 42; i++) {
+			for (int i = 1; i < TypeCount; i++) {
 				if (strcmp(type2, TypeName[i]) == 0)
 					return 0;
 			}

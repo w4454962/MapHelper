@@ -342,7 +342,7 @@ void TriggerEditor::saveSctipt(const char* path)
 {
 
 	printf("自定义保存jass文件\n");
-
+	SaveLoadInitLog();
 	auto start = clock();
 
 	auto data = m_editorData;
@@ -1584,6 +1584,7 @@ endfunction
 
 	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
+	SaveLoadCloseLog();
 
 	m_initFuncTable.clear();
 

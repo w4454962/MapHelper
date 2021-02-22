@@ -1,5 +1,6 @@
 #include "SaveLoadCheck.h"
 #include "unicode.h"
+#include <fstream>
 class CSaveLoadCheck {
 public:
 	typedef std::shared_ptr<std::map<std::string, std::string>> TSaveLoadMap;
@@ -31,7 +32,27 @@ public:
 		return "";
 	}
 
+	void InitLog()
+	{
+			auto buffer = std::vector<char>(MAX_PATH);
+			GetModuleFileNameA(GetModuleHandleA("ydbase.dll"), buffer.data(), MAX_PATH);
+			auto ydwe_path = fs::path(buffer.data()).parent_path().parent_path();
+			auto log_path = ydwe_path / "logs" / "SaveLoad.log";
+			LogWriter.open(log_path.string());
+	}
+
+	void CloseLog()
+	{
+		LogWriter.close();
+	}
+
+	void WriteLog(std::string log)
+	{
+		LogWriter << log << std::endl;
+	}
+
 private:
+	std::ofstream LogWriter;
 	const std::string Convert(const std::string src) const {
 		if (src == "StringExt") {
 			return "string";
@@ -93,11 +114,23 @@ std::string SaveLoadCheck_Get(std::string lpszKey) {
 	return g_SaveLoadCheck.get(lpszKey);
 }
 
-std::string SaveLoadError(ActionNodePtr node, std::string name, std::string type)
+void SaveLoadInitLog()
 {
-	size_t len = 0x400;
+	g_SaveLoadCheck.InitLog();
+}
+
+void SaveLoadCloseLog()
+{
+	g_SaveLoadCheck.CloseLog();
+}
+
+void SaveLoadError(ActionNodePtr node, std::string name, std::string type)
+{
+	const size_t len = 0x400;
 	auto buffer = std::vector<char>(len);
-	std::string fmt = base::a2u("YDTrigger Error: 触发器-%s: 你使用了局部变量loc_%s类型为%s,但是在其他地方声明类型为%s");
+	std::string fmt = base::a2u("YDTrigger Error: 触发器%s中发现错误: 你使用的局部变量loc_%s类型为%s,但是在其他地方声明类型为%s");
 	sprintf_s(buffer.data(), len, fmt.c_str(), node->getTriggerNamePtr()->c_str(), name.c_str(), type.c_str(), SaveLoadCheck_Get(name).c_str());
-	return std::string(buffer.data());
+	auto log = std::string(buffer.data());
+	printf("%s\n", base::u2a(log).c_str());
+	g_SaveLoadCheck.WriteLog(log);
 }

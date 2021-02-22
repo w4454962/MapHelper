@@ -44,3 +44,4 @@ const char* TypeName[] = {
   "frame",
   "seffect",
 };
+const size_t TypeCount = sizeof(TypeName) / sizeof(const char*);
