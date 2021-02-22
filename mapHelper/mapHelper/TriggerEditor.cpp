@@ -1601,7 +1601,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	std::string trigger_name = *root->getTriggerNamePtr();
 
 	std::string trigger_variable_name = "gg_trg_" + trigger_name;
-	std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
+	std::string trigger_action_name = "Trig_" + trigger_name + "Actions";
 
 
 	std::string events;
