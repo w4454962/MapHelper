@@ -20,6 +20,7 @@ public:
 	void saveScriptTriggers(const char* path);//生成 wct
 	void saveSctipt(const char* path); //生成j
 
+	std::string WriteRandomDisItem(const char* id); //处理物编掉落关于随机物品 随机组 四字id
 	
 
 	std::string convertTrigger(Trigger* trigger);
@@ -71,3 +72,5 @@ public:
 };
 extern TriggerEditor g_trigger_editor;
 TriggerEditor& get_trigger_editor();
+//所有物品类型的jass变量名
+std::string randomItemTypes[];

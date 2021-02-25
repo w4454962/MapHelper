@@ -9,6 +9,18 @@
 #include "singleton.h"
 #include "SaveLoadCheck.h"
 
+//所有物品类型的jass变量名
+std::string randomItemTypes[] = {
+	"ITEM_TYPE_ANY",
+	"ITEM_TYPE_PERMANENT",
+	"ITEM_TYPE_CHARGED",
+	"ITEM_TYPE_POWERUP",
+	"ITEM_TYPE_ARTIFACT",
+	"ITEM_TYPE_PURCHASABLE",
+	"ITEM_TYPE_CAMPAIGN",
+	"ITEM_TYPE_MISCELLANEOUS"
+};
+
 TriggerEditor::TriggerEditor()
 	:m_editorData(nullptr),
 	m_version(7)
@@ -337,6 +349,64 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	printf("wct 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
+/*
+* 进制如果为 xx xx 00 51 这种形式为自定义组
+* 第一个为数组索引 第二个数为 gg_rg_%03d 中的%03d 第三个应该只可能为 00 第四的默认为 0x51 ->81
+* 传递 gg_rg_%03d[i]
+* --------------------------------------------------------------------------
+* 其他情况存在00 默认为空物品 
+* 传递-1
+* --------------------------------------------------------------------------
+* 剩余特有id为
+* 物品
+* YYI/ -- YYI0 ---------- YYI8
+* YiI/ -- YiI0 ---------- YiI8
+* ----------------------------
+* YoI/ -- YoI0 ---------- YoI8 
+* 从上到下为 任何 永久 可充 力量提升 人造 可购买 战役 混杂 即 Y - o  -> 89 105 106 ---- 111
+* 从做到右为物品等级 即 -1 - 8  -> 47 - 56
+* 传递 ChooseRandomItemEx(ITEM_TYPE, num:[-1,8])
+* --------------------------------------------------------------------------
+* 单位
+* YYU/ -- YYU0 ---------- YYUD
+* 从左到右为单位等级 即 -1 20 -> 47 - 68
+* 传递 ChooseRandomCreep(num:[-1,20])
+* --------------------------------------------------------------------------
+* 剩余为正常id
+* 传递 'name'
+* 
+* 记录一下容易忘记的
+* Y 为 89
+* I 为 73
+* U 为 85
+*/
+std::string TriggerEditor::WriteRandomDisItem(const char *id) {
+	int num[4];
+	char buffer[0x400];
+	std::string name = std::string(id, id + 0x4);
+	for (int i = 0; i < 4; i++) {
+		num[i] = (int)id[i];
+	}
+	// 如果是随机单位
+	if (std::string(id, id + 0x3) == "YYU") {
+		sprintf(buffer, "ChooseRandomCreep(%d)", num[3] - 48);
+		return std::string(buffer);
+	}//如果是随机物品
+	else if (id[0] == 'Y' && id[2] == 'I') {
+		int random_item = (num[1] == 89) ? 0 : (num[1] - 104);
+		sprintf(buffer, "ChooseRandomItemEx(%s, %d)", randomItemTypes[random_item].c_str(), num[3] - 48);
+		return std::string(buffer);
+	}//如果是随机组
+	else if (num[2] == 0 && id[3] == 'Q') {
+		sprintf(buffer, "gg_rg_%03d[%d]", num[1], num[0]);
+		return std::string(buffer);
+	}
+	else if (num[1] && num[2] && num[3] && num[0]) {
+		return "'" + name + "'";
+	}
+
+	return "-1";
+}
 
 void TriggerEditor::saveSctipt(const char* path)
 {
@@ -552,13 +622,8 @@ void TriggerEditor::saveSctipt(const char* path)
 			for (uint32_t b = 0; b < groupData->param_count; b++)
 			{
 				const char* ptr = group->names[b];
-				std::string value = "-1";
-				// 判断了个寂寞
-				std::string id = std::string(ptr, ptr + 0x4);
-				if ( *(uint32_t*)(ptr) > 0 )
-					value = "'" + id + "'";
 				
-				sprintf(buffer, "\t\tset gg_rg_%03d[%i] = %s\n", i, b, value.c_str());
+				sprintf(buffer, "\t\tset gg_rg_%03d[%i] = %s\n", i, b, WriteRandomDisItem(ptr).c_str());
 				writer.write_string(std::string(buffer));
 			}
 		}
@@ -612,12 +677,7 @@ void TriggerEditor::saveSctipt(const char* path)
 			for (uint32_t b = 0; b < itemSetting->info_count; b++)
 			{
 				ItemTableInfo* info = &itemSetting->item_infos[b];
-				std::string id = std::string(info->name, info->name + 0x4);
-				// 处理下设置空物品的问题
-				if (*(uint32_t*)(info->name) > 0)
-					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
-				else
-					writer.write_string("\t\tcall RandomDistAddItem(-1, " + std::to_string(info->rate) + ")\n");
+				writer.write_string("\t\tcall RandomDistAddItem(" + WriteRandomDisItem(info->name) + ", " + std::to_string(info->rate) + ")\n");
 			}
 			writer.write_string(R"(
 		set itemID=RandomDistChoose()
@@ -691,12 +751,7 @@ endfunction
 				for (uint32_t b = 0; b < itemSetting->info_count; b++)
 				{
 					ItemTableInfo* info = &itemSetting->item_infos[b];
-					std::string id = std::string(info->name, info->name + 0x4);
-					// 处理下设置空物品的问题
-					if (*(uint32_t*)(info->name) > 0)
-						writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
-					else
-						writer.write_string("\t\tcall RandomDistAddItem(-1, " + std::to_string(info->rate) + ")\n");
+					writer.write_string("\t\tcall RandomDistAddItem(" + WriteRandomDisItem(info->name) + ", " + std::to_string(info->rate) + ")\n");
 				}
 
 				writer.write_string(R"(
@@ -765,12 +820,7 @@ endfunction
 				for (uint32_t b = 0; b < itemSetting->info_count; b++)
 				{
 					ItemTableInfo* info = &itemSetting->item_infos[b];
-					std::string id = std::string(info->name, info->name + 0x4);
-					// 处理下设置空物品的问题
-					if (*(uint32_t*)(info->name) > 0)
-						writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(info->rate) + ")\n");
-					else
-						writer.write_string("\t\tcall RandomDistAddItem(-1, " + std::to_string(info->rate) + ")\n");
+					writer.write_string("\t\tcall RandomDistAddItem(" + WriteRandomDisItem(info->name) + ", " + std::to_string(info->rate) + ")\n");
 				}
 
 				writer.write_string(R"(
@@ -872,7 +922,11 @@ endfunction
 
 		std::string id = buffer;
 
+		//可能也许大概貌似这样就没事了
 		if (variableTable.find(id) == variableTable.end()) 
+			id = "d";
+
+		if (unit->item_setting_count <= 0 && unit->item_table_index == -1)
 			continue;
 		
 		sprintf(buffer, "'%.4s',%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle * 180 / 3.14, unit->scale_x, unit->variation);
@@ -880,25 +934,25 @@ endfunction
 
 		if (unit->doodas_life != 100) {
 			sprintf(buffer, "%.2f", unit->doodas_life / 100.f);
-			writer2.write_string("\tset life = GetDestructableLife(" + id + ")\n");
-			writer2.write_string("\tcall SetDestructableLife(" + id + ", " + std::string(buffer) + " * life)\n");
+			writer.write_string("\tset life = GetDestructableLife(" + id + ")\n");
+			writer.write_string("\tcall SetDestructableLife(" + id + ", " + std::string(buffer) + " * life)\n");
 		}
 
 		if (unit->item_setting_count > 0) {
 			sprintf(buffer, "%06d", unit->index);
 
-			writer2.write_string("\tset t = CreateTrigger()\n");
-			writer2.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
-			writer2.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
-			writer2.write_string("\tcall TriggerAddAction(t, function Doodad" + std::string(buffer) + "_DropItems)\n");
+			writer.write_string("\tset t = CreateTrigger()\n");
+			writer.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
+			writer.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
+			writer.write_string("\tcall TriggerAddAction(t, function Doodad" + std::string(buffer) + "_DropItems)\n");
 		}
 		else if (unit->item_table_index != -1) {
 			sprintf(buffer, "%06d", unit->item_table_index);
 
-			writer2.write_string("\tset t = CreateTrigger()\n");
-			writer2.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
-			writer2.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
-			writer2.write_string("\tcall TriggerAddAction(t, function ItemTable_" + std::string(buffer) + "_DropItems)\n");
+			writer.write_string("\tset t = CreateTrigger()\n");
+			writer.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
+			writer.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
+			writer.write_string("\tcall TriggerAddAction(t, function ItemTable_" + std::string(buffer) + "_DropItems)\n");
 		}
 
 	}
@@ -912,19 +966,6 @@ endfunction
 
 	writer.write_string("\tlocal integer itemID\n");
 
-
-	//所有物品类型的jass变量名
-	std::string randomTypes[] = {
-		"ITEM_TYPE_ANY",
-		"ITEM_TYPE_PERMANENT",
-		"ITEM_TYPE_CHARGED",
-		"ITEM_TYPE_POWERUP",
-		"ITEM_TYPE_ARTIFACT",
-		"ITEM_TYPE_PURCHASABLE",
-		"ITEM_TYPE_CAMPAIGN",
-		"ITEM_TYPE_MISCELLANEOUS"
-	};
-
 	for (size_t i = 0; i < worldData->units->unit_count; i++)
 	{
 		Unit* unit = &worldData->units->array[i];
@@ -935,7 +976,7 @@ endfunction
 			{
 				if (unit->random_item_mode == 0)//从所有物品里随机
 				{
-					writer.write_string("\tset itemID=ChooseRandomItemEx(" + randomTypes[unit->random_item_type % 8] + ", " + std::to_string(unit->random_item_level) + ")\n");
+					writer.write_string("\tset itemID=ChooseRandomItemEx(" + randomItemTypes[unit->random_item_type % 8] + ", " + std::to_string(unit->random_item_level) + ")\n");
 				}
 				else if (unit->random_item_mode == 1)
 				{

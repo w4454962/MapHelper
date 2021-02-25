@@ -593,7 +593,9 @@ int WorldEditor::customSaveDoodas(const char* path)
 		//判断是否被全局变量引用 
 		//if (!this_call<int>(addr, doodas, i)) 
 
-		if (variableTable.find(buffer) == variableTable.end())
+		//这里应该判断有没有设置过掉落物品
+		//if (variableTable.find(buffer) == variableTable.end())
+		if (unit->item_setting_count <= 0 && unit->item_table_index == -1)
 		{
 			flag |= 0x2;
 		}
