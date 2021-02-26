@@ -2,6 +2,7 @@
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
 #include "singleton.h"
+#include "mapHelper.h"
 
 WorldEditor::WorldEditor()
 {
@@ -35,9 +36,11 @@ uintptr_t WorldEditor::getAddress(uintptr_t addr)
 EditorData* WorldEditor::getEditorData()
 {
 	uintptr_t addr = *(uintptr_t*)getAddress(0x803cb0);
-
-	uintptr_t count = *(uintptr_t*)(addr + 0x1b0);
-
+	uintptr_t count = 0;
+	if(!Helper::IsEixt())
+	{
+		count = *(uintptr_t*)(addr + 0x1b0);
+	}
 	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + count * 4);
 
 	if (*(uintptr_t*)(object + 0x114))

@@ -24,6 +24,9 @@ public:
 	
 	//static Helper* getInstance();
 
+
+	static bool IsEixt();
+
 	void enableConsole();
 
 	void attach();//附加
@@ -31,7 +34,7 @@ public:
 	void detach();//分离
 
 	int getConfig() const;
-private: 
+private:
 
 	//保存地图
 	static uintptr_t onSaveMap();

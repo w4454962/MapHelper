@@ -15,6 +15,8 @@
 const char* g_path;
 static uintptr_t g_object{};
 static uintptr_t g_addr;
+//保存地图函数调用返回地址
+static uintptr_t call_addr;
 
 namespace real
 {
@@ -73,11 +75,26 @@ Helper::~Helper()
 //}
 
 
+bool Helper::IsEixt()
+{
+	
+	if (call_addr == WorldEditor::getAddress(0x004E79A7))
+	{
+		return true;
+	}
+	return false;
+}
+
 static void __declspec(naked) insertSaveMapData()
 {
 	
 	__asm
 	{
+		mov eax, [ebp]
+		mov eax, [eax]
+		mov eax, [eax]
+		mov eax, [eax + 0x4]
+		mov call_addr, eax
 		mov g_object, esi
 		lea eax, dword ptr ss : [ebp - 0x10c];
 		mov g_path, eax
