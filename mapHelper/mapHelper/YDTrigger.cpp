@@ -349,7 +349,23 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 			for (auto&[n, t] : *table)
 			{
 				output += editor.spaces[stack];
-				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+				if (strncmp(t.c_str(),"AUTO_",5) == 0)
+				{
+					auto branch = node->getBranchNode();
+					auto parent = branch->getParentNode();
+					if (!parent.get() || parent->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+					{
+						output += setLocal(temp, n, t, n + "()", true) + "\n";
+					}
+					else
+					{
+						output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+					}
+				}
+				else
+				{
+					output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+				}
 				//将这一层需要传参的变量 传递给上一层
 				if (mapPtr.get() != table.get())
 				{
@@ -479,6 +495,10 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		{
 			for (auto&[n, t] : *table)
 			{
+				if (strncmp(t.c_str(), "AUTO_", 5) == 0)
+				{
+					continue;
+				}
 				output += editor.spaces[stack];
 				
 				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
