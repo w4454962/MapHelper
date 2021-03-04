@@ -598,7 +598,7 @@ int WorldEditor::customSaveDoodas(const char* path)
 
 		//这里应该判断有没有设置过掉落物品
 		//if (variableTable.find(buffer) == variableTable.end())
-		if (unit->item_setting_count <= 0 && unit->item_table_index == -1)
+		if (unit->item_setting_count <= 0 && unit->item_table_index == -1 && variableTable.find(buffer) == variableTable.end())
 		{
 			flag |= 0x2;
 		}

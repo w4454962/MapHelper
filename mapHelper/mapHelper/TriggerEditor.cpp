@@ -926,7 +926,7 @@ endfunction
 		if (variableTable.find(id) == variableTable.end()) 
 			id = "d";
 
-		if (unit->item_setting_count <= 0 && unit->item_table_index == -1)
+		if (id == "d" && unit->item_setting_count <= 0 && unit->item_table_index == -1)
 			continue;
 		
 		sprintf(buffer, "'%.4s',%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle * 180 / 3.14, unit->scale_x, unit->variation);
