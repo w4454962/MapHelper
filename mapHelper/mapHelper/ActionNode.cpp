@@ -320,9 +320,7 @@ VarTablePtr ActionNode::getLocalTable()
 
 int ActionNode::getParentGroupCount()
 {
-	ActionNodePtr branch = getBranchNode();
-
-	ActionNodePtr parent = branch->getParentNode();
+	ActionNodePtr parent = getParentNode();
 
 	if (parent.get() == NULL)
 	{
