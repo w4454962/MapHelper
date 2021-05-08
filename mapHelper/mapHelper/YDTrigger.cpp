@@ -1009,7 +1009,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 		{
 			Action* action = actions[i];
 			//如果不搜索子动作 and action是子动作则跳过
-			if (!isSeachChild && action->child_flag != -1 )
+			if (!isSeachChild && action->group_id != -1 )
 				continue;
 			
 			uint32_t hash = hash_(action->name);

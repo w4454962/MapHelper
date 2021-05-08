@@ -145,7 +145,7 @@ static void __declspec(naked) insertConvertTrigger()
 
 
 //修改特定UI的子动作数量
-static int __fastcall fakeGetChildCount(Action* action)
+int __fastcall fakeGetChildCount(Action* action)
 {
 	auto it = g_actionInfoTable.find(std::string(action->name));
 	if (it != g_actionInfoTable.end())
@@ -664,7 +664,6 @@ void Helper::enableConsole()
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞 \n"
-			<< "参与测试人员： 幽影、夜夜、七罪、五爷、妖精、tom、迷失\n"
 			<< "感谢7佬的最初版本\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
 			<< "                         ----2021/01/05\n"

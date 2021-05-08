@@ -252,7 +252,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 
 		writer.write(child_type);
 
-		writer.write(child->child_flag);
+		writer.write(child->group_id);
 
 		writeAction(writer, child);
 		
@@ -1766,9 +1766,8 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 {
 	Action* action = node->getAction();
 
-	// 虽然t转j没问题了。但是保存会出问题，占时注释掉
-	//if (!action->enable  || !action->unk_object)
-	if (!action->enable)
+
+	if (!action->enable || !((int)action->group_id < node->getParentGroupCount()))
 		return "";
 
 	std::string output;
@@ -1881,7 +1880,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 			case Action::Type::action:
 			{
 				auto action = child->getAction();
-				if (action->child_flag == 1)
+				if (action->group_id == 1)
 				{
 					thentext += spaces[space_stack];
 					thentext += convertAction(child, pre_actions, false) + "\n";

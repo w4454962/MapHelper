@@ -85,7 +85,11 @@ public:
 
 	VarTablePtr getLocalTable();
 
+	int getParentGroupCount();
+
 	bool m_haveHashLocal;
+
+	
 private:
 
 protected:
@@ -108,6 +112,9 @@ protected:
 
 	//记录局部变量的map指针
 	std::shared_ptr<std::map<std::string, std::string>> m_localTablePtr;
+
+	int m_group_count;
+
 };
 
 
