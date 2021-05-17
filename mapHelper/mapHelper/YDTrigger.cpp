@@ -559,7 +559,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 	case "YDWETimerStartFlush"s_hash:
 	{
-		ActionNodePtr ptr = node->getParentNode();
+		ActionNodePtr branch = node->getBranchNode();
+		ActionNodePtr ptr = branch->getParentNode();
 		bool isInTimer = false;
 		while (ptr.get())
 		{
@@ -568,7 +569,10 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				isInTimer = true;
 				break;
 			}
-			ptr = ptr->getParentNode();
+			//如果子节点数量为0则继续往上查找
+			if (!ptr->getAction()->child_count)
+				ptr = ptr->getBranchNode()->getParentNode();
+			else break;
 		}
 		if (isInTimer)
 		{
@@ -585,9 +589,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	}
 	case "YDWERegisterTriggerFlush"s_hash:
 	{
-		ActionNodePtr parent = node->getParentNode();
-
-		ActionNodePtr ptr = node->getParentNode();
+		ActionNodePtr branch = node->getBranchNode();
+		ActionNodePtr ptr = branch->getParentNode();
 		bool isInTrigger = false;
 		while (ptr.get())
 		{
@@ -596,7 +599,10 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				isInTrigger = true;
 				break;
 			}
-			ptr = ptr->getParentNode();
+			//如果子节点数量为0则继续往上查找
+			if (!ptr->getAction()->child_count)
+				ptr = ptr->getBranchNode()->getParentNode();
+			else break;
 		}
 		if (isInTrigger)
 		{
