@@ -983,7 +983,8 @@ bool YDTrigger::seachHashLocal(Parameter** parameters, uint32_t count, std::map<
 		}
 		if (child_count > 0 && childs)
 		{
-			return seachHashLocal(childs, child_count,mapPtr);
+			if (seachHashLocal(childs, child_count, mapPtr))
+				return true;
 		}
 	}
 	if (mapPtr && mapPtr->size() > 0)
