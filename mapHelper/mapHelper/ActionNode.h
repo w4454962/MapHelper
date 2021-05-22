@@ -87,8 +87,10 @@ public:
 
 	int getParentGroupCount();
 
-	bool m_haveHashLocal;
+	bool canHasVarTable();
 
+	bool m_haveHashLocal;;
+	
 	
 private:
 

@@ -42,13 +42,12 @@ public:
 	//当动作生成函数结束时 清除局部变量
 	void onActionsToFuncEnd(std::string& funcCode, ActionNodePtr node);
 
-
 	//判断触发是否休眠 true 为休眠状态
 	bool hasDisableRegister(Trigger* trigger);
 
 	bool isEnable();
 private:
-
+	std::string localVarTransfer(std::string& output, ActionNodePtr node, std::string& pre_actions);
 	
 	std::string setLocal(ActionNodePtr node, const std::string& name, const std::string& type, const std::string& value, bool add = false);
 	std::string getLocal(ActionNodePtr node, const std::string& name, const std::string& type);

@@ -109,6 +109,24 @@ bool ActionNode::isRootNode()
 	return m_parent == NULL;
 }
 
+bool ActionNode::canHasVarTable()
+{
+	static std::map<uint32_t, bool> t = {
+		{"YDWETimerStartMultiple"s_hash,true},
+		{"YDWEExecuteTriggerMultiple"s_hash,true},
+		{"YDWERegisterTriggerMultiple"s_hash,true},
+		{"DzTriggerRegisterMouseEventMultiple"s_hash,true},
+		{"DzTriggerRegisterKeyEventMultiple"s_hash,true},
+		{"DzTriggerRegisterMouseWheelEventMultiple"s_hash,true},
+		{"DzTriggerRegisterMouseMoveEventMultiple"s_hash,true},
+		{"DzTriggerRegisterWindowResizeEventMultiple"s_hash,true},
+		{"DzFrameSetUpdateCallbackMultiple"s_hash,true},
+		{"DzFrameSetScriptMultiple"s_hash,true}
+	};
+	auto id = getNameId();
+	return isRootNode() || t.find(id) != t.end();
+}
+
 
 ActionNodePtr ActionNode::getRootNode()
 {
@@ -286,10 +304,7 @@ VarTablePtr ActionNode::getLastVarTable()
 			retval = node->m_hashVarTablePtr;
 			break;
 		}
-		else if(node->m_action != m_action && (node->isRootNode()
-			|| node->m_nameId == "YDWETimerStartMultiple"s_hash
-			|| node->m_nameId == "YDWEExecuteTriggerMultiple"s_hash
-			|| node->m_nameId == "YDWERegisterTriggerMultiple"s_hash))
+		else if(node->m_action != m_action && node->canHasVarTable())
 		{
 			retval = VarTablePtr(new std::map<std::string, std::string>);
 			node->m_hashVarTablePtr = retval;
