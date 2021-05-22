@@ -369,6 +369,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		}
 		else
 		{
+			output += "call DestroyTimer(GetExpiredTimer()) 此句代码出错.\n";
 			output += "不要在逆天计时器的动作外使用<清除逆天计时器>";
 			return true;
 		}
@@ -399,6 +400,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		}
 		else
 		{
+			output += "call DestroyTrigger(GetTriggeringTrigger()) 此句代码出错.\n";
 			output += "不要在逆天触发器的动作外使用<清除逆天触发器>";
 			return true;
 		}
