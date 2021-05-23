@@ -273,108 +273,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "YDWETimerStartMultiple"s_hash:
 	{
 
-		std::string param_text;
-		std::string action_text;
-
-		param_text += "set ydl_timer = ";
-		param_text += editor.convertParameter(parameters[0], node, pre_actions) + "\n";
-
-
-		std::map<std::string, std::string> hashVarTable;
-		
-		//找到上一层函数的逆天局部变量表
-		auto mapPtr = node->getLastVarTable();
-
-		node->getChildNodeList(list);
-		for (auto& child : list)
-		{
-			Action* childAction = child->getAction();
-			if (child->getActionId() == 0)//如果是参数区
-			{
-				switch (child->getNameId())
-				{
-					//在逆天计时器参数中使用逆天局部变量
-				case "YDWESetAnyTypeLocalArray"s_hash:
-				case "YDWESetAnyTypeLocalVariable"s_hash:
-				{
-					std::string var_name = childAction->parameters[1]->value;
-					std::string var_type = childAction->parameters[0]->value + 11;
-					hashVarTable.emplace(var_name, var_type);
-					break;
-				}
-				}
-				param_text += editor.spaces[stack];
-				param_text += editor.convertAction(child, pre_actions, false) + "\n";
-			}
-		}
-
-
-		int s = stack;
-		stack = 1;
-		
-		for (auto& child : list)
-		{
-			if (child->getActionId() != 0)//如果是动作区
-			{
-				Action* childAction = child->getAction();
-
-				action_text += editor.spaces[stack];
-				action_text += editor.convertAction(child, pre_actions, false) + "\n";
-			}
-		}
-
-		stack = s;
-
-		//如果当前这层有需要申请的变量
-		auto table = node->getVarTable();
-		
-
-		for (auto&[n, t] : hashVarTable)
-		{	
-			table->erase(n);
-
-			if (mapPtr)
-			{
-				mapPtr->erase(n);
-			}
-		}
-
-		output += param_text;
-
-		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
-
-
-		if (table->size() > 0)
-		{
-			for (auto&[n, t] : *table)
-			{
-				output += editor.spaces[stack];
-				if (strncmp(t.c_str(),"AUTO_",5) == 0)
-				{
-					auto branch = node->getBranchNode();
-					auto parent = branch->getParentNode();
-					if (!parent.get() || parent->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
-					{
-						output += setLocal(temp, n, t, n + "()", true) + "\n";
-					}
-					else
-					{
-						output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
-					}
-				}
-				else
-				{
-					output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
-				}
-				//将这一层需要传参的变量 传递给上一层
-				if (mapPtr.get() != table.get())
-				{
-					mapPtr->emplace(n, t);
-				}
-			}
-			table->clear();
-		}
-
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
 
@@ -400,120 +299,7 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 	case "YDWERegisterTriggerMultiple"s_hash:
 	{
-		std::string param_text;
-		std::string action_text;
-
-		param_text += "set ydl_trigger = ";
-		param_text += editor.convertParameter(parameters[0], node, pre_actions) + "\n";
-
-
-		std::map<std::string, std::string> hashVarTable;
-
-		//找到上一层函数的逆天局部变量表
-		auto mapPtr = node->getLastVarTable();
-
-		node->getChildNodeList(list);
-
-		for (auto& child : list)
-		{
-			Action* childAction = child->getAction();
-
-			//如果是事件 则单独处理
-			if (child->getActionType() == Action::Type::event)
-			{
-				if (child->getNameId() == "MapInitializationEvent"s_hash)
-				{
-					continue;
-				}
-				onRegisterEvent(param_text,child);
-				param_text += editor.spaces[stack];
-				
-				param_text += "call " + editor.getBaseName(child) + "(ydl_trigger";
-
-				for (size_t k = 0; k < childAction->param_count; k++)
-				{
-					param_text += ", ";
-					param_text += editor.convertParameter(childAction->parameters[k], child, pre_actions);
-				}
-				param_text += ")\n";
-				onRegisterEvent2(param_text, child);
-			}
-			else if (child->getActionId() == 1)//如果是参数区
-			{
-				switch (child->getNameId())
-				{
-					//在逆天计时器参数中使用逆天局部变量
-				case "YDWESetAnyTypeLocalArray"s_hash:
-				case "YDWESetAnyTypeLocalVariable"s_hash:
-				{
-					std::string var_name = childAction->parameters[1]->value;
-					std::string var_type = childAction->parameters[0]->value + 11;
-					hashVarTable.emplace(var_name, var_type);
-					break;
-				}
-				}
-				param_text += editor.spaces[stack];
-				param_text += editor.convertAction(child, pre_actions, false) + "\n"; 
-			}
-		}
-
-		int s = stack;
-		stack = 1;
-
-		for (auto& child : list)
-		{
-			Action* childAction = child->getAction();
-
-			if (child->getActionId() == 2)//如果是动作区
-			{
-				action_text += editor.spaces[stack];
-				action_text += editor.convertAction(child, pre_actions, false) + "\n";
-			}
-		}
-
-		stack = s;
-
-		//如果当前这层有需要申请的变量
-		auto table = node->getVarTable();
-
-
-		for (auto&[n, t] : hashVarTable)
-		{
-			table->erase(n);
-
-			if (mapPtr)
-			{
-				mapPtr->erase(n);
-			}
-		}
-
-		output += param_text;
-
-		ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
-
-		if (table->size() > 0)
-		{
-			for (auto&[n, t] : *table)
-			{
-				if (strncmp(t.c_str(), "AUTO_", 5) == 0)
-				{
-					continue;
-				}
-				output += editor.spaces[stack];
-				
-				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
-
-				//将这一层需要传参的变量 传递给上一层
-				if (mapPtr.get() != table.get())
-				{
-					mapPtr->emplace(n, t);
-				}
-			}
-			table->clear();
-		}
-
-
-
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
 	
@@ -569,8 +355,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				isInTimer = true;
 				break;
 			}
-			//如果子节点数量为0则继续往上查找
-			if (!ptr->getAction()->child_count)
+			//如果节点无法穿透就跳出
+			if (!ptr->canHasVarTable())
 				ptr = ptr->getBranchNode()->getParentNode();
 			else break;
 		}
@@ -599,8 +385,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				isInTrigger = true;
 				break;
 			}
-			//如果子节点数量为0则继续往上查找
-			if (!ptr->getAction()->child_count)
+			//如果节点无法穿透就跳出
+			if (!ptr->canHasVarTable())
 				ptr = ptr->getBranchNode()->getParentNode();
 			else break;
 		}
@@ -697,6 +483,111 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 				output += "call " + func_name + "()\n";
 			}
 		}
+		return true;
+	}
+	case "DzTriggerRegisterMouseEventMultiple"s_hash:
+	case "DzTriggerRegisterKeyEventMultiple"s_hash:
+	{
+		std::string action_name = node->getName();
+		std::string action_text = localVarTransfer(output, node, pre_actions);
+		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		action_name = action_name.replace(action_name.find("Multiple"),-1,"ByCode");
+
+		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
+
+		onActionsToFuncBegin(pre_actions, node);
+		pre_actions += action_text;
+		onActionsToFuncEnd(pre_actions, node);
+		pre_actions += "endfunction\n";
+		output += editor.spaces[stack];
+		output += "if GetLocalPlayer() == " + editor.convertParameter(parameters[0], node, pre_actions) + " then\n";
+		output += editor.spaces[stack] + editor.spaces[stack];
+		output += "call "+ action_name +"(null, " + editor.convertParameter(parameters[1], node, pre_actions) +
+			", " + editor.convertParameter(parameters[2], node, pre_actions) + ", false, function ";
+		output += func_name;
+		output += ")";
+		output += editor.spaces[stack] + "\n";
+		output += editor.spaces[stack] + "endif";
+		if (output.front() == '\t')
+			output = output.erase(0, 1);
+		return true;
+	}
+	case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+	case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+	case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+	{
+		std::string action_name = node->getName();
+		std::string action_text = localVarTransfer(output, node, pre_actions);
+		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		action_name = action_name.replace(action_name.find("Multiple"), -1, "ByCode");
+
+		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
+
+		onActionsToFuncBegin(pre_actions, node);
+		pre_actions += action_text;
+		onActionsToFuncEnd(pre_actions, node);
+		pre_actions += "endfunction\n";
+		output += editor.spaces[stack];
+		output += "if GetLocalPlayer() == " + editor.convertParameter(parameters[0], node, pre_actions) + " then\n";
+		output += editor.spaces[stack] + editor.spaces[stack];
+		output += "call " + action_name + "(null, false, function ";
+		output += func_name;
+		output += ")";
+		output += editor.spaces[stack] + "\n";
+		output += editor.spaces[stack] + "endif";
+		if (output.front() == '\t')
+			output = output.erase(0, 1);
+		return true;
+	}
+	case "DzFrameSetUpdateCallbackMultiple"s_hash:
+	{
+		std::string action_name = node->getName();
+		std::string action_text = localVarTransfer(output, node, pre_actions);
+		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		action_name = action_name.replace(action_name.find("Multiple"), -1, "ByCode");
+
+		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
+
+		onActionsToFuncBegin(pre_actions, node);
+		pre_actions += action_text;
+		onActionsToFuncEnd(pre_actions, node);
+		pre_actions += "endfunction\n";
+		output += editor.spaces[stack];
+		output += "if GetLocalPlayer() == " + editor.convertParameter(parameters[0], node, pre_actions) + " then\n";
+		output += editor.spaces[stack] + editor.spaces[stack];
+		output += "call " + action_name + "(function ";
+		output += func_name;
+		output += ")";
+		output += editor.spaces[stack] + "\n";
+		output += editor.spaces[stack] + "endif";
+		if (output.front() == '\t')
+			output = output.erase(0, 1);
+		return true;
+	}
+	case "DzFrameSetScriptMultiple"s_hash:
+	{
+		std::string action_name = node->getName();
+		std::string action_text = localVarTransfer(output, node, pre_actions);
+		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		action_name = action_name.replace(action_name.find("Multiple"), -1, "ByCode");
+
+		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
+
+		onActionsToFuncBegin(pre_actions, node);
+		pre_actions += action_text;
+		onActionsToFuncEnd(pre_actions, node);
+		pre_actions += "endfunction\n";
+		output += editor.spaces[stack];
+		output += "if GetLocalPlayer() == " + editor.convertParameter(parameters[0], node, pre_actions) + " then\n";
+		output += editor.spaces[stack] + editor.spaces[stack];
+		output += "call " + action_name + "("+ editor.convertParameter(parameters[1], node, pre_actions)+
+			", " + editor.convertParameter(parameters[2], node, pre_actions) + ", function ";
+		output += func_name;
+		output += ", false)";
+		output += editor.spaces[stack] + "\n";
+		output += editor.spaces[stack] + "endif";
+		if (output.front() == '\t')
+			output = output.erase(0,1);
 		return true;
 	}
 	}
@@ -891,6 +782,15 @@ bool YDTrigger::onParamterToJass(Parameter* paramter, ActionNodePtr node, std::s
 					flag = 1; 
 					break;
 				case "YDWETimerStartMultiple"s_hash:
+					flag = ptr->getActionId() == 0 ? 1 : 2;
+					break;
+				case "DzTriggerRegisterMouseEventMultiple"s_hash:
+				case "DzTriggerRegisterKeyEventMultiple"s_hash:
+				case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+				case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+				case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+				case "DzFrameSetUpdateCallbackMultiple"s_hash:
+				case "DzFrameSetScriptMultiple"s_hash:
 					flag = ptr->getActionId() == 0 ? 1 : 2;
 					break;
 				// 逆天触发器并不会自动传参
@@ -1173,7 +1073,164 @@ bool YDTrigger::hasDisableRegister(Trigger* trigger)
 	return it != m_triggerHasDisable.end();
 }
 
+std::string YDTrigger::localVarTransfer(std::string& output, ActionNodePtr node, std::string& pre_actions)
+{
+	auto& editor = get_trigger_editor();
+	int& stack = editor.space_stack;
+	Action* action = node->getAction();
+	Parameter** parameters = action->parameters;
+	std::vector<ActionNodePtr> list;
+	std::string param_text;
+	std::string action_text;
+	int param_index;//参数区索引
+	bool param_auto;//是否自动传参
+	switch (node->getNameId())
+	{
+		case "YDWERegisterTriggerMultiple"s_hash:
+			param_text += "set ydl_trigger = ";
+			param_text += editor.convertParameter(parameters[0], node, pre_actions) + "\n";
+			param_index = 1;
+			param_auto = false;
+			break;
+		case "YDWETimerStartMultiple"s_hash:
+			param_text += "set ydl_timer = ";
+			param_text += editor.convertParameter(parameters[0], node, pre_actions) + "\n";
+			param_index = 0;
+			param_auto = true;
+			break;
+		case "DzTriggerRegisterMouseEventMultiple"s_hash:
+		case "DzTriggerRegisterKeyEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+		case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+		case "DzFrameSetUpdateCallbackMultiple"s_hash:
+		case "DzFrameSetScriptMultiple"s_hash:
+			param_index = 0;
+			param_auto = true;
+			break;
+	}
 
+
+	std::map<std::string, std::string> hashVarTable;
+
+	//找到上一层函数的逆天局部变量表
+	auto mapPtr = node->getLastVarTable();
+
+	node->getChildNodeList(list);
+
+	for (auto& child : list)
+	{
+		Action* childAction = child->getAction();
+
+		//如果是事件 则单独处理
+		if (child->getActionType() == Action::Type::event)
+		{
+			if (child->getNameId() == "MapInitializationEvent"s_hash)
+			{
+				continue;
+			}
+			onRegisterEvent(param_text, child);
+			param_text += editor.spaces[stack];
+
+			param_text += "call " + editor.getBaseName(child) + "(ydl_trigger";
+
+			for (size_t k = 0; k < childAction->param_count; k++)
+			{
+				param_text += ", ";
+				param_text += editor.convertParameter(childAction->parameters[k], child, pre_actions);
+			}
+			param_text += ")\n";
+			onRegisterEvent2(param_text, child);
+		}
+		else if (child->getActionId() == param_index)//如果是参数区
+		{
+			switch (child->getNameId())
+			{
+				//使用逆天局部变量
+			case "YDWESetAnyTypeLocalArray"s_hash:
+			case "YDWESetAnyTypeLocalVariable"s_hash:
+			{
+				std::string var_name = childAction->parameters[1]->value;
+				std::string var_type = childAction->parameters[0]->value + 11;
+				hashVarTable.emplace(var_name, var_type);
+				break;
+			}
+			}
+			param_text += editor.spaces[stack];
+			param_text += editor.convertAction(child, pre_actions, false) + "\n";
+		}
+	}
+
+	int s = stack;
+	stack = 1;
+
+	for (auto& child : list)
+	{
+		Action* childAction = child->getAction();
+
+		if (child->getActionId() > param_index)//如果是动作区
+		{
+			action_text += editor.spaces[stack];
+			action_text += editor.convertAction(child, pre_actions, false) + "\n";
+		}
+	}
+
+	stack = s;
+
+	//如果当前这层有需要申请的变量
+	auto table = node->getVarTable();
+
+
+	for (auto& [n, t] : hashVarTable)
+	{
+		table->erase(n);
+
+		if (mapPtr)
+		{
+			mapPtr->erase(n);
+		}
+	}
+
+	output += param_text;
+
+	ActionNodePtr temp = ActionNodePtr(new ActionNode(action, node));
+
+	if (table->size() > 0)
+	{
+		for (auto& [n, t] : *table)
+		{
+			if (strncmp(t.c_str(), "AUTO_", 5) == 0)
+			{
+				if (!param_auto)
+					continue;
+				output += editor.spaces[stack];
+				auto branch = node->getBranchNode();
+				auto parent = branch->getParentNode();
+				if (!parent.get() || parent->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				{
+					output += setLocal(temp, n, t, n + "()", true) + "\n";
+				}
+				else
+				{
+					output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+				}
+			}
+			else
+			{
+				output += editor.spaces[stack];
+				output += setLocal(temp, n, t, getLocal(node, n, t), true) + "\n";
+			}
+
+			//将这一层需要传参的变量 传递给上一层
+			if (mapPtr.get() != table.get())
+			{
+				mapPtr->emplace(n, t);
+			}
+		}
+		table->clear();
+	}
+	return action_text;
+}
 
 std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, const std::string& type, const std::string& value,bool add)
 {
@@ -1231,6 +1288,18 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 			callname = "YDLocal5Set";
 			break;
 		}
+		case "DzTriggerRegisterMouseEventMultiple"s_hash:
+		case "DzTriggerRegisterKeyEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+		case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+		case "DzFrameSetUpdateCallbackMultiple"s_hash:
+		case "DzFrameSetScriptMultiple"s_hash:
+		{
+			callname = "YDLocal6Set";
+			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			break;
+		}
 		//否则 在其他未定义的动作组中
 		default:
 		{
@@ -1239,9 +1308,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 			while (!ptr->isRootNode())
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
-				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				if (parentPtr->canHasVarTable())
 				{
 					return setLocal(ptr, name, type,value,add);
 				}
@@ -1343,6 +1410,22 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 			callname = "YDLocalGet";
 			break;
 		}
+		case "DzTriggerRegisterMouseEventMultiple"s_hash:
+		case "DzTriggerRegisterKeyEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+		case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+		case "DzFrameSetUpdateCallbackMultiple"s_hash:
+		case "DzFrameSetScriptMultiple"s_hash:
+		{
+			if (branch->getActionId() == 0) //在参数区内获取上个区域的逆天变量
+			{
+				return getLocal(parent, name, type);
+			}
+			callname = "YDLocal6Get";
+			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			break;
+		}
 		//否则 在其他未定义的动作组中
 		default:
 		{
@@ -1352,9 +1435,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 			while (!ptr->isRootNode())
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
-				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				if (parentPtr->canHasVarTable())
 				{
 					return getLocal(ptr, name, type);
 				}
@@ -1454,6 +1535,18 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 			callname = "YDLocal5ArraySet";
 			break;
 		}
+		case "DzTriggerRegisterMouseEventMultiple"s_hash:
+		case "DzTriggerRegisterKeyEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+		case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+		case "DzFrameSetUpdateCallbackMultiple"s_hash:
+		case "DzFrameSetScriptMultiple"s_hash:
+		{
+			callname = "YDLocal6ArraySet";
+			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			break;
+		}
 		//否则 在其他未定义的动作组中
 		default:
 		{
@@ -1463,9 +1556,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 			while (!ptr->isRootNode())
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
-				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				if (parentPtr->canHasVarTable())
 				{
 					return setLocalArray(ptr, name, type,index, value);
 				}
@@ -1547,6 +1638,22 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 			callname = "YDLocalArrayGet";
 			break;
 		}
+		case "DzTriggerRegisterMouseEventMultiple"s_hash:
+		case "DzTriggerRegisterKeyEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+		case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+		case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+		case "DzFrameSetUpdateCallbackMultiple"s_hash:
+		case "DzFrameSetScriptMultiple"s_hash:
+		{
+			if (branch->getActionId() == 0) //0是参数区
+			{
+				return getLocalArray(parent, name, type, index);
+			}
+			callname = "YDLocal6ArrayGet";
+			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			break;
+		}
 		//否则 在其他未定义的动作组中
 		default:
 		{
@@ -1557,9 +1664,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 			while (!ptr->isRootNode())
 			{
 				ActionNodePtr parentPtr = ptr->getParentNode();
-				if (parentPtr->getNameId() == "YDWETimerStartMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWEExecuteTriggerMultiple"s_hash
-					|| parentPtr->getNameId() == "YDWERegisterTriggerMultiple"s_hash)
+				if (parentPtr->canHasVarTable())
 				{
 					return getLocalArray(ptr, name, type, index);
 				}
