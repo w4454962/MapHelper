@@ -2093,11 +2093,14 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 		{
 			auto& world = get_world_editor();
 			const auto preset_type = world.getConfigData("TriggerParams", value, 1);
+			const auto preset_value = world.getConfigData("TriggerParams", value, 2);
+			bool has_quote_symbol = preset_value.find('`') == 0;
 
-			if (getBaseType(preset_type) == "string" || preset_type == "OrderType") {
-				return string_replaced(world.getConfigData("TriggerParams",value, 2), "`", "\"");
+			if (has_quote_symbol == true) {
+				return string_replaced(preset_value, "`", "\"");
+			} else {
+				return preset_value;
 			}
-			return world.getConfigData("TriggerParams", value, 2);
 		}
 	case Parameter::Type::function:
 		return value + "()";
