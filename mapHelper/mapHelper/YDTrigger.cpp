@@ -580,8 +580,8 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 		output += editor.spaces[stack];
 		output += "if GetLocalPlayer() == " + editor.convertParameter(parameters[0], node, pre_actions) + " then\n";
 		output += editor.spaces[stack] + editor.spaces[stack];
-		output += "call " + action_name + "("+ editor.convertParameter(parameters[1], node, pre_actions)+
-			", " + editor.convertParameter(parameters[2], node, pre_actions) + ", function ";
+		output += "call " + action_name + "("+ editor.convertParameter(parameters[2], node, pre_actions)+
+			", " + editor.convertParameter(parameters[1], node, pre_actions) + ", function ";
 		output += func_name;
 		output += ", false)";
 		output += editor.spaces[stack] + "\n";
