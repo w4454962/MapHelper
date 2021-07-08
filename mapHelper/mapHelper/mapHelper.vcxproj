@@ -128,7 +128,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EMBED_YDWE;WIN32;NDEBUG;MAPHELPER_EXPORTS;_WINDOWS;_USRDLL;ASMJIT_BUILD_RELEASE;ASMJIT_BUILD_X86;ASMJIT_BUILD_EMBED;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;MAPHELPER_EXPORTS;_WINDOWS;_USRDLL;ASMJIT_BUILD_RELEASE;ASMJIT_BUILD_X86;ASMJIT_BUILD_EMBED;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>..\3rd\Detours\src;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
