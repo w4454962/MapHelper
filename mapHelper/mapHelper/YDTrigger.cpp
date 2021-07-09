@@ -1245,6 +1245,11 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 	//如果是自动传递GetTriggerUnit() 这些函数值的话
 	bool isauto = type.length() > 5 && strncmp(type.c_str(), "AUTO_", 5) == 0;
 
+	if (parent.get() && parent->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash)
+	{
+		branch = parent->getBranchNode();
+		parent = branch->getParentNode();
+	}
 
 	if (parent.get() == NULL || parent->isRootNode())//如果是在触发中
 	{
@@ -1363,6 +1368,11 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 	//如果是自动传递GetTriggerUnit() 这些函数值的话
 	bool isauto = type.length() > 5 && strncmp(type.c_str(), "AUTO_", 5) == 0;
 
+	if (parent.get() && parent->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash)
+	{
+		branch = parent->getBranchNode();
+		parent = branch->getParentNode();
+	}
 
 	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
 	{
@@ -1492,6 +1502,12 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 	std::string callname;
 	std::string handle;
 
+	if (parent.get() && parent->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash)
+	{
+		branch = parent->getBranchNode();
+		parent = branch->getParentNode();
+	}
+
 	if (parent.get() == NULL || branch->isRootNode())//如果是在触发中
 	{
 		callname = "YDLocal1ArraySet";
@@ -1601,6 +1617,13 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 
 	std::string callname;
 	std::string handle;
+
+	if (parent.get() && parent->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash)
+	{
+		branch = parent->getBranchNode();
+		parent = branch->getParentNode();
+	}
+
 	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
 	{
 		callname = "YDLocal1ArrayGet";
