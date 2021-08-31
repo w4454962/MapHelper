@@ -273,8 +273,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "YDWETimerStartMultiple"s_hash:
 	{
 
-		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		node->setFunctionNamePtr(func_name);
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
 
 
@@ -299,8 +300,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 
 	case "YDWERegisterTriggerMultiple"s_hash:
 	{
-		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		node->setFunctionNamePtr(func_name);
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
 	
 		onActionsToFuncBegin(pre_actions, node);
@@ -489,8 +491,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "DzTriggerRegisterKeyEventMultiple"s_hash:
 	{
 		std::string action_name = node->getName();
-		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		node->setFunctionNamePtr(func_name);
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		action_name = action_name.replace(action_name.find("Multiple"),-1,"ByCode");
 
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
@@ -517,8 +520,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
 	{
 		std::string action_name = node->getName();
-		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		node->setFunctionNamePtr(func_name);
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		action_name = action_name.replace(action_name.find("Multiple"), -1, "ByCode");
 
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
@@ -542,8 +546,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "DzFrameSetUpdateCallbackMultiple"s_hash:
 	{
 		std::string action_name = node->getName();
-		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		node->setFunctionNamePtr(func_name);
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		action_name = action_name.replace(action_name.find("Multiple"), -1, "ByCode");
 
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
@@ -567,8 +572,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "DzFrameSetScriptMultiple"s_hash:
 	{
 		std::string action_name = node->getName();
-		std::string action_text = localVarTransfer(output, node, pre_actions);
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
+		node->setFunctionNamePtr(func_name);
+		std::string action_text = localVarTransfer(output, node, pre_actions);
 		action_name = action_name.replace(action_name.find("Multiple"), -1, "ByCode");
 
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
@@ -1297,7 +1303,7 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 		case "DzFrameSetScriptMultiple"s_hash:
 		{
 			callname = "YDLocal6Set";
-			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			handle = "\"" + *parent->getFunctionNamePtr() + "\"";
 			break;
 		}
 		//否则 在其他未定义的动作组中
@@ -1423,7 +1429,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 				return getLocal(parent, name, type);
 			}
 			callname = "YDLocal6Get";
-			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			handle = "\"" + *parent->getFunctionNamePtr() + "\"";
 			break;
 		}
 		//否则 在其他未定义的动作组中
@@ -1544,7 +1550,7 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 		case "DzFrameSetScriptMultiple"s_hash:
 		{
 			callname = "YDLocal6ArraySet";
-			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			handle = "\"" + *parent->getFunctionNamePtr() + "\"";
 			break;
 		}
 		//否则 在其他未定义的动作组中
@@ -1651,7 +1657,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 				return getLocalArray(parent, name, type, index);
 			}
 			callname = "YDLocal6ArrayGet";
-			handle = "\""+*node->getTriggerNamePtr()+"\"";
+			handle = "\"" + *parent->getFunctionNamePtr() + "\"";
 			break;
 		}
 		//否则 在其他未定义的动作组中

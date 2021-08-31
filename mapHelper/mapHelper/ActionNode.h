@@ -38,6 +38,9 @@ public:
 
 	std::shared_ptr<std::string> getTriggerNamePtr();
 
+	void setFunctionNamePtr(std::string func_name);
+	std::shared_ptr<std::string> getFunctionNamePtr();
+
 	//获取动作名
 	std::string getName() const;
 
@@ -106,6 +109,8 @@ protected:
 	Trigger* m_trigger;//所属触发器
 
 	std::shared_ptr<std::string> m_trigger_name;
+
+	std::shared_ptr<std::string> m_function_name;
 
 	Type m_type;
 

@@ -63,6 +63,18 @@ std::shared_ptr<std::string> ActionNode::getTriggerNamePtr()
 	return m_trigger_name;
 }
 
+void ActionNode::setFunctionNamePtr(std::string func_name)
+{
+	m_function_name = std::make_shared<std::string>(func_name);
+}
+
+std::shared_ptr<std::string> ActionNode::getFunctionNamePtr()
+{
+	if (!m_function_name)
+		m_function_name = std::make_shared<std::string>("\"MapHelperError:Function Name Missed");
+	return m_function_name;
+}
+
 std::string ActionNode::getName() const
 {
 	if (m_type == Type::trigger && m_trigger)
