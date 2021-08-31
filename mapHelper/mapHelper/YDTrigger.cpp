@@ -1418,7 +1418,7 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 		case "DzFrameSetUpdateCallbackMultiple"s_hash:
 		case "DzFrameSetScriptMultiple"s_hash:
 		{
-			if (branch->getActionId() == 0) //在参数区内获取上个区域的逆天变量
+			if (branch->getActionId() != 1) //只要不是动作区域就获取父级的局部变量
 			{
 				return getLocal(parent, name, type);
 			}
@@ -1646,7 +1646,7 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 		case "DzFrameSetUpdateCallbackMultiple"s_hash:
 		case "DzFrameSetScriptMultiple"s_hash:
 		{
-			if (branch->getActionId() == 0) //0是参数区
+			if (branch->getActionId() != 1) //只要不是动作区域就获取父级的局部变量
 			{
 				return getLocalArray(parent, name, type, index);
 			}
