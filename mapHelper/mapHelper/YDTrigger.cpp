@@ -3,6 +3,7 @@
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
 #include "SaveLoadCheck.h"
+#include <regex>
 
 YDTrigger::YDTrigger()
 	:m_bEnable(true),
@@ -459,7 +460,11 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "CustomScriptCode"s_hash:
 	case "YDWECustomScriptCode"s_hash:
 	{
-		output += parameters[0]->value;
+		std::regex reg("^\\s*local\\s+\\w+\\s+(\\w+)\\s*=");
+		std::string script = regex_replace(parameters[0]->value, reg, "set $1 =");
+		reg = std::regex("^\\s*local\\s+\\w+\\s+\\w+\\s*");
+		script = regex_replace(script, reg, "");
+		output += script;
 		return true;
 	}
 	case "YDWEActivateTrigger"s_hash:
@@ -1010,6 +1015,16 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			{
 				isInMainProc = true;
 				break;
+			}
+			case "CustomScriptCode"s_hash:
+			{
+				std::regex reg("^\\s*local\\s+(\\w+)\\s+(\\w+)");
+				std::string script = action->parameters[0]->value;
+				auto it_end = std::sregex_iterator();
+				auto it = std::sregex_iterator(script.begin(), script.end(), reg);
+				for (; it != it_end; ++it) {
+					addLocalVar(it->str(2), it->str(1));
+				}
 			}
 
 			default:
