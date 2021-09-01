@@ -550,6 +550,7 @@ void TriggerEditor::saveSctipt(const char* path)
 		}
 		else
 		{
+			auto& world = get_world_editor();
 			std::string value = var->value;
 			if (value.length() == 0)
 			{
@@ -563,7 +564,10 @@ void TriggerEditor::saveSctipt(const char* path)
 				else
 					writer.write_string("\tset udg_" + name + " = \"" + value + "\"\n");
 			else if (!value.empty())
-				writer.write_string("\tset udg_" + name + " = " + value + "\n");
+				if (world.getConfigData("TriggerParams", value, 1).empty())
+					writer.write_string("\tset udg_" + name + " = " + value + "\n");
+				else
+					writer.write_string("\tset udg_" + name + " = " + world.getConfigData("TriggerParams", value, 2) + "\n");
 		}
 	}
 	writer.write_string("endfunction\n\n");
