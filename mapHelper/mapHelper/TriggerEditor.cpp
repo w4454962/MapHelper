@@ -502,6 +502,8 @@ void TriggerEditor::saveSctipt(const char* path)
 		std::string name = var->name;
 		std::string type = var->type;
 		std::string base = getBaseType(type);
+		if (type == "musicfile")
+			continue;
 		if (var->is_array )
 		{
 			//获取默认值
