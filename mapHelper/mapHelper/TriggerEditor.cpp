@@ -459,38 +459,14 @@ void TriggerEditor::saveSctipt(const char* path)
 			if (strncmp(var->name, "gg_", 3))
 				name = "udg_" + name;
 			std::string value = var->value;
-			if (value.length() == 0)
-			{
-				auto it = m_typesTable.find(type);
-				if (it != m_typesTable.end())
-					value = it->second->value;
-				if (value.length() == 0)
-				{
-					if (base == "integer" || base == "real")
-					{
-						value = "0";
-					}
-					else
-					{
-						value = "null";
-					}
-				}
-			}
+			if (base == "integer" || base == "real")
+				value = "0";
 			else
-			{
-				if (base == "string")
-				{
-					value.clear();
-				}
-			}
-			if (value.empty())
-			{
+				value = "null";
+			if (base == "string")
 				writer.write_string("\t" + base + " " + name + "\n");
-			}
 			else
-			{
 				writer.write_string("\t" + base + " " + name + " = " + value + "\n");
-			}
 		}
 	}
 
@@ -570,24 +546,22 @@ void TriggerEditor::saveSctipt(const char* path)
 			writer.write_string("\t\tset i = i + 1\n");
 			writer.write_string("\tendloop\n");
 		}
-		else if (var->is_init) 
+		else
 		{
 			std::string value = var->value;
+			if (value.length() == 0)
+			{
+				auto it = m_typesTable.find(type);
+				if (it != m_typesTable.end())
+					value = it->second->value;
+			}
 			if (base == "string")
-			{
 				if (value.empty())
-				{
 					writer.write_string("\tset udg_" + name + " = \"\"\n");
-				}
 				else
-				{
 					writer.write_string("\tset udg_" + name + " = \"" + value + "\"\n");
-				}
-			}
-			else
-			{
+			else if (!value.empty())
 				writer.write_string("\tset udg_" + name + " = " + value + "\n");
-			}
 		}
 	}
 	writer.write_string("endfunction\n\n");
