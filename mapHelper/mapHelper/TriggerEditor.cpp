@@ -458,9 +458,11 @@ void TriggerEditor::saveSctipt(const char* path)
 			//非gg_开头的自定义变量
 			if (strncmp(var->name, "gg_", 3))
 				name = "udg_" + name;
-			std::string value = var->value;
+			std::string value;
 			if (base == "integer" || base == "real")
 				value = "0";
+			else if (base == "boolean")
+				value = "false";
 			else
 				value = "null";
 			if (base == "string")
