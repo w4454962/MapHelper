@@ -1288,6 +1288,11 @@ std::string YDTrigger::setLocal(ActionNodePtr node, const std::string& name, con
 			callname = "YDLocalSet";
 			break;
 		}
+		//如果是在逆天选取单位里
+		case "YDWEEnumUnitsInRangeMultiple"s_hash:
+		{
+			return setLocal(parent, name, type, value, add);
+		}
 		//如果是在 逆天运行动作传参里
 		case "YDWEExecuteTriggerMultiple"s_hash:
 		{
@@ -1416,6 +1421,11 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 			callname = "YDLocalGet";
 			break;
 		}
+		//如果是在逆天选取单位里
+		case "YDWEEnumUnitsInRangeMultiple"s_hash:
+		{
+			return getLocal(parent, name, type);
+		}
 		case "DzTriggerRegisterMouseEventMultiple"s_hash:
 		case "DzTriggerRegisterKeyEventMultiple"s_hash:
 		case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
@@ -1535,6 +1545,11 @@ std::string YDTrigger::setLocalArray(ActionNodePtr node, const  std::string& nam
 			callname = "YDLocalArraySet";
 			break;
 		}
+		//如果是在逆天选取单位里
+		case "YDWEEnumUnitsInRangeMultiple"s_hash:
+		{
+			return setLocalArray(parent, name, type, index, value);
+		}
 		//如果是在 逆天运行动作传参里
 		case "YDWEExecuteTriggerMultiple"s_hash:
 		{
@@ -1643,6 +1658,11 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 			}
 			callname = "YDLocalArrayGet";
 			break;
+		}
+		//如果是在逆天选取单位里
+		case "YDWEEnumUnitsInRangeMultiple"s_hash:
+		{
+			return getLocalArray(parent, name, type, index);
 		}
 		case "DzTriggerRegisterMouseEventMultiple"s_hash:
 		case "DzTriggerRegisterKeyEventMultiple"s_hash:
