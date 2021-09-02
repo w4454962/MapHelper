@@ -1413,7 +1413,8 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 
 	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
 	{
-		if (node->getActionType() == Action::Type::condition) {
+		if (node->getActionType() == Action::Type::condition\
+			&& node->getActionId() == -1) {
 			printf("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
 			callname = "YDLocal2Get";
 		}
