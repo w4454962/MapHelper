@@ -460,8 +460,10 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "CustomScriptCode"s_hash:
 	case "YDWECustomScriptCode"s_hash:
 	{
-		std::regex reg("^\\s*local\\s+\\w+\\s+(\\w+)\\s*=");
-		std::string script = regex_replace(parameters[0]->value, reg, "set $1 =");
+		std::regex reg("^\\s*local\\s+\\w+\\s+array\\s+\\w+\\s*"); 
+		std::string script = regex_replace(parameters[0]->value, reg, "");
+		reg = std::regex("^\\s*local\\s+\\w+\\s+(\\w+)\\s*="); 
+		script = regex_replace(script, reg, "set $1 =");
 		reg = std::regex("^\\s*local\\s+\\w+\\s+\\w+\\s*");
 		script = regex_replace(script, reg, "");
 		output += script;
@@ -1018,12 +1020,21 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			}
 			case "CustomScriptCode"s_hash:
 			{
-				std::regex reg("^\\s*local\\s+(\\w+)\\s+(\\w+)");
+				//匹配局部变量数组
+				std::regex reg("^\\s*local\\s+(\\w+)\\s+array\\s+(\\w+)");
 				std::string script = action->parameters[0]->value;
 				auto it_end = std::sregex_iterator();
 				auto it = std::sregex_iterator(script.begin(), script.end(), reg);
 				for (; it != it_end; ++it) {
-					addLocalVar(it->str(2), it->str(1));
+					addLocalVar(it->str(2), it->str(1) + " array");
+				}
+				//匹配局部变量
+				reg = std::regex("^\\s*local\\s+(\\w+)\\s+(\\w+)");
+				it = std::sregex_iterator(script.begin(), script.end(), reg);
+				for (; it != it_end; ++it) {
+					if (it->str(2) != "array"){
+						addLocalVar(it->str(2), it->str(1));
+					}
 				}
 			}
 
