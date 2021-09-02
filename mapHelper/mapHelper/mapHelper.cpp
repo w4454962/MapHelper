@@ -658,6 +658,12 @@ void Helper::enableConsole()
 	v_hwnd_console = ::GetConsoleWindow();
 	if (v_hwnd_console)
 	{
+		DWORD mode;
+		GetConsoleMode(v_hwnd_console, &mode);
+		mode &= ~ENABLE_QUICK_EDIT_MODE;  //移除快速编辑模式
+		mode &= ~ENABLE_INSERT_MODE;      //移除插入模式
+		mode &= ~ENABLE_MOUSE_INPUT;
+		SetConsoleMode(v_hwnd_console, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
 		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0D");
