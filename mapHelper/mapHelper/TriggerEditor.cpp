@@ -1642,6 +1642,8 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	std::vector<ActionNodePtr> list;
 	root->getChildNodeList(list);
 
+	bool firstBoolexper = true;
+
 	// 逐条解析动作
 	for (auto& node : list)
 	{
@@ -1683,9 +1685,16 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 
 			break;
 		case Action::Type::condition:
-			conditions += "\tif (not (" + convertAction(node, pre_actions, true) + ")) then\n";
-			conditions += "\treturn false\n";
-			conditions += "\tendif\n";
+			//conditions += "\tif (not (" + convertAction(node, pre_actions, true) + ")) then\n";
+			//conditions += "\treturn false\n";
+			//conditions += "\tendif\n";
+			if (firstBoolexper) {
+				firstBoolexper = false;
+				conditions += "\treturn ";
+			}
+			else
+				conditions += " and ";
+			conditions += "(" + convertAction(node, pre_actions, true) + ")";
 			break;
 		case Action::Type::action:
 			space_stack = 1;
@@ -1712,8 +1721,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	actions += "endfunction\n\n";
 
 	if (!conditions.empty()) {
-		conditions = "function Trig_" + trigger_name + "_Conditions takes nothing returns boolean\n" + conditions;
-		conditions += "\treturn true\n";
+		conditions = "function Trig_" + trigger_name + "_Conditions takes nothing returns boolean\n" + conditions + "\n";
 		conditions += "endfunction\n\n";
 
 		events += "\tcall TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
