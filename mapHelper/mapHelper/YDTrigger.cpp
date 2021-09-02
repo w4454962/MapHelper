@@ -932,6 +932,11 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 			if (!isSeachChild && action->group_id != -1 )
 				continue;
 			
+			//如果动作被禁用则跳过
+			if (action->enable != 1){
+				continue;
+			}
+
 			uint32_t hash = hash_(action->name);
 			if (isSeachHashLocal)
 			{
