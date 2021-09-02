@@ -667,20 +667,20 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0F");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0G");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
 			<< "感谢7佬的最初版本\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 技术交流群 -> 692125060。\n"
-			<< "						----2021/09/02\n"
+			<< "						----2021/09/03\n"
 			<< "\n"
-			<< "version 1.0F update:\n"
-			<< "[fix]兼容自定义代码声明局部变量数组\n"
-			<< "[fix]修复在触发器条件中使用逆天局部变量会保存失败的bug\n"
-			<< "[fix]修复修复逆天运行触发传参错误的bug\n"
+			<< "version 1.0G update:\n"
+			<< "[fix]修复逆天局部变量在动作中的条件获取时获取错误的bug\n"
+			<< "[fix]修复部分全局变量初始化报错的bug\n"
 			<< "[fix]修复cmd窗口快速编辑模式会阻塞程序运行的bug\n"
+			<< "[chg]优化触发器Condition条件生成的代码\n"
 			<< "\n"
 			<< "因为不确定bug修没修完，保存请另存为改名字。或先备份一份地图\n"
 			<< "如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1\n"
