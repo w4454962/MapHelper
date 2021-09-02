@@ -502,74 +502,59 @@ void TriggerEditor::saveSctipt(const char* path)
 		std::string name = var->name;
 		std::string type = var->type;
 		std::string base = getBaseType(type);
-		if (type == "musicfile")
+		std::string value = var->value;
+		auto& world = get_world_editor();
+		//获取默认值
+		std::string defaultValue;
+		auto it = m_typesTable.find(type);
+		if (it != m_typesTable.end())
+			defaultValue = it->second->value;
+		//跳过默认初始值为空的变量
+		if (!var->is_init && base != "string" && defaultValue.empty())
 			continue;
+		//跳过gg_开头的变量，会在其他地方初始化
+		if (strncmp(name.c_str(), "gg_", 3) == 0)
+			continue;
+		//将变量的值转译一遍
+		if (!world.getConfigData("TriggerParams", value, 1).empty())
+			value = world.getConfigData("TriggerParams", value, 2);
 		if (var->is_array )
 		{
-			//获取默认值
-			std::string defaultValue;
-			auto it = m_typesTable.find(type);
-			if (it != m_typesTable.end())
-				defaultValue = it->second->value;
-			if (!var->is_init && base != "string" && defaultValue.empty())
-				continue;
 			writer.write_string("\tset i = 0\n");
 			writer.write_string("\tloop\n");
 			writer.write_string("\t\texitwhen(i > " + std::to_string(var->array_size) + ")\n");
 
 			if (var->is_init)
-			{
-				std::string value = var->value;
 				if (base == "string")
-				{
 					if (value.empty())
-					{
 						writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
-					}
 					else
-					{
 						writer.write_string("\t\tset udg_" + name + "[i] = \"" + value + "\"\n");
-					}
-				}
 				else 
-				{
 					writer.write_string("\t\tset udg_" + name + "[i] = " + value + "\n");
-				}
-			}
-			else 
-			{
+			else
 				if (base == "string")
-				{
 					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
-				}
 				else 
-				{
 					writer.write_string("\t\tset udg_" + name + "[i] = " + defaultValue + "\n");
-				}
-			}
 			writer.write_string("\t\tset i = i + 1\n");
 			writer.write_string("\tendloop\n");
 		}
 		else
 		{
-			auto& world = get_world_editor();
-			std::string value = var->value;
-			if (value.length() == 0)
-			{
-				auto it = m_typesTable.find(type);
-				if (it != m_typesTable.end())
-					value = it->second->value;
-			}
-			if (base == "string")
-				if (value.empty())
+			if (var->is_init)
+				if (base == "string")
+					if (value.empty())
+						writer.write_string("\tset udg_" + name + " = \"\"\n");
+					else
+						writer.write_string("\tset udg_" + name + " = \"" + value + "\"\n");
+				else
+					writer.write_string("\tset udg_" + name + " = " + value + "\n");
+			else
+				if (base == "string")
 					writer.write_string("\tset udg_" + name + " = \"\"\n");
 				else
-					writer.write_string("\tset udg_" + name + " = \"" + value + "\"\n");
-			else if (!value.empty())
-				if (world.getConfigData("TriggerParams", value, 1).empty())
-					writer.write_string("\tset udg_" + name + " = " + value + "\n");
-				else
-					writer.write_string("\tset udg_" + name + " = " + world.getConfigData("TriggerParams", value, 2) + "\n");
+					writer.write_string("\tset udg_" + name + " = " + defaultValue + "\n");
 		}
 	}
 	writer.write_string("endfunction\n\n");
