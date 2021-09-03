@@ -509,6 +509,7 @@ void TriggerEditor::saveSctipt(const char* path)
 		auto it = m_typesTable.find(type);
 		if (it != m_typesTable.end())
 			defaultValue = it->second->value;
+		//printf("name:%s type:%s base:%s value:%s default:%s\n", name.c_str(), type.c_str(), base.c_str(), value.c_str(), defaultValue.c_str());
 		//跳过默认初始值为空的变量
 		if (!var->is_init && base != "string" && defaultValue.empty())
 			continue;
@@ -518,6 +519,8 @@ void TriggerEditor::saveSctipt(const char* path)
 		//将变量的值转译一遍
 		if (!world.getConfigData("TriggerParams", value, 1).empty())
 			value = world.getConfigData("TriggerParams", value, 2);
+		if (base == "integer" && !value.empty() && std::regex_match(type, std::regex("^\\w+code$")))
+			value = "'" + value + "'";
 		if (var->is_array )
 		{
 			writer.write_string("\tset i = 0\n");
