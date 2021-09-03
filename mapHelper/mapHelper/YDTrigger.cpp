@@ -462,7 +462,6 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	{
 		std::regex reg("^\\s*local\\s+\\w+\\s+array\\s+\\w+\\s*"); 
 		std::string script = editor.convertParameter(parameters[0], node, pre_actions);
-		printf("CustomScript:%s", parameters[0]->value);
 		script = regex_replace(script, reg, "");
 		reg = std::regex("^\\s*local\\s+\\w+\\s+(\\w+)\\s*="); 
 		script = regex_replace(script, reg, "set $1 =");
