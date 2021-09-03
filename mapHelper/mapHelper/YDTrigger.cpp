@@ -461,7 +461,9 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	case "YDWECustomScriptCode"s_hash:
 	{
 		std::regex reg("^\\s*local\\s+\\w+\\s+array\\s+\\w+\\s*"); 
-		std::string script = regex_replace(parameters[0]->value, reg, "");
+		std::string script = editor.convertParameter(parameters[0], node, pre_actions);
+		printf("CustomScript:%s", parameters[0]->value);
+		script = regex_replace(script, reg, "");
 		reg = std::regex("^\\s*local\\s+\\w+\\s+(\\w+)\\s*="); 
 		script = regex_replace(script, reg, "set $1 =");
 		reg = std::regex("^\\s*local\\s+\\w+\\s+\\w+\\s*");
@@ -1041,6 +1043,7 @@ void YDTrigger::onActionsToFuncBegin(std::string& funcCode, ActionNodePtr node)
 						addLocalVar(it->str(2), it->str(1));
 					}
 				}
+				break;
 			}
 
 			default:
