@@ -93,7 +93,9 @@ public:
 	bool canHasVarTable();
 
 	bool m_haveHashLocal;
-	
+
+	//该节点在触发器中的分区：事件/条件/动作
+	Action::Type rootType;
 	
 private:
 

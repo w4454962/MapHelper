@@ -1414,21 +1414,24 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 		parent = branch->getParentNode();
 	}
 
-	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
+	if (node->rootType == Action::Type::event) //事件分区
 	{
-		if (node->getActionType() == Action::Type::condition\
-			&& node->getActionId() == -1) {
-			printf("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
-			callname = "YDLocal2Get";
+		printf("YDTrigger Warning: 触发器\"%s\": 在事件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		callname = "YDLocal2Get";
+	}
+	else if (node->rootType == Action::Type::condition) //条件分区
+	{
+		printf("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		callname = "YDLocal2Get";
+	}
+	else if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
+	{
+		//如果是自动传递GetTriggerUnit() 这些函数值的话
+		if (isauto)
+		{
+			return name + "()";
 		}
-		else {
-			//如果是自动传递GetTriggerUnit() 这些函数值的话
-			if (isauto)
-			{
-				return name + "()";
-			}
-			callname = "YDLocal1Get";
-		}
+		callname = "YDLocal1Get";
 	}
 	else
 	{
@@ -1676,7 +1679,18 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 		parent = branch->getParentNode();
 	}
 
-	if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
+
+	if (node->rootType == Action::Type::event) //事件分区
+	{
+		printf("YDTrigger Warning: 触发器\"%s\": 在事件中使用了局部变量数组\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		callname = "YDLocal2ArrayGet";
+	}
+	else if (node->rootType == Action::Type::condition)//条件分区
+	{
+		printf("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量数组\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		callname = "YDLocal2ArrayGet";
+	}
+	else if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
 	{
 		callname = "YDLocal1ArrayGet";
 	}

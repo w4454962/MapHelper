@@ -39,6 +39,8 @@ ActionNode::ActionNode(Action* action, ActionNodePtr parent)
 	m_trigger_name = parent->m_trigger_name;
 
 	m_group_count = fakeGetChildCount(action);
+
+	rootType = parent->rootType;
 }
 
 ActionNode::ActionNode(Action* action, Parameter* owner, ActionNodePtr parent)
@@ -259,6 +261,7 @@ void ActionNode::getChildNodeList(std::vector<ActionNodePtr>& list)
 			ActionNodePtr node = std::make_shared<ActionNode>(action, parent);
 			if (!action->enable ||!((int)action->group_id < node->getParentGroupCount()))
 				continue;
+			node->rootType = static_cast<Action::Type>(action->table->getType(action));
 			list.push_back(node);
 		}
 	}
