@@ -667,7 +667,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.0G");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 1.1A");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
@@ -676,13 +676,15 @@ void Helper::enableConsole()
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 技术交流群 -> 692125060。\n"
 			<< "						----2021/09/03\n"
 			<< "\n"
-			<< "version 1.0G update:\n"
-			<< "[fix]修复逆天局部变量在动作中的条件获取时获取错误的bug\n"
-			<< "[fix]修复部分全局变量初始化报错的bug\n"
-			<< "[fix]修复cmd窗口快速编辑模式会阻塞程序运行的bug\n"
-			<< "[chg]优化触发器Condition条件生成的代码\n"
+			<< "version 1.1A update:\n"
+			<< "[fix]修复某些特殊动作的参数中带有动作时部分动作无法正常转译的bug\n"
+			<< "[fix]修复单位类型等全局变量初始化时初始值未添加单引号的bug\n"
+			<< "[fix]修复自定义代码中使用预设代码转译失败的bug\n"
+			<< "[fix]修复快捷键预设HotKeyNull无法正常转译的bug\n"
+			<< "[fix]重写关于触发器事件和条件中使用逆天局部变量的警告,修复误报的bug\n"
 			<< "\n"
-			<< "因为不确定bug修没修完，保存请另存为改名字。或先备份一份地图\n"
+			<< "当前插件仍在测试中，推荐自己测试时使用新的保存模式提升速度，发布正式版时使用旧的保存模式保证稳定\n"
+			<< "\n"
 			<< "如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1\n"
 			<< "EnableYDTrigger = -1 为默认开启控制台与对话框\n"
 			<< "EnableYDTrigger = 0 为使用原本的保存方式\n"
