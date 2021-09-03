@@ -2055,7 +2055,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 	if (parameter->funcParam) 
 	{
 		auto childNode{ std::make_shared<ActionNode>(parameter->funcParam, parameter, node) };
-		return convertCall(childNode,pre_actions, add_call);
+		return convertAction(childNode, pre_actions, !add_call);
 	}
 	auto value = std::string(parameter->value);
 
