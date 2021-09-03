@@ -2112,6 +2112,9 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			{
 				return value;
 			}
+			if (type == "HotKey" &&  value == "HotKeyNull") {
+				return "0";
+			}
 			if (is_import_path || getBaseType(type) == "string") {
 				value = string_replaced(value, "\\", "\\\\");
 				return "\"" + string_replaced(value, "\"", "\\\"") + "\"";
