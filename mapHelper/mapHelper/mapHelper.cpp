@@ -353,6 +353,9 @@ void Helper::attach()
 
 	auto& editor = get_world_editor();
 
+	editor.loadConfigData();
+
+
 	//------------------自定义脚本生成器的操作----------------
 
 	//当保存或测试地图时保存生成数据

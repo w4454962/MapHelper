@@ -161,9 +161,10 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	print("当前地图路径%s\n", getCurrentMapPath());
 	print("保存地图路径 %s\n", getTempSavePath());
 
+
 	auto& triggerEditor = get_trigger_editor();
 
-	loadConfigData();
+	
 
 	TriggerData* triggerData = getEditorData()->triggers;
 
