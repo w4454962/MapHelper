@@ -29,5 +29,6 @@ extern "C" {
 
 EXPORT void ConverJassScript(MakeEditorData* data, const char* ouput_path);
 
-EXPORT int GetSoundPlayTime(const char* music_path);
+EXPORT int GetSoundPlayTime(const char* path, const char* data, uint32_t size);
+
 

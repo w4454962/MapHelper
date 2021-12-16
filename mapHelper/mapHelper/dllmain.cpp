@@ -5,8 +5,11 @@
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
 #include "Export.h"
-#include <mmsystem.h>
-#pragma comment(lib, "Winmm.lib")
+
+#include <libnyquist/Decoders.h>
+
+#pragma comment(lib,"libnyquist.lib")
+#pragma comment(lib,"libwavpack.lib")
 
 Helper g_CHelper;
 WorldEditor g_world_editor;
@@ -51,6 +54,8 @@ Action::Type get_action_type(Action* action)
 
 void ConverJassScript(MakeEditorData* data, const char* ouput_path)
 {
+	//MessageBoxA(0, "A", "", MB_OK);
+
 	g_make_editor_data = data;
 
 	auto& triggerEditor = get_trigger_editor();
@@ -60,11 +65,17 @@ void ConverJassScript(MakeEditorData* data, const char* ouput_path)
 	triggerEditor.saveSctipt(ouput_path);
 }
  
-int GetSoundPlayTime(const char* music_path)
+int GetSoundPlayTime(const char* path, const char* data, uint32_t size)
 {
-	char str[0x100];
-	char timebuffer[0x400];
-	sprintf(timebuffer, "status %s position", music_path); 
-	mciSendStringA(timebuffer, str, 0x100, NULL);
-	return atoi(str);
+
+	nqr::NyquistIO loader;
+	nqr::AudioData audio_data;
+	std::vector<uint8_t> buffer(size);
+	memcpy(buffer.data(), data, size);
+
+	loader.Load(&audio_data, buffer);
+
+	int time = ceil(audio_data.lengthSeconds * 1000); //转毫秒
+
+	return time;
 }

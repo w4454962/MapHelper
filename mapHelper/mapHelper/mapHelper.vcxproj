@@ -91,7 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;MAPHELPER_EXPORTS;_WINDOWS;_USRDLL;ASMJIT_BUILD_DEBUG;ASMJIT_BUILD_X86;ASMJIT_BUILD_EMBED;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\3rd\Detours\src;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\3rd\Detours\src;..\3rd\libnyquist\include;</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -102,6 +102,7 @@
       <OutputFile>D:\war3\MapHelper.asi</OutputFile>
       <AssemblyDebug>true</AssemblyDebug>
       <ModuleDefinitionFile>Export.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>..\3rd\libnyquist\lib\Debug;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -132,9 +133,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;MAPHELPER_EXPORTS;_WINDOWS;_USRDLL;ASMJIT_BUILD_RELEASE;ASMJIT_BUILD_X86;ASMJIT_BUILD_EMBED;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>..\3rd\Detours\src;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\3rd\Detours\src;..\3rd\libnyquist\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Async</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,6 +145,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>D:\war3\MapHelper.asi</OutputFile>
       <ModuleDefinitionFile>Export.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>..\3rd\libnyquist\lib\Release;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
