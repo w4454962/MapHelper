@@ -49,19 +49,12 @@ Action::Type get_action_type(Action* action)
 
 void ConverJassScript(MakeEditorData* data, const char* ouput_path)
 {
-	//MessageBoxA(0, "Start", "", MB_OK);
 	g_make_editor_data = data;
-	
 
 	auto& triggerEditor = get_trigger_editor();
-	auto& worldEditor = get_world_editor();
 
-	worldEditor.loadConfigData();
-	
-	TriggerData* triggerData = worldEditor.getEditorData()->triggers;
-	
-	triggerEditor.loadTriggers(triggerData);
-	
+	triggerEditor.loadTriggerConfig(data->config_data);
+	triggerEditor.loadTriggers(data->editor_data->triggers);
 	triggerEditor.saveSctipt(ouput_path);
 }
  

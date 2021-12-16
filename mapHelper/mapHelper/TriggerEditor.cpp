@@ -54,7 +54,7 @@ void TriggerEditor::loadTriggers(TriggerData* data)
 
 void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 {
-	if (m_configData) return;
+	//if (m_configData) return;
 
 	m_configData = data;
 	//std::cout<<"cout读取配置文件"<<std::endl;
