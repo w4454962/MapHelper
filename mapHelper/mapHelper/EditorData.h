@@ -21,7 +21,7 @@ struct TriggerConfigData
 
 struct Parameter
 {
-	enum Type {
+	enum Type:int {
 		invalid = -1,
 		preset,
 		variable,
@@ -39,7 +39,7 @@ struct Parameter
 
 struct Action
 {
-	enum Type {
+	enum Type:int {
 		event,
 		condition,
 		action,

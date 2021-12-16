@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+char fmtbuffer[0x1000];
+
 hash_t hash_(const char* str)
 {
 	hash_t ret{ basis };
@@ -120,4 +122,5 @@ void convert_loop_var_name(std::string& name, size_t limit)
 
 	name = retval;
 }
+
 

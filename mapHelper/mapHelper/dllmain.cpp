@@ -4,10 +4,13 @@
 #include "mapHelper.h"
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
+#include "Export.h"
 
 Helper g_CHelper;
 WorldEditor g_world_editor;
 TriggerEditor g_trigger_editor;
+
+MakeEditorData* g_make_editor_data = nullptr;
 
 BOOL APIENTRY DllMain( HMODULE hModule,
 					   DWORD  ul_reason_for_call,
@@ -28,3 +31,37 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	return TRUE;
 }
 
+
+Action::Type get_action_type(Action* action)
+{
+	if (g_make_editor_data)
+	{
+		uint32_t type = (uint32_t)action->table;
+		if (type < 5)
+		{
+			return static_cast<Action::Type>(type - 1);
+		}
+		//return static_cast<Action::Type>(g_make_editor_data->get_action_type(action));
+	}
+	return static_cast<Action::Type>(action->table->getType(action));
+}
+
+
+void ConverJassScript(MakeEditorData* data, const char* ouput_path)
+{
+	//MessageBoxA(0, "Start", "", MB_OK);
+	g_make_editor_data = data;
+	
+
+	auto& triggerEditor = get_trigger_editor();
+	auto& worldEditor = get_world_editor();
+
+	worldEditor.loadConfigData();
+	
+	TriggerData* triggerData = worldEditor.getEditorData()->triggers;
+	
+	triggerEditor.loadTriggers(triggerData);
+	
+	triggerEditor.saveSctipt(ouput_path);
+}
+ 

@@ -9,6 +9,8 @@
 #include "json.hpp"
 #include <sstream>
 #include "Wc3VarType.h"
+#include "Export.h"
+extern MakeEditorData* g_make_editor_data;
 
 #pragma warning(disable:4996)
 
@@ -147,6 +149,11 @@ static void __declspec(naked) insertConvertTrigger()
 //修改特定UI的子动作数量
 int __fastcall fakeGetChildCount(Action* action)
 {
+	if (g_make_editor_data)
+	{
+		return action->child_count;
+	}
+
 	auto it = g_actionInfoTable.find(std::string(action->name));
 	if (it != g_actionInfoTable.end())
 	{
@@ -187,7 +194,7 @@ static void setParamerType(Action* action, int flag, int type_param_index, int t
 		return;
 	const char* type = param->value + 11; //typename_01_integer  + 11 = integer
 
-	//printf("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
+	//print("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
 	this_call<int>(real::SetParamType, action, target_param_index, type, flag);
 }
 
@@ -596,10 +603,10 @@ int Helper::onSelectConvartMode()
 
 		if (ret == 6)
 		{
-			printf("自定义保存模式\n");
+			print("自定义保存模式\n");
 			return 0;
 		}
-		printf("原始保存模式\n");
+		print("原始保存模式\n");
 		return 1;
 	}
 	else
@@ -673,7 +680,7 @@ void Helper::enableConsole()
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
 			<< "感谢7佬的最初版本\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
-			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 技术交流群 -> 692125060。\n"
+			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 技术交流群 -> 1019770872。\n"
 			<< "						----2021/09/03\n"
 			<< "\n"
 			<< "version 1.1A update:\n"

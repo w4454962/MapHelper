@@ -90,6 +90,9 @@
     <ClInclude Include="detail\dynarray.h">
       <Filter>源文件\utils\detail</Filter>
     </ClInclude>
+    <ClInclude Include="Export.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -168,6 +171,9 @@
     </None>
     <None Include="detail\utf8_codecvt.inl">
       <Filter>源文件\utils\detail</Filter>
+    </None>
+    <None Include="Export.def">
+      <Filter>源文件</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -23,6 +23,7 @@ std::string randomItemTypes[] = {
 
 TriggerEditor::TriggerEditor()
 	:m_editorData(nullptr),
+	m_configData(nullptr),
 	m_version(7)
 { 
 	space_stack = 0;
@@ -53,8 +54,10 @@ void TriggerEditor::loadTriggers(TriggerData* data)
 
 void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 {
+	if (m_configData) return;
+
 	m_configData = data;
-	std::cout<<"cout读取配置文件"<<std::endl;
+	//std::cout<<"cout读取配置文件"<<std::endl;
 	for (size_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
@@ -94,7 +97,7 @@ void TriggerEditor::saveTriggers(const char* path)
 	writer.finish(out);
 	out.close();
 
-	printf("wtg 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("wtg 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 void TriggerEditor::writeCategoriy(BinaryWriter& writer)
@@ -217,7 +220,7 @@ void TriggerEditor::writeTrigger(BinaryWriter& writer, Trigger* trigger)
 	{
 		auto action = trigger->actions[i];
 
-		auto actionType = action->table->getType(action);
+		auto actionType = get_action_type(action);
 
 		writer.write(actionType);
 
@@ -248,7 +251,7 @@ void TriggerEditor::writeAction(BinaryWriter& writer, Action* action)
 	{
 		const auto child = action->child_actions[i];
 
-		const auto child_type = child->table->getType(child);
+		const auto child_type = get_action_type(child);
 
 		writer.write(child_type);
 
@@ -274,7 +277,7 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 	{
 		Action* action = param->funcParam;
 
-		const uint32_t actionType = action->table->getType(action);
+		const uint32_t actionType = get_action_type(action);
 
 		writer.write(actionType);
 
@@ -302,7 +305,7 @@ TriggerEditor& get_trigger_editor()
 
 void TriggerEditor::saveScriptTriggers(const char* path)
 {
-	printf("自定义保存wct文件\n");
+	print("自定义保存wct文件\n");
 
 	const auto start = clock();
 
@@ -346,7 +349,7 @@ void TriggerEditor::saveScriptTriggers(const char* path)
 	writer.finish(out);
 	out.close();
 
-	printf("wct 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("wct 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 /*
@@ -411,12 +414,12 @@ std::string TriggerEditor::WriteRandomDisItem(const char *id) {
 void TriggerEditor::saveSctipt(const char* path)
 {
 
-	printf("自定义保存jass文件\n");
+	print("自定义保存jass文件\n");
+
 	SaveLoadInitLog();
 	auto start = clock();
 
 	auto data = m_editorData;
-
 
 
 	BinaryWriter writer,writer2;
@@ -433,6 +436,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	writer.write_string("//*\n");
 	writer.write_string(seperator);
 
+	
 	if (m_ydweTrigger->isEnable())
 	{
 		m_ydweTrigger->onGlobals(writer);
@@ -509,7 +513,15 @@ void TriggerEditor::saveSctipt(const char* path)
 		auto it = m_typesTable.find(type);
 		if (it != m_typesTable.end())
 			defaultValue = it->second->value;
-		//printf("name:%s type:%s base:%s value:%s default:%s\n", name.c_str(), type.c_str(), base.c_str(), value.c_str(), defaultValue.c_str());
+
+		char testff[0x400];
+		sprintf(testff, "name:%s type:%s base:%s value:%s default:%s\n", name.c_str(), type.c_str(), base.c_str(), value.c_str(), defaultValue.c_str());
+
+		std::ofstream  ff("testaa.txt", std::ios::app);
+		ff << testff;
+		ff.close();
+
+
 		//跳过默认初始值为空的变量
 		if (!var->is_init && base != "string" && defaultValue.empty())
 			continue;
@@ -526,7 +538,7 @@ void TriggerEditor::saveSctipt(const char* path)
 			writer.write_string("\tset i = 0\n");
 			writer.write_string("\tloop\n");
 			writer.write_string("\t\texitwhen(i > " + std::to_string(var->array_size) + ")\n");
-
+			
 			if (var->is_init)
 				if (base == "string")
 					if (value.empty())
@@ -1340,9 +1352,12 @@ endfunction
 
 	std::vector<uint32_t> player_to_startloc(16,16);
 
+
 	for (size_t i = 0; i < worldData->player_count; i++)
 	{
+		
 		PlayerData* player_data = &worldData->players[i];
+
 		std::string id = std::to_string(player_data->id);
 		std::string player = "Player(" + id + "), ";
 		writer.write_string("\tcall SetPlayerStartLocation(" + player + std::to_string(i) + ")\n");
@@ -1588,12 +1603,18 @@ endfunction
 
 	//std::cout << std::string_view((const char*)&writer.buffer[0],writer.buffer.size());
 
-	std::ofstream out(std::string(path) + ".j", std::ios::binary);
+	std::string outpath = std::string(path);
+	
+	if (fs::path(outpath).extension().string() != ".j")
+	{
+		outpath = outpath + ".j";
+	}
+	std::ofstream out (outpath, std::ios::binary);
 	writer.finish(out);
 	out.close();
 
 
-	printf("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	SaveLoadCloseLog();
 
@@ -1733,12 +1754,13 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 
-	std::string logo = u8"//自定义jass生成器 作者： 阿七  \n//有bug到魔兽地图编辑器吧 @w4454962 \n//技术交流群：692125060\n";
+	std::string logo = u8"//自定义jass生成器 作者： 阿七  \n//有bug到魔兽地图编辑器吧 @w4454962 \n//技术交流群：1019770872\n";
 
 
 	return seperator + "// Trigger: " + root->getName() + "\n" + logo + seperator + pre_actions + conditions + actions + seperator + events;
 }
 
+uint32_t aaanum = 0;
 
 std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_actions, bool nested)
 {
@@ -1900,7 +1922,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 	case "EnumItemsInRectBJMultiple"s_hash:
 	{
 		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
-
+		node->setFunctionNamePtr(function_name);
 		auto name = std::string(node->getName());
 
 		// Remove multiple
@@ -2286,7 +2308,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 
 		if (child_type == "boolexpr") {
 			const auto function_name = generate_function_name(node->getTriggerNamePtr());
-
+			node->setFunctionNamePtr(function_name);
 			auto tttt = convertParameter(param, node, pre_actions);
 
 			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
@@ -2298,7 +2320,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		else if (child_type == "code")
 		{
 			const auto function_name = generate_function_name(node->getTriggerNamePtr());
-
+			node->setFunctionNamePtr(function_name);
 			auto childNode{ std::make_shared<ActionNode>(param->funcParam, param, node) };
 
 			auto tttt = convertAction(childNode, pre_actions, false);

@@ -33,6 +33,7 @@ namespace fs = std::experimental::filesystem;
 
 #include "fp_call.h"
 #include "BinaryWriter.h"
+#include "Export.h"
 
 
 #pragma  warning( disable: 4307 4455 )
@@ -62,5 +63,19 @@ constexpr unsigned int operator "" s_hash(char const* p, size_t)
 //globals
 
 
+extern MakeEditorData* g_make_editor_data;
+extern char fmtbuffer[0x1000];
+template <typename ... Args>
+void print(const char* fmt, Args ... args)
+{
+	if (g_make_editor_data)
+	{
+		snprintf(fmtbuffer, sizeof(fmtbuffer), fmt, args...);
 
-
+		g_make_editor_data->out_print(fmtbuffer);
+	}
+	else
+	{
+		printf(fmt, args...);
+	}
+}

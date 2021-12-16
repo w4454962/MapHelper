@@ -113,7 +113,7 @@ Action::Type ActionNode::getActionType()
 {
 	if (m_action)
 	{
-		return static_cast<Action::Type>(m_action->table->getType(m_action));
+		return get_action_type(m_action);
 	}
 	return Action::Type::none;
 }
@@ -261,7 +261,7 @@ void ActionNode::getChildNodeList(std::vector<ActionNodePtr>& list)
 			ActionNodePtr node = std::make_shared<ActionNode>(action, parent);
 			if (!action->enable ||!((int)action->group_id < node->getParentGroupCount()))
 				continue;
-			node->rootType = static_cast<Action::Type>(action->table->getType(action));
+			node->rootType = get_action_type( action);
 			list.push_back(node);
 		}
 	}
@@ -362,3 +362,4 @@ int ActionNode::getParentGroupCount()
 	}
 	return 0;
 }
+

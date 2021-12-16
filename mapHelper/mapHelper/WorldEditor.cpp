@@ -3,17 +3,15 @@
 #include "TriggerEditor.h"
 #include "singleton.h"
 #include "mapHelper.h"
+#include "Export.h"
+
+extern MakeEditorData* g_make_editor_data;
+
+std::map<std::string, std::string> g_config_map;
 
 WorldEditor::WorldEditor()
 {
 	m_tempPath = nullptr;
-
-	auto& triggerEditor = get_trigger_editor();
-
-	const auto configData = std_call<TriggerConfigData*>(getAddress(0x004D4DA0));
-	triggerEditor.loadTriggerConfig(configData);
-
-
 }
 
 WorldEditor::~WorldEditor()
@@ -33,8 +31,31 @@ uintptr_t WorldEditor::getAddress(uintptr_t addr)
 }
 
 
+void WorldEditor::loadConfigData()
+{
+	auto& triggerEditor = get_trigger_editor();
+
+	TriggerConfigData* configData = nullptr;
+
+	if (g_make_editor_data)
+	{
+		configData = g_make_editor_data->config_data;
+	}
+	else
+	{
+		configData = std_call<TriggerConfigData*>(getAddress(0x004D4DA0));
+	}
+
+	triggerEditor.loadTriggerConfig(configData);
+}
+
 EditorData* WorldEditor::getEditorData()
 {
+	if (g_make_editor_data)
+	{
+		return g_make_editor_data->editor_data;
+	}
+
 	uintptr_t addr = *(uintptr_t*)getAddress(0x803cb0);
 	uintptr_t count = 0;
 	if(!Helper::IsEixt())
@@ -60,9 +81,6 @@ void WorldEditor::saveMap(const char* outPath)
 
 
 
-
-
-
 const char* WorldEditor::getCurrentMapPath()
 {
 	uintptr_t addr = *(uintptr_t*)getAddress(0x803cb0);
@@ -71,7 +89,7 @@ const char* WorldEditor::getCurrentMapPath()
 
 	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + count * 4);
 
-	printf("当前地图路径%X\n", object);
+	print("当前地图路径%X\n", object);
 	return (const char*)object;
 }
 
@@ -82,6 +100,10 @@ const char* WorldEditor::getTempSavePath()
 
 int WorldEditor::getSoundDuration(const char* path)
 {
+	if (g_make_editor_data)
+	{
+		return g_make_editor_data->get_sound_duration(path);
+	}
 	uint32_t param[10];
 	ZeroMemory(&param, sizeof param);
 	auto& v_we = get_world_editor();
@@ -89,8 +111,22 @@ int WorldEditor::getSoundDuration(const char* path)
 	return param[1];
 }
 
+
 std::string WorldEditor::getConfigData(const std::string& parentKey, const std::string& childKey, int index)
 {
+	if (g_make_editor_data)
+	{
+		std::string key = parentKey + childKey + std::to_string(index);
+		auto it = g_config_map.find(key);
+		if (it == g_config_map.end())
+		{
+			std::string ret = g_make_editor_data->get_config_data(parentKey.c_str(), childKey.c_str(), index);
+
+			g_config_map[key] = ret;
+			return ret;
+		}
+		return it->second;
+	}
 	char buffer[0x100];
 	bool result = fast_call<uint32_t>(getAddress(0x004D1EC0), parentKey.c_str(), childKey.c_str(),buffer, 0x100, index);
 	if (result)
@@ -103,6 +139,11 @@ std::string WorldEditor::getConfigData(const std::string& parentKey, const std::
 
 bool WorldEditor::getSkillObjectData(uint32_t id,uint32_t level,std::string text, std::string& value)
 {
+	if (g_make_editor_data)
+	{
+		value = g_make_editor_data->get_skill_data(id, level, text.c_str());
+		return true;
+	}
 	uint32_t data = std_call<uint32_t>(getAddress(0x004D4EE0));
 	char buffer[0x400];
 	bool ret = this_call<bool>(getAddress(0x0050B7B0), data, id, text.c_str(), buffer, 0x400, level, 1);
@@ -114,13 +155,15 @@ void WorldEditor::onSaveMap(const char* tempPath)
 {
 	//m_tmp_path = fs::path(tempPath);
 	m_tempPath = tempPath;
-	//printf("m_tmp_path%s\n", m_tmp_path.string().c_str());
+	//print("m_tmp_path%s\n", m_tmp_path.string().c_str());
 	//memcpy(&m_tempPath, m_tmp_path.string().c_str(), m_tmp_path.string().size());
 
-	printf("当前地图路径%s\n", getCurrentMapPath());
-	printf("保存地图路径 %s\n", getTempSavePath());
+	print("当前地图路径%s\n", getCurrentMapPath());
+	print("保存地图路径 %s\n", getTempSavePath());
 
 	auto& triggerEditor = get_trigger_editor();
+
+	loadConfigData();
 
 	TriggerData* triggerData = getEditorData()->triggers;
 
@@ -139,9 +182,9 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
 
 		if (ret == 6)
-			printf("自定义保存模式\n");
+			print("自定义保存模式\n");
 		else
-			printf("原始保存模式\n");
+			print("原始保存模式\n");
 	}
 	else if (result == 1)
 	{
@@ -209,7 +252,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	saveArchive();
 
 		
-	printf("地图所有数据保存完成 总耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("地图所有数据保存完成 总耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	m_tempPath = NULL;
 }
@@ -217,32 +260,32 @@ void WorldEditor::onSaveMap(const char* tempPath)
 int WorldEditor::saveWts()
 {
 
-	printf("保存wts文本数据\n");
+	print("保存wts文本数据\n");
 
 	clock_t start = clock() ;
 
 	int ret = this_call<int>(getAddress(0x0055DAF0), getEditorData(), getTempSavePath());
 
-	printf("wts保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("wts保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 
 int WorldEditor::saveW3i()
 {
-	printf("保存w3i地图信息数据\n");
+	print("保存w3i地图信息数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x0055D280), getEditorData(), getTempSavePath(), 1);
 
-	printf("w3i保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("w3i保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 int WorldEditor::saveImp()
 {
-	printf("保存imp文件列表数据\n");
+	print("保存imp文件列表数据\n");
 
 	clock_t start = clock();
 
@@ -250,20 +293,20 @@ int WorldEditor::saveImp()
 	this_call<int>(getAddress(0x0051CEB0), object, getTempSavePath());
 	int ret = this_call<int>(getAddress(0x0055DFD0), getEditorData(), getTempSavePath());
 
-	printf("imp 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("imp 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 
 int WorldEditor::saveW3e()
 {
-	printf("保存w3e地形纹理数据\n");
+	print("保存w3e地形纹理数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x005B0C50), getEditorData()->terrain, getTempSavePath());
 
-	printf("w3e 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("w3e 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 
@@ -271,13 +314,13 @@ int WorldEditor::saveW3e()
 
 int WorldEditor::saveShd()
 {
-	printf("保存shd地形阴影数据\n");
+	print("保存shd地形阴影数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x0055d1f0), getEditorData(), getTempSavePath());
 
-	printf("shd 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("shd 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
@@ -285,7 +328,7 @@ int WorldEditor::saveShd()
 
 int WorldEditor::saveWpm()
 {
-	printf("保存wpm地形路径数据\n");
+	print("保存wpm地形路径数据\n");
 
 	clock_t start = clock();
 
@@ -293,14 +336,14 @@ int WorldEditor::saveWpm()
 	std::string path = std::string(getTempSavePath()) + ".wpm";
 	int ret = this_call<int>(getAddress(0x005E91C0), getEditorData()->terrain, path.c_str());
 
-	printf("wpm 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("wpm 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 
 int WorldEditor::saveMiniMap()
 {
-	printf("保存minimap小地图数据\n");
+	print("保存minimap小地图数据\n");
 
 	clock_t start = clock();
 
@@ -308,7 +351,7 @@ int WorldEditor::saveMiniMap()
 
 	int ret = this_call<int>(getAddress(0x00583200), getEditorData(), path.c_str(), 0);
 
-	printf("minimap 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("minimap 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
@@ -316,19 +359,19 @@ int WorldEditor::saveMiniMap()
 
 int WorldEditor::saveMmp()
 {
-	printf("保存mmp预览小文件的数据\n");
+	print("保存mmp预览小文件的数据\n");
 
 	clock_t start = clock();
 	int ret = this_call<int>(getAddress(0x00583D00), getEditorData(), getTempSavePath());
 
-	printf("mmp 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("mmp 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 
 int WorldEditor::saveObject()
 {
-	printf("保存物编数据\n");
+	print("保存物编数据\n");
 
 	clock_t start = clock();
 
@@ -343,20 +386,20 @@ int WorldEditor::saveObject()
 
 	int ret = this_call<int>(getAddress(0x0051B5B0), getEditorData()->objects, getTempSavePath(), 1);
 
-	printf("物编 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("物编 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;;
 }
 
 int WorldEditor::saveDoodas()
 {
-	printf("保存war3map.doo地形装饰物\n");
+	print("保存war3map.doo地形装饰物\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x0062BAE0), getEditorData()->doodas, getTempSavePath(), 1);
 
-	printf("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
@@ -364,26 +407,26 @@ int WorldEditor::saveDoodas()
 
 int WorldEditor::saveUnits()
 {
-	printf("保存war3mapUnit.doo地形单位预设数据\n");
+	print("保存war3mapUnit.doo地形单位预设数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x0062BAE0), getEditorData()->units, getTempSavePath(), 1);
 
-	printf("war3mapUnit.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("war3mapUnit.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 
 int WorldEditor::saveRect()
 {
-	printf("保存w3r地形区域数据\n");
+	print("保存w3r地形区域数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x0062ACF0), getEditorData()->regions, getTempSavePath());
 
-	printf("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
@@ -391,51 +434,51 @@ int WorldEditor::saveRect()
 
 int WorldEditor::saveCamara()
 {
-	printf("保存w3c预设镜头数据\n");
+	print("保存w3c预设镜头数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x005AEBB0), getEditorData()->cameras, getTempSavePath());
 
-	printf("w3c 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("w3c 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 int WorldEditor::saveSound()
 {
-	printf("保存w3s声音数据\n");
+	print("保存w3s声音数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x005EACE0), getEditorData()->sounds, getTempSavePath());
 
-	printf("w3s 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("w3s 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 
 int WorldEditor::saveTrigger()
 {
-	printf("保存wtg + wct 触发数据\n");
+	print("保存wtg + wct 触发数据\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x00520ED0), getEditorData()->triggers, getTempSavePath(), 1);
 
-	printf("wtg + wct  保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("wtg + wct  保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
 
 int WorldEditor::saveScript()
 {
-	printf("保存war3map.j脚本文件\n");
+	print("保存war3map.j脚本文件\n");
 
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x0055DA80), getEditorData(), getTempSavePath());
 
-	printf("war3map.j 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("war3map.j 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
 }
@@ -460,9 +503,9 @@ int WorldEditor::saveArchive()
 
 	fs::path pathTemp = path / name;
 
-	printf("打包将文件夹打包成mpq结构\n");
+	print("打包将文件夹打包成mpq结构\n");
 
-	printf("路径 %s\n", path.string().c_str());
+	print("路径 %s\n", path.string().c_str());
 
 	clock_t start = clock();
 
@@ -478,7 +521,7 @@ int WorldEditor::saveArchive()
 		//移动文件目录
 		ret = fast_call<int>(getAddress(0x004D0F60), pathTemp.string().c_str(), path2.string().c_str(), 1, 0);
 
-		printf("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+		print("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 		return ret;
 
@@ -492,7 +535,7 @@ int WorldEditor::saveArchive()
 
 int WorldEditor::customSaveWts(const char* path)
 {
-	printf("自定义保存war3map.wts文本数据\n");
+	print("自定义保存war3map.wts文本数据\n");
 
 	clock_t start = clock();
 
@@ -525,7 +568,7 @@ int WorldEditor::customSaveWts(const char* path)
 	std::ofstream out(std::string(path) + ".wts", std::ios::binary);
 	writer.finish(out);
 	out.close();
-	printf("war3map.wts 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("war3map.wts 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return 1;
 }
@@ -533,7 +576,7 @@ int WorldEditor::customSaveWts(const char* path)
 
 int WorldEditor::customSaveDoodas(const char* path)
 {
-	printf("自定义保存war3map.doo地形装饰物\n");
+	print("自定义保存war3map.doo地形装饰物\n");
 
 	clock_t start = clock();
 	auto doodas = getEditorData()->doodas; 
@@ -659,7 +702,7 @@ int WorldEditor::customSaveDoodas(const char* path)
 	writer.finish(out);
 	out.close();
 
-	printf("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+	print("war3map.doo 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return 1;
 }

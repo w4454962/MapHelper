@@ -127,3 +127,4 @@ protected:
 };
 
 
+Action::Type get_action_type(Action* action);

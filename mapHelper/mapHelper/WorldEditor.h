@@ -33,6 +33,7 @@ public:
 
 	void onSaveMap(const char* tempPath);
 
+	void loadConfigData();
 private:
 
 	int saveWts();

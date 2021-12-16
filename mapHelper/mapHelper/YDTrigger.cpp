@@ -126,12 +126,11 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	Action* action = node->getAction();
 	
 	Parameter** parameters = action->parameters;
-
 	switch (node->getNameId())
 	{
 	case "YDWEForLoopLocVarMultiple"s_hash:
 	{
-		
+
 		std::string variable = std::string("ydul_") + action->parameters[0]->value;
 		convert_loop_var_name(variable);
 
@@ -273,18 +272,17 @@ bool YDTrigger::onActionToJass(std::string& output,ActionNodePtr node, std::stri
 	
 	case "YDWETimerStartMultiple"s_hash:
 	{
-
 		std::string func_name = editor.generate_function_name(node->getTriggerNamePtr());
 		node->setFunctionNamePtr(func_name);
 		std::string action_text = localVarTransfer(output, node, pre_actions);
+
 		pre_actions += "function " + func_name + " takes nothing returns nothing\n";
-
-
+		
 		onActionsToFuncBegin(pre_actions,node);
 		pre_actions += action_text;
 		onActionsToFuncEnd(pre_actions, node);
 		pre_actions += "endfunction\n";
-
+		
 		output += editor.spaces[stack];
 		output += "call TimerStart(ydl_timer,";
 		output += editor.convertParameter(parameters[1], node, pre_actions);
@@ -1157,6 +1155,7 @@ std::string YDTrigger::localVarTransfer(std::string& output, ActionNodePtr node,
 
 	node->getChildNodeList(list);
 
+
 	for (auto& child : list)
 	{
 		Action* childAction = child->getAction();
@@ -1268,6 +1267,7 @@ std::string YDTrigger::localVarTransfer(std::string& output, ActionNodePtr node,
 		}
 		table->clear();
 	}
+
 	return action_text;
 }
 
@@ -1415,12 +1415,12 @@ std::string YDTrigger::getLocal(ActionNodePtr node, const std::string& name, con
 
 	if (node->rootType == Action::Type::event) //事件分区
 	{
-		printf("YDTrigger Warning: 触发器\"%s\": 在事件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		print("YDTrigger Warning: 触发器\"%s\": 在事件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
 		callname = "YDLocal2Get";
 	}
 	else if (node->rootType == Action::Type::condition) //条件分区
 	{
-		printf("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		print("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
 		callname = "YDLocal2Get";
 	}
 	else if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
@@ -1681,12 +1681,12 @@ std::string YDTrigger::getLocalArray(ActionNodePtr node, const std::string& name
 
 	if (node->rootType == Action::Type::event) //事件分区
 	{
-		printf("YDTrigger Warning: 触发器\"%s\": 在事件中使用了局部变量数组\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		print("YDTrigger Warning: 触发器\"%s\": 在事件中使用了局部变量数组\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
 		callname = "YDLocal2ArrayGet";
 	}
 	else if (node->rootType == Action::Type::condition)//条件分区
 	{
-		printf("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量数组\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
+		print("YDTrigger Warning: 触发器\"%s\": 在条件中使用了局部变量数组\"loc_%s\"，该变量将返回空值\n", base::u2a(node->getRootNode()->getName()).c_str(), name.c_str());
 		callname = "YDLocal2ArrayGet";
 	}
 	else if (parent.get() == NULL || parent->isRootNode() || branch->isRootNode())//如果是在触发中
