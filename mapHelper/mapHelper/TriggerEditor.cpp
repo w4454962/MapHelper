@@ -965,7 +965,7 @@ endfunction
 					//随机组里面获取
 					sprintf(buffer, "\t set itemID=gg_rg_%03d[%i]\n", unit->random_group_index,unit->random_group_child_index);
 
-					writer.write_string(buffer);
+					writer.write_string(std::string(buffer, strlen(buffer)));
 				}
 				else if (unit->random_item_mode == 2)
 				{
