@@ -151,7 +151,7 @@ int __fastcall fakeGetChildCount(Action* action)
 {
 	if (g_make_editor_data)
 	{
-		return action->child_count;
+		return action->fake_child_group_count;
 	}
 
 	auto it = g_actionInfoTable.find(std::string(action->name));

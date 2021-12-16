@@ -514,13 +514,6 @@ void TriggerEditor::saveSctipt(const char* path)
 		if (it != m_typesTable.end())
 			defaultValue = it->second->value;
 
-		char testff[0x400];
-		sprintf(testff, "name:%s type:%s base:%s value:%s default:%s\n", name.c_str(), type.c_str(), base.c_str(), value.c_str(), defaultValue.c_str());
-
-		std::ofstream  ff("testaa.txt", std::ios::app);
-		ff << testff;
-		ff.close();
-
 
 		//跳过默认初始值为空的变量
 		if (!var->is_init && base != "string" && defaultValue.empty())
@@ -1766,9 +1759,18 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 {
 	Action* action = node->getAction();
 
-
 	if (!action->enable || !((int)action->group_id < node->getParentGroupCount()))
 		return "";
+
+
+	//char testff[0x400];
+	//sprintf(testff, "%s  %i  %i\n", action->name, (int)action->group_id, node->getParentGroupCount());
+	//
+	//std::ofstream  ff("testaa.txt", std::ios::app);
+	//ff << testff;
+	//ff.close();
+
+
 
 	std::string output;
 

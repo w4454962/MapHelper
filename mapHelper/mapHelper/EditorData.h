@@ -53,7 +53,8 @@ struct Action
 		uint32_t(__thiscall* getType)(void* pThis);
 	};
 	VritualTable* table; //0x0
-	char unknow1[0x8];	 //0x4
+	int fake_child_group_count;		//0x4 借用一下这个偏移量
+	int unknow1;					//0x8
 	uint32_t child_count;	//0xc
 	Action** child_actions;//0x10
 	char unknow2[0xc];	 //0x14

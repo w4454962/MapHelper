@@ -5,6 +5,8 @@
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
 #include "Export.h"
+#include <mmsystem.h>
+#pragma comment(lib, "Winmm.lib")
 
 Helper g_CHelper;
 WorldEditor g_world_editor;
@@ -58,3 +60,11 @@ void ConverJassScript(MakeEditorData* data, const char* ouput_path)
 	triggerEditor.saveSctipt(ouput_path);
 }
  
+int GetSoundPlayTime(const char* music_path)
+{
+	char str[0x100];
+	char timebuffer[0x400];
+	sprintf(timebuffer, "status %s position", music_path); 
+	mciSendStringA(timebuffer, str, 0x100, NULL);
+	return atoi(str);
+}
