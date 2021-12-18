@@ -8,8 +8,21 @@
 
 #include <libnyquist/Decoders.h>
 
+#ifdef _DEBUG
+
+#pragma comment(lib,"libnyquist_d.lib")
+#pragma comment(lib,"libwavpack_d.lib")
+#else 
+
 #pragma comment(lib,"libnyquist.lib")
 #pragma comment(lib,"libwavpack.lib")
+
+#endif // DEBUG
+
+
+
+
+
 
 Helper g_CHelper;
 WorldEditor g_world_editor;

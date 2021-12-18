@@ -102,7 +102,7 @@
       <OutputFile>D:\war3\MapHelper.asi</OutputFile>
       <AssemblyDebug>true</AssemblyDebug>
       <ModuleDefinitionFile>Export.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>..\3rd\libnyquist\lib\Debug;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\3rd\libnyquist\lib;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -145,7 +145,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>D:\war3\MapHelper.asi</OutputFile>
       <ModuleDefinitionFile>Export.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>..\3rd\libnyquist\lib\Release;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\3rd\libnyquist\lib\;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
