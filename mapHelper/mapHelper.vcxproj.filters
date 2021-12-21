@@ -24,17 +24,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="MapHelper.h">
       <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="fp_call.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TriggerEditor.h">
       <Filter>源文件</Filter>
@@ -63,12 +54,6 @@
     <ClInclude Include="json.hpp">
       <Filter>源文件\utils</Filter>
     </ClInclude>
-    <ClInclude Include="SaveLoadCheck.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Wc3VarType.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="unicode.h">
       <Filter>源文件\utils</Filter>
     </ClInclude>
@@ -92,6 +77,15 @@
     </ClInclude>
     <ClInclude Include="..\ThirdParty\Detours\src\detver.h">
       <Filter>源文件\detours</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SaveLoadCheck.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fp_call.h">
+      <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -123,9 +117,6 @@
       <Filter>源文件\utils</Filter>
     </ClCompile>
     <ClCompile Include="SaveLoadCheck.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Wc3VarType.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="unicode.cpp">

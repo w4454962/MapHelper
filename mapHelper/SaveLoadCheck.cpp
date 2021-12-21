@@ -54,44 +54,6 @@ public:
 private:
 	std::ofstream LogWriter;
 	const std::string Convert(const std::string src) const {
-		//ÕâË­Ğ´µÄ´úÂë 
-		//if (src == "StringExt") {
-		//	return "string";
-		//}
-		//if (src == "imagefile") {
-		//	return "string";
-		//}
-		//if (src == "modelfile") {
-		//	return "string";
-		//}
-		//if (src == "radian") {
-		//	return "real";
-		//}
-		//if (src == "degree") {
-		//	return "real";
-		//}
-		//if (src == "degree") {
-		//	return "real";
-		//}
-		//if (src == "unitcode") {
-		//	return "integer";
-		//}
-		//if (src == "abilcode") {
-		//	return "integer";
-		//}
-		//if (src == "itemcode") {
-		//	return "integer";
-		//}
-		//if (src == "gamekey") {
-		//	return "integer";
-		//}
-		//if (src == "frame") {
-		//	return "integer";
-		//}
-		//if (src == "seffect") {
-		//	return "integer";
-		//}
-
 		switch (hash_(src.c_str()))
 		{
 		case "StringExt"s_hash:

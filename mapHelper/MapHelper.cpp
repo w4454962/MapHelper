@@ -8,7 +8,7 @@
 
 #include "json.hpp"
 #include <sstream>
-#include "Wc3VarType.h"
+
 #include "Export.h"
 extern MakeEditorData* g_make_editor_data;
 
@@ -61,6 +61,7 @@ typedef std::map<std::string, ActionInfoList> ActionInfoMap;
 ActionInfoMap g_actionInfoTable;
 
 
+std::unordered_map<std::string, std::string> g_typenames;
 
 Helper::Helper()
 	: m_bAttach(false)
@@ -193,6 +194,11 @@ static void setParamerType(Action* action, int flag, int type_param_index, int t
 	if (!param || strncmp(param->value,"typename_",8) != 0)
 		return;
 	const char* type = param->value + 11; //typename_01_integer  + 11 = integer
+	auto it = g_typenames.find(type);
+	if (it == g_typenames.end())
+	{
+		g_typenames.emplace(type, param->value);
+	}
 
 	//print("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
 	this_call<int>(real::SetParamType, action, target_param_index, type, flag);
@@ -235,17 +241,11 @@ static void __fastcall insertCreateUI(Action* action,uint32_t edx, int flag)
 static int __fastcall fakeReturnTypeStrcmp(const char* type1,const char* type2)
 {
 	//类型相等 或者type1 是任意类型 即返回字符串相同的结果
-	if (strcmp(type1, type2) != 0)
+	if (strcmp(type1, type2) == 0 || (strcmp(type1, "AnyReturnType") == 0 && g_typenames.find(type2) != g_typenames.end()))
 	{
-		if (strcmp(type1, "AnyReturnType") == 0) {
-			for (int i = 1; i < TypeCount; i++) {
-				if (strcmp(type2, TypeName[i]) == 0)
-					return 0;
-			}
-		}
-		return 1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 static int __declspec(naked) insertReturnTypeStrcmp()
@@ -353,8 +353,6 @@ void Helper::attach()
 
 	auto& editor = get_world_editor();
 
-	editor.loadConfigData();
-
 
 	//------------------自定义脚本生成器的操作----------------
 
@@ -425,6 +423,8 @@ void Helper::attach()
 	}
 #endif
 
+
+	editor.loadConfigData();
 
 	//std::ifstream file("D:\\war3\\test.json",std::ios::binary);
 	//

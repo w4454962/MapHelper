@@ -58,6 +58,7 @@ void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 
 	m_configData = data;
 	//std::cout<<"cout读取配置文件"<<std::endl;
+
 	for (size_t i = 0; i < data->type_count; i++)
 	{
 		TriggerType* type_data = &data->array[i];
@@ -1753,7 +1754,6 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	return seperator + "// Trigger: " + root->getName() + "\n" + logo + seperator + pre_actions + conditions + actions + seperator + events;
 }
 
-uint32_t aaanum = 0;
 
 std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_actions, bool nested)
 {
@@ -1761,16 +1761,6 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 
 	if (!action->enable || !((int)action->group_id < node->getParentGroupCount()))
 		return "";
-
-
-	//char testff[0x400];
-	//sprintf(testff, "%s  %i  %i\n", action->name, (int)action->group_id, node->getParentGroupCount());
-	//
-	//std::ofstream  ff("testaa.txt", std::ios::app);
-	//ff << testff;
-	//ff.close();
-
-
 
 	std::string output;
 
