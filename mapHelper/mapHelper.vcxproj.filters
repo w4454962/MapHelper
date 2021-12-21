@@ -30,7 +30,7 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="mapHelper.h">
+    <ClInclude Include="MapHelper.h">
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="fp_call.h">
@@ -56,12 +56,6 @@
     </ClInclude>
     <ClInclude Include="EditorData.h">
       <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\3rd\Detours\src\detours.h">
-      <Filter>源文件\detours</Filter>
-    </ClInclude>
-    <ClInclude Include="..\3rd\Detours\src\detver.h">
-      <Filter>源文件\detours</Filter>
     </ClInclude>
     <ClInclude Include="singleton.h">
       <Filter>源文件\utils</Filter>
@@ -93,12 +87,18 @@
     <ClInclude Include="Export.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\ThirdParty\Detours\src\detours.h">
+      <Filter>源文件\detours</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\Detours\src\detver.h">
+      <Filter>源文件\detours</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="mapHelper.cpp">
+    <ClCompile Include="MapHelper.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
@@ -119,36 +119,6 @@
     <ClCompile Include="ActionNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\creatwth.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\detours.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\disasm.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\disolarm.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\disolarm64.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\disolia64.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\disolx64.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\disolx86.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\image.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\3rd\Detours\src\modules.cpp">
-      <Filter>源文件\detours</Filter>
-    </ClCompile>
     <ClCompile Include="json.cpp">
       <Filter>源文件\utils</Filter>
     </ClCompile>
@@ -160,6 +130,27 @@
     </ClCompile>
     <ClCompile Include="unicode.cpp">
       <Filter>源文件\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Detours\src\creatwth.cpp">
+      <Filter>源文件\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Detours\src\detours.cpp">
+      <Filter>源文件\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Detours\src\disasm.cpp">
+      <Filter>源文件\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Detours\src\disolarm.cpp">
+      <Filter>源文件\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Detours\src\disolx86.cpp">
+      <Filter>源文件\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Detours\src\image.cpp">
+      <Filter>源文件\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\Detours\src\modules.cpp">
+      <Filter>源文件\detours</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

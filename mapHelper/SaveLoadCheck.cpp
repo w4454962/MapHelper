@@ -54,46 +54,66 @@ public:
 private:
 	std::ofstream LogWriter;
 	const std::string Convert(const std::string src) const {
-		if (src == "StringExt") {
-			return "string";
-		}
-		if (src == "imagefile") {
-			return "string";
-		}
-		if (src == "modelfile") {
-			return "string";
-		}
-		if (src == "radian") {
-			return "real";
-		}
-		if (src == "degree") {
-			return "real";
-		}
-		if (src == "degree") {
-			return "real";
-		}
-		if (src == "unitcode") {
-			return "integer";
-		}
-		if (src == "abilcode") {
-			return "integer";
-		}
-		if (src == "itemcode") {
-			return "integer";
-		}
-		if (src == "gamekey") {
-			return "integer";
-		}
-		if (src == "frame") {
-			return "integer";
-		}
-		if (src == "seffect") {
-			return "integer";
-		}
-		if (src.substr(0, 5) == "AUTO_") {
-			return src.substr(5, src.size());
-		}
+		//ÕâË­Ð´µÄ´úÂë 
+		//if (src == "StringExt") {
+		//	return "string";
+		//}
+		//if (src == "imagefile") {
+		//	return "string";
+		//}
+		//if (src == "modelfile") {
+		//	return "string";
+		//}
+		//if (src == "radian") {
+		//	return "real";
+		//}
+		//if (src == "degree") {
+		//	return "real";
+		//}
+		//if (src == "degree") {
+		//	return "real";
+		//}
+		//if (src == "unitcode") {
+		//	return "integer";
+		//}
+		//if (src == "abilcode") {
+		//	return "integer";
+		//}
+		//if (src == "itemcode") {
+		//	return "integer";
+		//}
+		//if (src == "gamekey") {
+		//	return "integer";
+		//}
+		//if (src == "frame") {
+		//	return "integer";
+		//}
+		//if (src == "seffect") {
+		//	return "integer";
+		//}
 
+		switch (hash_(src.c_str()))
+		{
+		case "StringExt"s_hash:
+		case "imagefile"s_hash:
+		case "modelfile"s_hash:
+			return "string";
+		case "radian"s_hash:
+		case "degree"s_hash:
+			return "real";
+
+		case "unitcode"s_hash:
+		case "abilcode"s_hash:
+		case "itemcode"s_hash:
+		case "gamekey"s_hash:
+		case "frame"s_hash:
+		case "seffect"s_hash:
+			return "integer";
+		default:
+			if (src.substr(0, 5) == "AUTO_") {
+				return src.substr(5, src.size());
+			}
+		}
 		return src;
 	}
 
@@ -132,5 +152,5 @@ void SaveLoadError(ActionNodePtr node, std::string name, std::string type)
 	sprintf_s(buffer.data(), len, fmt.c_str(), node->getRootNode()->getName().c_str(), name.c_str(), type.c_str(), SaveLoadCheck_Get(name).c_str());
 	auto log = std::string(buffer.data());
 	print("%s\n", base::u2a(log).c_str());
-	//g_SaveLoadCheck.WriteLog(log);
+	g_SaveLoadCheck.WriteLog(log);
 }
