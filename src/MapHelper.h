@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "utils\inline.h"
-#include "include\EditorData.h"
+#include "..\include\EditorData.h"
 #include "WorldEditor.h"
 
 template<typename dst_type, typename src_type>

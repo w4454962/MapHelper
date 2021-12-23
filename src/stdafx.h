@@ -32,7 +32,7 @@ namespace fs = std::experimental::filesystem;
 
 #include "utils\fp_call.h"
 #include "utils\BinaryWriter.h"
-#include "include\Export.h"
+#include "..\include\Export.h"
 
 
 #pragma  warning( disable: 4307 4455 )

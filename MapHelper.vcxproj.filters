@@ -69,12 +69,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\include\EditorData.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\include\Export.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\ActionNode.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -113,6 +107,12 @@
     </ClInclude>
     <ClInclude Include="src\utils\dynarray.h">
       <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EditorData.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Export.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

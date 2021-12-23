@@ -8,7 +8,7 @@
 
 #include <sstream>
 #include "utils\json.hpp"
-#include "include\Export.h"
+#include "..\include\Export.h"
 
 extern MakeEditorData* g_make_editor_data;
 

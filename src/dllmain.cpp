@@ -1,15 +1,15 @@
 ﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "stdafx.h"
 #include <Windows.h>
-#include "mapHelper.h"
+#include "MapHelper.h"
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
-#include "include\Export.h"
+#include "..\include\Export.h"
+
 
 #include <libnyquist/Decoders.h>
 
 #ifdef _DEBUG
-
 #pragma comment(lib,"libnyquist_d.lib")
 #pragma comment(lib,"libwavpack_d.lib")
 #else 
@@ -17,11 +17,7 @@
 #pragma comment(lib,"libnyquist.lib")
 #pragma comment(lib,"libwavpack.lib")
 
-#endif // DEBUG
-
-
-
-
+#endif 
 
 
 Helper g_CHelper;
@@ -88,7 +84,7 @@ int GetSoundPlayTime(const char* path, const char* data, uint32_t size)
 
 	loader.Load(&audio_data, buffer);
 
-	int time = ceil(audio_data.lengthSeconds * 1000); //转毫秒
+	int time = (int)ceil(audio_data.lengthSeconds * 1000); //转毫秒
 
 	return time;
 }

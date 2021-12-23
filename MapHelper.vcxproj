@@ -75,14 +75,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>bin\$(Configuration)\</IntDir>
+    <IntDir>bin\objs\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>bin\$(Configuration)\</IntDir>
+    <IntDir>bin\objs\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -102,7 +104,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <OutputFile>D:\war3\MapHelper.asi</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AssemblyDebug>true</AssemblyDebug>
       <ModuleDefinitionFile>src\Export.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>3rd\libnyquist\lib;</AdditionalLibraryDirectories>
@@ -146,7 +148,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <OutputFile>D:\war3\MapHelper.asi</OutputFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ModuleDefinitionFile>src\Export.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>3rd\libnyquist\lib\;</AdditionalLibraryDirectories>
     </Link>
@@ -192,9 +194,9 @@
     <ClCompile Include="src\YDTrigger.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\EditorData.h" />
+    <ClInclude Include="include\Export.h" />
     <ClInclude Include="src\ActionNode.h" />
-    <ClInclude Include="src\include\EditorData.h" />
-    <ClInclude Include="src\include\Export.h" />
     <ClInclude Include="src\MapHelper.h" />
     <ClInclude Include="src\SaveLoadCheck.h" />
     <ClInclude Include="src\stdafx.h" />
