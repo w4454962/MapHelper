@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <iostream>
 #include <regex>
-#include "singleton.h"
+
 #include "SaveLoadCheck.h"
 
 //所有物品类型的jass变量名
@@ -300,7 +300,8 @@ void TriggerEditor::writeParameter(BinaryWriter& writer, Parameter* param)
 
 TriggerEditor& get_trigger_editor()
 {
-	return base::singleton<TriggerEditor>::instance();
+	static TriggerEditor instance;
+	return instance;
 }
 
 

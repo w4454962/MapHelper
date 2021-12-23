@@ -4,12 +4,12 @@
 #include <io.h>
 #include <fcntl.h>
 #include "mapHelper.h"
-#include "singleton.h"
 
-#include "json.hpp"
+
 #include <sstream>
+#include "utils\json.hpp"
+#include "include\Export.h"
 
-#include "Export.h"
 extern MakeEditorData* g_make_editor_data;
 
 #pragma warning(disable:4996)
@@ -639,7 +639,8 @@ int Helper::onConvertTrigger(Trigger* trigger)
 
 Helper& get_helper()
 {
-	return base::singleton<Helper>::instance();
+	static Helper instance;
+	return instance;
 }
 
 

@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="detours">
+      <UniqueIdentifier>{4204f959-0a8d-4f9f-bf9d-066995866974}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{ff679f68-9d4d-4ecb-864a-df4ca3182304}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\utils">
+      <UniqueIdentifier>{bf004cc3-bc55-495f-92cb-94639d8470d8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="3rd\Detours\src\creatwth.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\detours.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\disasm.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\disolx86.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\image.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\Detours\src\modules.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ActionNode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dllmain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MapHelper.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SaveLoadCheck.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TriggerEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WorldEditor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\YDTrigger.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\inline.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\json.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\unicode.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\include\EditorData.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\include\Export.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ActionNode.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MapHelper.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SaveLoadCheck.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TriggerEditor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WorldEditor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\YDTrigger.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\BinaryWriter.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\fp_call.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\inline.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\json.hpp">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\unicode.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\dynarray.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Export.def">
+      <Filter>src</Filter>
+    </None>
+  </ItemGroup>
+</Project>

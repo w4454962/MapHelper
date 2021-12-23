@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
-#include "singleton.h"
+
 #include "mapHelper.h"
-#include "Export.h"
+#include "include\Export.h"
 
 extern MakeEditorData* g_make_editor_data;
 
@@ -734,5 +734,6 @@ void WorldEditor::updateSaveFlags()
 
 WorldEditor& get_world_editor()
 {
-	return base::singleton<WorldEditor>::instance();
+	static WorldEditor instance;
+	return instance;
 }

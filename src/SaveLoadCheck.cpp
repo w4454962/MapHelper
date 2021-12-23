@@ -1,5 +1,5 @@
 #include "SaveLoadCheck.h"
-#include "unicode.h"
+#include "utils\unicode.h"
 #include <fstream>
 class CSaveLoadCheck {
 public:

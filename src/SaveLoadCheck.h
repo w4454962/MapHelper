@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "ActionNode.h"
-#include "unicode.h"
+#include "utils\unicode.h"
 
 void   SaveLoadCheck_Reset();
 bool   SaveLoadCheck_Set(std::string lpszKey, std::string lpszName);

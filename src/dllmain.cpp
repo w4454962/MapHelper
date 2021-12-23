@@ -4,7 +4,7 @@
 #include "mapHelper.h"
 #include "WorldEditor.h"
 #include "TriggerEditor.h"
-#include "Export.h"
+#include "include\Export.h"
 
 #include <libnyquist/Decoders.h>
 

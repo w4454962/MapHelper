@@ -1,4 +1,6 @@
 #pragma once
+
+
 #include <cassert>
 #include <exception>
 #include <limits>
@@ -16,8 +18,8 @@ namespace std {
 		{ }
 
 		virtual const char* what() const throw()
-		{
-			return "std::bad_array_length";
+		{ 
+			return "std::bad_array_length"; 
 		}
 	};
 
@@ -26,12 +28,12 @@ namespace std {
 	{
 	public:
 		typedef       T                               value_type;
-		typedef       T& reference;
-		typedef const T& const_reference;
-		typedef       T* pointer;
-		typedef const T* const_pointer;
-		typedef       T* iterator;
-		typedef const T* const_iterator;
+		typedef       T&                              reference;
+		typedef const T&                              const_reference;
+		typedef       T*                              pointer;
+		typedef const T*                              const_pointer;
+		typedef       T*                              iterator;
+		typedef const T*                              const_iterator;
 		typedef std::reverse_iterator<iterator>       reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 		typedef size_t                                size_type;
@@ -43,87 +45,87 @@ namespace std {
 		explicit dynarray(size_type c)
 			: store_(alloc(c))
 			, count_(c)
-		{
+		{ 
 			size_type i = 0;
 			try {
 				for (i = 0; i < count_; ++i)
 				{
-					new (store_ + i) T;
+					new (store_+i) T;
 				}
 			}
 			catch (...) {
 				for (; i > 0; --i)
-					(store_ + (i - 1))->~T();
+					(store_+(i-1))->~T();
 				throw;
-			}
+			} 
 		}
 
 		dynarray(const dynarray& d)
 			: store_(alloc(d.size()))
 			, count_(d.size())
-		{
-			try {
+		{ 
+			try { 
 				uninitialized_copy(d.begin(), d.end(), begin());
 			}
-			catch (...) {
-				delete[] store_;
-				throw;
-			}
+			catch (...) { 
+				delete[] store_; 
+				throw; 
+			} 
 		}
 
 		~dynarray()
 		{
 			for (size_type i = 0; i < size(); ++i)
 			{
-				(store_ + i)->~T();
+				(store_+i)->~T();
 			}
 			delete[] store_;
 		}
 
-		iterator               begin() { return store_; }
+		iterator               begin()                       { return store_; }
 		const_iterator         begin()                 const { return store_; }
 		const_iterator         cbegin()                const { return store_; }
-		iterator               end() { return begin() + size(); }
+		iterator               end()                         { return begin() + size(); }
 		const_iterator         end()                   const { return cbegin() + size(); }
 		const_iterator         cend()                  const { return cbegin() + size(); }
-		reverse_iterator       rbegin() { return reverse_iterator(end()); }
+		reverse_iterator       rbegin()                      { return reverse_iterator(end()); }
 		const_reverse_iterator rbegin()                const { return reverse_iterator(cend()); }
-		reverse_iterator       rend() { return reverse_iterator(begin()); }
+		reverse_iterator       rend()                        { return reverse_iterator(begin()); }
 		const_reverse_iterator rend()                  const { return reverse_iterator(cbegin()); }
 		size_type              size()                  const { return count_; }
 		size_type              max_size()              const { return count_; }
 		bool                   empty()                 const { return size() == 0; }
-		reference              operator[](size_type n) { assert(size() > n); return store_[n]; }
+		reference              operator[](size_type n)       { assert(size() > n); return store_[n]; }
 		const_reference        operator[](size_type n) const { assert(size() > n); return store_[n]; }
-		reference              front() { assert(size() > 0); return store_[0]; }
+		reference              front()                       { assert(size() > 0); return store_[0]; }
 		const_reference        front()                 const { assert(size() > 0); return store_[0]; }
-		reference              back() { assert(size() > 0); return store_[size() - 1]; }
-		const_reference        back()                  const { assert(size() > 0); return store_[size() - 1]; }
+		reference              back()                        { assert(size() > 0); return store_[size()-1]; }
+		const_reference        back()                  const { assert(size() > 0); return store_[size()-1]; }
 		const_reference        at(size_type n)         const { check(n); return store_[n]; }
-		reference              at(size_type n) { check(n); return store_[n]; }
-		pointer                data() { return store_; }
+		reference              at(size_type n)               { check(n); return store_[n]; }
+		pointer                data()                        { return store_; }
 		const_pointer          data()                  const { return store_; }
-		void                   fill(const T& v) { fill_n(begin(), size(), v); }
+		void                   fill(const T& v)              { fill_n(begin(), size(), v); }
 
 	private:
 		pointer   store_;
 		size_type count_;
 
 		void check(size_type n)
-		{
+		{ 
 			if (n >= size())
 			{
-				throw out_of_range("std::dynarray");
+				throw ("std::dynarray"); 
 			}
 		}
 
 		pointer alloc(size_type n)
-		{
-			if (n > (std::numeric_limits<size_type>::max)() / sizeof(T))
+		{ 
+			if (n > (std::numeric_limits<size_type>::max)()/sizeof(T))
 			{
 				throw bad_array_length();
 			}
-			return reinterpret_cast<pointer>(new char[n * sizeof(T)]);
+			return reinterpret_cast<pointer>(new char[n*sizeof(T)]); 
 		}
 	};
 }

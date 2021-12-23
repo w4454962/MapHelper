@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.572
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mapHelper", "mapHelper\mapHelper.vcxproj", "{4A3C5086-97EE-4220-9264-BE5B1F8B1D0C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapHelper", "mapHelper.vcxproj", "{4A3C5086-97EE-4220-9264-BE5B1F8B1D0C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

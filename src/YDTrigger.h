@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "TriggerEditor.h"
-#include "EditorData.h"
+#include "include\EditorData.h"
 #include "ActionNode.h"
 
 //专门负责重载ydwe的功能
