@@ -1,7 +1,11 @@
 #pragma once
-#include "stdafx.h"
+#include "..\stdafx.h"
 #include <memory>
 #include <functional>
+
+
+int __fastcall fakeGetChildCount(Action* action);
+Action::Type get_action_type(Action* action);
 
 namespace mh {
 	class Node;
@@ -49,6 +53,7 @@ namespace mh {
 
 		//获取文本
 		virtual std::string toString(std::string& pre_actions) = 0;
+
 	};
 
 	NodePtr NodeFromTrigger(Trigger* trigger);
@@ -67,3 +72,4 @@ namespace mh {
 	std::string& Spaces(int offset = 0);
 
 }
+

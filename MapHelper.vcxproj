@@ -184,6 +184,7 @@
     <ClCompile Include="src\ActionNode.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\MapHelper.cpp" />
+    <ClCompile Include="src\Nodes\TriggerNode.hpp" />
     <ClCompile Include="src\SaveLoadCheck.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\TriggerEditor.cpp" />
@@ -198,8 +199,10 @@
     <ClInclude Include="include\Export.h" />
     <ClInclude Include="src\ActionNode.h" />
     <ClInclude Include="src\MapHelper.h" />
-    <ClInclude Include="src\Node.h" />
-    <ClInclude Include="src\Node.hpp" />
+    <ClInclude Include="src\Nodes\ActionNode.hpp" />
+    <ClInclude Include="src\Nodes\Node.h" />
+    <ClInclude Include="src\Nodes\Node.hpp" />
+    <ClInclude Include="src\Nodes\Parameter.hpp" />
     <ClInclude Include="src\SaveLoadCheck.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\TriggerEditor.h" />

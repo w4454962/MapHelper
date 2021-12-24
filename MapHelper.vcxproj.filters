@@ -14,6 +14,9 @@
     <Filter Include="src\utils">
       <UniqueIdentifier>{bf004cc3-bc55-495f-92cb-94639d8470d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Nodes">
+      <UniqueIdentifier>{71dd9314-70a9-45de-9a81-f8dabe5f4cad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd\Detours\src\creatwth.cpp">
@@ -67,6 +70,9 @@
     <ClCompile Include="src\utils\unicode.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\Nodes\TriggerNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ActionNode.h">
@@ -114,11 +120,17 @@
     <ClInclude Include="include\Export.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\Node.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="src\Nodes\ActionNode.hpp">
+      <Filter>src\Nodes</Filter>
     </ClInclude>
-    <ClInclude Include="src\Node.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\Nodes\Parameter.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\Node.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\Node.h">
+      <Filter>src\Nodes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

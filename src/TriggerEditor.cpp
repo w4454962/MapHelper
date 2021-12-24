@@ -2386,8 +2386,8 @@ std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> t
 }
 
 
-#include "Node.h"
-#include "Node.hpp"
+#include "Nodes\Node.h"
+#include "Nodes\Node.hpp"
 
 bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {
