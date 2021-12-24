@@ -2335,6 +2335,15 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 	return (add_call ? "call " : "") + getBaseName(node) + "(" + output + ")";
 }
 
+TriggerType* TriggerEditor::getTypeData(const std::string& type)
+{
+	auto it = m_typesTable.find(type);
+	if (it != m_typesTable.end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
 
 std::string TriggerEditor::getBaseType(const std::string& type) const
 {
@@ -2377,11 +2386,20 @@ std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> t
 }
 
 
+#include "Node.h"
+#include "Node.hpp"
 
 bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {
 	if (trigger->is_custom_srcipt || trigger->is_comment)
 		return false;
+
+	mh::NodePtr node = mh::NodeFromTrigger(trigger);
+
+	std::string pre_actions;
+
+	print("%s\n", base::u2a(node->toString(pre_actions)).c_str());
+
 	auto& world = get_world_editor();
 
 	const auto script = convertTrigger(trigger);
@@ -2423,3 +2441,4 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 	}
 	return true;
 }
+

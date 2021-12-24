@@ -29,6 +29,7 @@ public:
 	std::string convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call = false);
 	std::string convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call);
 	
+	TriggerType* getTypeData(const std::string& type);
 	std::string getBaseType(const std::string& type) const;
 	std::string getBaseName(ActionNodePtr node);
 

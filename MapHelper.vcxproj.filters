@@ -114,6 +114,12 @@
     <ClInclude Include="include\Export.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\Node.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Node.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Export.def">
