@@ -5,9 +5,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="detours">
-      <UniqueIdentifier>{4204f959-0a8d-4f9f-bf9d-066995866974}</UniqueIdentifier>
-    </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{ff679f68-9d4d-4ecb-864a-df4ca3182304}</UniqueIdentifier>
     </Filter>
@@ -17,25 +14,31 @@
     <Filter Include="src\Nodes">
       <UniqueIdentifier>{71dd9314-70a9-45de-9a81-f8dabe5f4cad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="3rd">
+      <UniqueIdentifier>{8037b7e4-121a-4fbe-ab6c-0616dcdfee4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd\detours">
+      <UniqueIdentifier>{4204f959-0a8d-4f9f-bf9d-066995866974}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd\Detours\src\creatwth.cpp">
-      <Filter>detours</Filter>
+      <Filter>3rd\detours</Filter>
     </ClCompile>
     <ClCompile Include="3rd\Detours\src\detours.cpp">
-      <Filter>detours</Filter>
+      <Filter>3rd\detours</Filter>
     </ClCompile>
     <ClCompile Include="3rd\Detours\src\disasm.cpp">
-      <Filter>detours</Filter>
+      <Filter>3rd\detours</Filter>
     </ClCompile>
     <ClCompile Include="3rd\Detours\src\disolx86.cpp">
-      <Filter>detours</Filter>
+      <Filter>3rd\detours</Filter>
     </ClCompile>
     <ClCompile Include="3rd\Detours\src\image.cpp">
-      <Filter>detours</Filter>
+      <Filter>3rd\detours</Filter>
     </ClCompile>
     <ClCompile Include="3rd\Detours\src\modules.cpp">
-      <Filter>detours</Filter>
+      <Filter>3rd\detours</Filter>
     </ClCompile>
     <ClCompile Include="src\ActionNode.cpp">
       <Filter>src</Filter>
@@ -70,7 +73,7 @@
     <ClCompile Include="src\utils\unicode.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\Nodes\TriggerNode.hpp">
+    <ClCompile Include="src\Nodes\Node.cpp">
       <Filter>src\Nodes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -120,16 +123,28 @@
     <ClInclude Include="include\Export.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\Nodes\Node.h">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
     <ClInclude Include="src\Nodes\ActionNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\Function.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\EventNode.hpp">
       <Filter>src\Nodes</Filter>
     </ClInclude>
     <ClInclude Include="src\Nodes\Parameter.hpp">
       <Filter>src\Nodes</Filter>
     </ClInclude>
-    <ClInclude Include="src\Nodes\Node.hpp">
+    <ClInclude Include="src\Nodes\TriggerNode.hpp">
       <Filter>src\Nodes</Filter>
     </ClInclude>
-    <ClInclude Include="src\Nodes\Node.h">
+    <ClInclude Include="src\Nodes\ClosureNode.hpp">
+      <Filter>src\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nodes\Closures.hpp">
       <Filter>src\Nodes</Filter>
     </ClInclude>
   </ItemGroup>

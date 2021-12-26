@@ -49,14 +49,6 @@ namespace real
 
 
 
-struct ActionInfo
-{
-	int type_id;
-	std::string name;
-};
-
-typedef std::vector<ActionInfo> ActionInfoList;
-typedef std::map<std::string, ActionInfoList> ActionInfoMap;
 
 ActionInfoMap g_actionInfoTable;
 

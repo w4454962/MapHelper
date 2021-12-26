@@ -23,6 +23,10 @@
 #include <unordered_map>
 #include <functional>
 #include <memory>
+
+#define __cpp_lib_format
+
+#include <format>
 #ifdef _HAS_CXX17
 namespace fs = std::filesystem;
 #else
@@ -32,6 +36,7 @@ namespace fs = std::experimental::filesystem;
 
 #include "utils\fp_call.h"
 #include "utils\BinaryWriter.h"
+#include "utils\unicode.h"
 #include "..\include\Export.h"
 
 
@@ -59,6 +64,15 @@ constexpr unsigned int operator "" s_hash(char const* p, size_t)
 {
 	return hash_compile_time(p);
 }
+
+
+constexpr std::string operator "" s(char const* p, size_t)
+{
+	return std::string(p);
+}
+
+
+
 //globals
 
 

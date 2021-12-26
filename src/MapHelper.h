@@ -16,6 +16,17 @@ dst_type union_cast(src_type src)
 }
 
 
+struct ActionInfo
+{
+	int type_id;
+	std::string name;
+};
+
+typedef std::vector<ActionInfo> ActionInfoList;
+typedef std::map<std::string, ActionInfoList> ActionInfoMap;
+
+extern ActionInfoMap g_actionInfoTable;
+
 class Helper
 {
 public:

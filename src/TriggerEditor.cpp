@@ -1657,12 +1657,12 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 
 		m_ydweTrigger->onRegisterTrigger(events, root->getName(), trigger_variable_name);
 	}
-
+	 
 	std::vector<ActionNodePtr> list;
 	root->getChildNodeList(list);
 
 	bool firstBoolexper = true;
-
+	  
 	// 逐条解析动作
 	for (auto& node : list)
 	{
@@ -1749,7 +1749,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 
-	std::string logo = u8"//自定义jass生成器 作者： 阿七  \n//有bug到魔兽地图编辑器吧 @w4454962 \n//技术交流群：1019770872\n";
+	std::string logo = base::a2u("//自定义jass生成器 作者： 阿七  \n//有bug到魔兽地图编辑器吧 @w4454962 \n//技术交流群：1019770872\n");
 
 
 	return seperator + "// Trigger: " + root->getName() + "\n" + logo + seperator + pre_actions + conditions + actions + seperator + events;
@@ -1815,7 +1815,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		output += "endloop\n";
 		return output;
 	}
-
+	  
 	case "ForLoopVarMultiple"s_hash:
 	{
 		std::string variable = convertParameter(parameters[0], node, pre_actions);
@@ -1838,7 +1838,7 @@ std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_ac
 		output += spaces[--space_stack];
 		output += "endloop\n";
 		return output;
-	}
+	} 
 	
 	case "IfThenElseMultiple"s_hash:
 	{
@@ -2096,7 +2096,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 		return value + "()";
 	case Parameter::Type::variable:
 		{
-			
+			 
 			auto output = value;
 
 			if (!output._Starts_with("gg_")) 
@@ -2105,7 +2105,7 @@ std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr 
 			}
 
 			if (value == "Armagedontimerwindow") 
-			{
+			{  
 				puts("s");
 			}
 			if (parameter->arrayParam) {
@@ -2298,7 +2298,7 @@ std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_acti
 		auto param = parameters[k];
 
 		const auto child_type = std::string(param->type_name);
-
+		 
 		if (child_type == "boolexpr") {
 			const auto function_name = generate_function_name(node->getTriggerNamePtr());
 			node->setFunctionNamePtr(function_name);
@@ -2380,6 +2380,23 @@ std::string TriggerEditor::getBaseName(ActionNodePtr node)
 	return name;
 }
 
+std::string TriggerEditor::getScriptName(Action* action)
+{
+	std::string name = action->name;
+	std::string key = "_" + name + "_ScriptName";
+	std::string parent_key = "TriggerActions";
+	if (get_action_type(action) == Action::event) {
+		parent_key = "TriggerEvents";
+	}
+	auto& world = get_world_editor();
+
+	std::string func_name = world.getConfigData(parent_key, key, 0);
+	if (func_name.length() > 0) {
+		return func_name;
+	}
+	return name;
+}
+
 std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> trigger_name) const {
 	const auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	return "Trig_" + *trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
@@ -2387,7 +2404,6 @@ std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> t
 
 
 #include "Nodes\Node.h"
-#include "Nodes\Node.hpp"
 
 bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {
@@ -2398,7 +2414,7 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 
 	std::string pre_actions;
 
-	print("%s\n", base::u2a(node->toString(pre_actions)).c_str());
+	print("%s\n", base::u2a(node->toString()).c_str());
 
 	auto& world = get_world_editor();
 

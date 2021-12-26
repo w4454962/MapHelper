@@ -2,11 +2,43 @@
 
 namespace mh {
 
+	typedef std::shared_ptr<class ParameterNode> ParameterNodePtr;
+
+	//生成一个静态方法 + 基于ParameterNode的构造方法
+#define REGISTER_FROM_PARAM(name) REGISTER_FROM(name, Parameter*); name(Parameter* param, uint32_t index, NodePtr parent): ParameterNode(param, index, parent) { } ;
+
+
 	class ParameterNode : public Node {
 	public:
 		REGISTER_FROM(ParameterNode, Parameter*)
+			
+		ParameterNode(Parameter* parameter, uint32_t index, NodePtr parent) {
+			m_parameter = parameter;
 
-			virtual void* getData() override { return m_parameter; }
+			m_parent = parent;
+
+			m_index = index;
+
+			m_action = parameter->funcParam;
+			m_name = StringPtr(new std::string());
+			m_nameId = 0;
+
+			if (parent->getType() == TYPE::ROOT) {
+				m_root = parent;
+			}
+			else {
+				m_root = parent->getRootNode();
+			}
+		}
+
+		NodePtr getParamActionNode() {
+			if (!m_parameter->funcParam)
+				return nullptr;
+			NodePtr node = shared_from_this();
+			return NodeFromAction(m_parameter->funcParam, m_index, node);
+		}
+
+		virtual void* getData() override { return m_parameter; }
 
 		virtual StringPtr getName() override { return m_name; }
 
@@ -14,37 +46,28 @@ namespace mh {
 
 		virtual TYPE getType() override { return TYPE::PARAM; }
 
+		virtual void setType(TYPE type) override {  }
+
 		virtual NodePtr getParentNode() override { return m_parent; }
 
 		virtual NodePtr getRootNode() override { return m_root; }
 
 		virtual std::vector<NodePtr> getChildList() override {
-			std::vector<NodePtr> list;
-
-			if (m_parameter->funcParam) {
-
-				NodePtr node = shared_from_this();
-
-				NodePtr child = NodeFromAction(m_parameter->funcParam, 0, node);
-				list.push_back(child);
-			}
-			return list;
+			return std::vector<NodePtr>();
 		}
 
-		virtual bool getValue(Codes& result, const NodeFilter& filter) override {
-
+		virtual bool getValue(const NodeFilter& filter) override {
 			NodePtr node = shared_from_this();
 			if (filter(node)) {
 				return true;
 			}
 			else if (m_parent->getType() != TYPE::ROOT) { //向上传递
-				return m_parent->getValue(result, filter);
+				return m_parent->getValue(filter);
 			}
-
 			return true;
 		}
 
-		virtual std::string toString(std::string& pre_actions) override {
+		virtual std::string toString(TriggerFunction* func) override {
 			;
 			NodePtr node = shared_from_this();
 
@@ -65,8 +88,8 @@ namespace mh {
 				bool has_quote_symbol = preset_value.find('`') == 0;
 
 				if (editor.getBaseType(preset_type) == "string") {
-					auto result = world.getConfigData("TriggerParams", value, 2);
-					if (has_quote_symbol) { //如果是未定义类型的 并且是单引号开头的 替换成双引号
+					auto result = world.getConfigData("TriggerParams", value, 2);;
+					if (has_quote_symbol) { 
 						result = string_replaced(result, "`", "\"");
 					}
 					return result;
@@ -86,16 +109,16 @@ namespace mh {
 				//}
 				if (m_parameter->arrayParam) {
 					NodePtr array_node = NodeFramParameter(m_parameter->arrayParam, 0, node);
-					result += "[" + array_node->toString(pre_actions) + "]";
+					result += "[" + array_node->toString(func) + "]";
 				}
 				return result;
 			}
 
 			case Parameter::Type::function:
 			{
-				auto list = getChildList();
-				if (list.size() > 0) {
-					return list[0]->toString(pre_actions);
+				auto node = getParamActionNode();
+				if (node) {
+					return node->toString(func);
 				}
 				return value + "()";
 			}
@@ -132,33 +155,30 @@ namespace mh {
 						value = string_replaced(value, "\\", "\\\\");
 						return "\"" + string_replaced(value, "\"", "\\\"") + "\"";
 					}
-					return value;
 				}
 				}
 			}
 			default:
 				break;
 			}
+			return value;
 		}
 
-	private:
-		ParameterNode(Parameter* parameter, uint32_t index, NodePtr parent) {
-			m_parameter = parameter;
+		virtual std::string getFuncName() override {
+			return std::format("{}{:03d}", getParentNode()->getFuncName(), m_index + 1);
+		}
 
-			m_parent = parent;
+		virtual const std::string& getTriggerVariableName() override {
+			return getParentNode()->getTriggerVariableName();
+		}
 
-			m_index = index;
+		virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) override {
+			return std::string();
+		}
 
-			m_action = parameter->funcParam;
-			m_name = StringPtr(new std::string());
-			m_nameId = 0;
 
-			if (parent->getType() == TYPE::ROOT) {
-				m_root = parent;
-			}
-			else {
-				m_root = parent->getRootNode();
-			}
+		virtual std::string getHandleName() override {
+			return std::string();
 		}
 
 	protected:
@@ -173,3 +193,4 @@ namespace mh {
 		uint32_t m_index;
 	};
 }
+

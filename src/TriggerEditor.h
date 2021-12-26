@@ -36,6 +36,9 @@ public:
 	std::string generate_function_name(std::shared_ptr<std::string> trigger_name) const;
 
 
+	std::string getScriptName(Action* action);
+
+
 	//当触发编辑器转换单个触发为自定义脚本的时候
 	bool onConvertTrigger(Trigger* trigger);
 
