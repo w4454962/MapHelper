@@ -3,27 +3,64 @@
 
 namespace mh {
 
-
-	class YDWEExecuteTriggerMultiple : public ClosureNode {
+	class ForForceMultiple : public ClosureNode {
 	public:
-		REGISTER_FROM_CLOSUER(YDWEExecuteTriggerMultiple)
+		REGISTER_FROM_CLOSUER(ForForceMultiple)
 
+		virtual std::string toString(TriggerFunction* func) override {
 
-			virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) override {
-			switch (type) {
-			case mh::Node::UPVALUE_TYPE::SET_LOCAL:
-				return "YDLocal5Set";
-			case mh::Node::UPVALUE_TYPE::GET_LOCAL:
+			auto& editor = get_trigger_editor();
+			// script_name
+			std::string name = editor.getScriptName(m_action);
+			std::string func_name = getFuncName() + "A";
+
+			std::string result = name + "(";
+
+			for (auto& param : getParameterList()) {
+				result += " " + param->toString(func);
+				result += ",";
+			}
+			result += "function " + func_name + ")";
+
+			Function* code = new Function(func_name, "nothing");
+			func->push(code);
+			for (auto& node : getChildList()) {
+				*func << node->toString(func);
+			}
+			func->pop();
+			func->addFunction(code);
+			return toLine(result, func);
+		}
+
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+			std::string result;
+
+			switch (info.uptype)
+			{
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocal2Set({}, \"{}\", {})", info.type, info.name, info.value);
 				break;
-			case mh::Node::UPVALUE_TYPE::SET_ARRAY:
-				return "YDLocal5ArraySet";
-			case mh::Node::UPVALUE_TYPE::GET_ARRAY:
+			case Upvalue::TYPE::GET_LOCAL:
+				result = std::format("YDLocal2Get({}, \"{}\")", info.type, info.name);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocal2ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = std::format("YDLocal2ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
 				break;
 			default:
 				break;
 			}
-			return std::string();
+			return result;
 		}
+
+	};
+
+
+	class YDWEExecuteTriggerMultiple : public ClosureNode {
+	public:
+		REGISTER_FROM_CLOSUER(YDWEExecuteTriggerMultiple)
 
 		virtual std::string toString(TriggerFunction* func) override {
 
@@ -44,6 +81,30 @@ namespace mh {
 
 			return result;
 		}
+
+
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+			std::string result;
+
+			switch (info.uptype)
+			{
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocal5Set({}, \"{}\", {})", info.type, info.name, info.value);
+				break;
+			case Upvalue::TYPE::GET_LOCAL:
+				result = getParentNode()->getUpvalue(func, info);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocal5ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = getParentNode()->getUpvalue(func, info);
+				break;
+			default:
+				break;
+			}
+			return result;
+		}
 	};
 
 
@@ -51,15 +112,44 @@ namespace mh {
 	public:
 		REGISTER_FROM_CLOSUER(YDWETimerStartMultiple)
 
-			virtual uint32_t getCrossDomainIndex() override { return 0; }
+		virtual uint32_t getCrossDomainIndex() override { return 0; }
 
 		virtual bool isCrossDomain() override { return true; }
 
-		virtual std::string getHandleName() override {
+		std::string getHandleName() {
 			if (getCurrentGroupId() <= getCrossDomainIndex()) {
 				return "ydl_timer";
 			}
 			return "GetExpiredTimer()";
+		}
+
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+			std::string result;
+
+			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
+			if (getCrossDomainIndex() == getCurrentGroupId() && is_get) {	//如果当前是传参区 则使用上一层的局部变量
+				result = getParentNode()->getUpvalue(func, info);
+				return result;
+			}
+
+			switch (info.uptype)
+			{
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocalSet({}, {}, \"{}\", {})", getHandleName(), info.type, info.name, info.value);
+				break;
+			case Upvalue::TYPE::GET_LOCAL:
+				result = std::format("YDLocalGet({}, {}, \"{}\")", getHandleName(), info.type, info.name);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocalArraySet({}, {}, \"{}\", {}, {})", getHandleName(), info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = std::format("YDLocalArrayGet({}, {}, \"{}\", {})", getHandleName(), info.type, info.name, info.index);
+				break;
+			default:
+				break;
+			}
+			return result;
 		}
 
 		virtual std::string toString(TriggerFunction* func) override {
@@ -70,36 +160,71 @@ namespace mh {
 			func->current()->addLocal("ydl_timer", "timer", std::string(), false);
 
 			std::string result;
+			std::string save_state;
 
 			std::string func_name = getFuncName() + "T";
-
+			
 			result += func->getSpaces() + "set ydl_timer = " + params[0]->toString(func) + "\n";
+
+			Function* closure = getBlock(func, func_name, save_state);
+			result += save_state;
 			result += func->getSpaces() + "call TimerStart(ydl_timer, "
 				+ params[1]->toString(func) + ", "
 				+ params[2]->toString(func)
 				+ ", function " + func_name + ")\n";
 
-			Function* closure = getBlock(func, func_name, result);
+		
 
 			func->addFunction(closure);
 
 			return result;
 		}
+
+
 	};
 
 	class YDWERegisterTriggerMultiple : public ClosureNode {
 	public:
 		REGISTER_FROM_CLOSUER(YDWERegisterTriggerMultiple)
 
-			virtual uint32_t getCrossDomainIndex() override { return 1; }
+		virtual uint32_t getCrossDomainIndex() override { return 1; }
 
 		virtual bool isCrossDomain() override { return false; }
 
-		virtual std::string getHandleName() override {
+		std::string getHandleName() {
 			if (getCurrentGroupId() <= getCrossDomainIndex()) {
 				return "ydl_trigger";
 			}
 			return "GetTriggeringTrigger()";
+		}
+
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+			std::string result;
+
+			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
+			if (getCrossDomainIndex() == getCurrentGroupId() && is_get) {	//如果当前是传参区 则使用上一层的局部变量
+				result = getParentNode()->getUpvalue(func, info);
+				return result;
+			}
+
+			switch (info.uptype)
+			{
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocalSet({}, {}, \"{}\", {})", getHandleName(), info.type, info.name, info.value);
+				break;
+			case Upvalue::TYPE::GET_LOCAL:
+				result = std::format("YDLocalGet({}, {}, \"{}\")", getHandleName(), info.type, info.name);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocalArraySet({}, {}, \"{}\", {}, {})", getHandleName(), info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = std::format("YDLocalArrayGet({}, {}, \"{}\", {})", getHandleName(), info.type, info.name, info.index);
+				break;
+			default:
+				break;
+			}
+			return result;
 		}
 
 		virtual std::string toString(TriggerFunction* func) override {
@@ -110,18 +235,23 @@ namespace mh {
 			func->current()->addLocal("ydl_trigger", "trigger", std::string(), false);
 
 			std::string result;
+			std::string save_state;
 
-			std::string func_name = getFuncName() + "T";
-
+			std::string func_name = getFuncName() + "Conditions";
+	
 			result += func->getSpaces() + "set ydl_trigger = " + params[0]->toString(func) + "\n";
+
+			Function* closure = getBlock(func, func_name, save_state);
+			result += save_state;
 			result += func->getSpaces() + "call TriggerAddCondition( ydl_trigger, Condition(function " + func_name + ")\n";
 
-			Function* closure = getBlock(func, func_name, result);
+			
 
 			func->addFunction(closure);
 
 			return result;
 		}
+
 	};
 
 
@@ -129,24 +259,37 @@ namespace mh {
 	public:
 		REGISTER_FROM_CLOSUER(DzTriggerRegisterMouseEventMultiple)
 
-			virtual uint32_t getCrossDomainIndex() override { return 0; }
+		virtual uint32_t getCrossDomainIndex() override { return 0; }
 
 		virtual bool isCrossDomain() override { return true; }
 
-		virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) override {
-			switch (type) {
-			case mh::Node::UPVALUE_TYPE::SET_LOCAL:
-				return "YDLocal6Set";
-			case mh::Node::UPVALUE_TYPE::GET_LOCAL:
-				return "YDLocal6Get";
-			case mh::Node::UPVALUE_TYPE::SET_ARRAY:
-				return "YDLocal6ArraySet";
-			case mh::Node::UPVALUE_TYPE::GET_ARRAY:
-				return "YDLocal6ArrayGet";
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+			std::string result;
+
+			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
+			if (getCrossDomainIndex() == getCurrentGroupId() && is_get) {	//如果当前是传参区 则使用上一层的局部变量
+				result = getParentNode()->getUpvalue(func, info);
+				return result;
+			}
+
+			switch (info.uptype)
+			{
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocal6Set({}, {}, \"{}\", {})", func->current()->getName(), info.type, info.name, info.value);
+				break;
+			case Upvalue::TYPE::GET_LOCAL:
+				result = std::format("YDLocal6Get({}, {}, \"{}\")", func->current()->getName(), info.type, info.name);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocal6ArraySet({}, {}, \"{}\", {}, {})", func->current()->getName(), info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = std::format("YDLocal6ArrayGet({}, {}, \"{}\", {})", func->current()->getName(), info.type, info.name, info.index);
+				break;
 			default:
 				break;
 			}
-			return std::string();
+			return result;
 		}
 
 		virtual std::string toString(TriggerFunction* func) override {
@@ -205,5 +348,6 @@ namespace mh {
 			result += "\n";
 			return  result;
 		}
+
 	};
 }

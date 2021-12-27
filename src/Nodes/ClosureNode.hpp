@@ -78,16 +78,11 @@ namespace mh {
 			//找到上一层闭包 的逆天局部变量表
 			getValue([&](const NodePtr ptr) {
 				if (ptr.get() != this) {
-
 					if (ptr->getType() == TYPE::CLOSURE) {
 						auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
 						prev_upvalue_map_ptr = &node->upvalue_map;
 						return true;
-					} else if(ptr->getType() == TYPE::CLOSURE) {
-						auto node = std::dynamic_pointer_cast<TriggerNode>(ptr);
-						prev_upvalue_map_ptr = &node->upvalue_map;
-						return true;
-					}
+					} 
 				}
 				return false;
 			});
@@ -113,6 +108,14 @@ namespace mh {
 			
 			for (auto&& [n, t] : upvalue_map) {
 				//生成保存状态代码
+				Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
+				upvalue.name = n;
+				upvalue.type = t;
+
+				m_current_group_id = getCrossDomainIndex();
+				upvalue.value = getUpvalue(func, { Upvalue::TYPE::GET_LOCAL, n, t });
+				m_current_group_id = 0;
+				upvalues += func->getSpaces() + "call " + getUpvalue(func, upvalue) + "\n";
 
 				if (prev_upvalue_map_ptr && prev_upvalue_map_ptr != &upvalue_map) { 
 					//将通知上一层闭包 让他们保存状态
@@ -125,21 +128,10 @@ namespace mh {
 			return closure;
 		}
 
-		virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) override {
-			switch (type) {
-			case mh::Node::UPVALUE_TYPE::SET_LOCAL:
-				return "YDLocalSet";
-			case mh::Node::UPVALUE_TYPE::GET_LOCAL:
-				return "YDLocalGet";
-			case mh::Node::UPVALUE_TYPE::SET_ARRAY:
-				return "YDLocalArraySet";
-			case mh::Node::UPVALUE_TYPE::GET_ARRAY:
-				return "YDLocalArrayGet";
-			default:
-				break;
-			}
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
 			return std::string();
 		}
+
 	public:
 		//逆天局部变量表
 		std::map<std::string, std::string> upvalue_map;

@@ -84,14 +84,16 @@ namespace mh {
 		}
 			 
 		std::string toString() {
-			
-
+		
 			std::string result = "function " + m_name + " takes nothing returns " + m_return_type + "\n";
 			//申明局部变量
 			for (auto& local : m_locals) {
 				result += local.toString(false);
 			}
-			std::string release;
+
+			result += insert_begin;
+
+			std::string release = insert_end;
 			for (auto& local : m_locals) {
 				if (!local.is_array && IsHandleType(local.type)) {
 					release += local.toString(true);
@@ -104,8 +106,7 @@ namespace mh {
 				}
 			}
 			if (m_return_type == "nothing") {
-				auto& line = m_lines.back();
-				line += release;
+				m_lines.push_back(release);
 			}
 
 			for (auto& line : m_lines) {
@@ -120,6 +121,10 @@ namespace mh {
 			return m_name;
 		}
 		
+	public:
+		std::string insert_begin;
+		std::string insert_end;
+
 	private:
 		std::string m_name;
 		std::string m_return_type;
@@ -127,6 +132,8 @@ namespace mh {
 		uint32_t m_end_pos;
 		std::vector<uint32_t> m_ends;
 		std::vector<Local> m_locals;
+
+	
 
 		int m_space;
 	};

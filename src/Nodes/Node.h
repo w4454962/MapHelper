@@ -65,19 +65,27 @@ namespace mh {
 		//触发变量名
 		virtual const std::string& getTriggerVariableName() = 0;
 
-		//逆天局部变量类型
-		enum class UPVALUE_TYPE :int {
-			SET_LOCAL,
-			GET_LOCAL,
-			SET_ARRAY,
-			GET_ARRAY,
+	
+		//逆天局部变量的信息
+		struct Upvalue{
+
+			//逆天局部变量类型
+			enum class TYPE :int {
+				SET_LOCAL,
+				GET_LOCAL,
+				SET_ARRAY,
+				GET_ARRAY,
+			};
+
+			TYPE uptype;
+			std::string name;
+			std::string type;
+			std::string value;
+			std::string index;
 		};
 
-		//逆天局部变量的函数名 在不同节点里使用不同
-		virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) = 0;
-
-		//获取触发handle
-		virtual std::string getHandleName() = 0;
+		//生成逆天局部变量代码 
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) = 0;
 	};
 
 

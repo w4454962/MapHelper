@@ -160,25 +160,10 @@ namespace mh {
 		}
 
 
-		virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) override {
-			switch (type) {
-			case mh::Node::UPVALUE_TYPE::SET_LOCAL:
-				return "YDLocal2Set";
-			case mh::Node::UPVALUE_TYPE::GET_LOCAL:
-				return "YDLocal2Get";
-			case mh::Node::UPVALUE_TYPE::SET_ARRAY:
-				return "YDLocal1ArraySet";
-			case mh::Node::UPVALUE_TYPE::GET_ARRAY:
-				return "YDLocal2ArrayGet";
-			default:
-				break;
-			}
-			return std::string();
-		}
-
+		//生成逆天局部变量代码 
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) override {
 	
-		virtual std::string getHandleName() override {
-			return std::string();
+			return getParentNode()->getUpvalue(func, info);
 		}
 
 	protected:

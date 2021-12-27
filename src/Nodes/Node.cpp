@@ -326,35 +326,7 @@ namespace mh {
 	};
 
 
-	class ForForceMultiple : public ActionNode {
-	public:
-		REGISTER_FROM_ACTION(ForForceMultiple)
-
-		virtual std::string toString(TriggerFunction* func) override {
-
-			auto& editor = get_trigger_editor();
-			// script_name
-			std::string name = editor.getScriptName(m_action);
-			std::string func_name = getFuncName() + "A";
-
-			std::string result = name + "(";
-
-			for (auto& param : getParameterList()) {
-				result += " " + param->toString(func);
-				result += ",";
-			}
-			result += "function " + func_name + ")";
-
-			Function* code = new Function(func_name, "nothing");
-			func->push(code);
-			for (auto& node : getChildList()) {
-				*func << node->toString(func);
-			}
-			func->pop();
-			func->addFunction(code);
-			return toLine(result, func);
-		}
-	};
+	
 
 
 	class AndMultiple : public ActionNode {
@@ -859,6 +831,146 @@ namespace mh {
 	};
 
 
+	class YDWEGetAnyTypeLocalVariable : public ActionNode {
+	public:
+		REGISTER_FROM_ACTION(YDWEGetAnyTypeLocalVariable)
+
+		virtual std::string toString(TriggerFunction* func) override {
+			ParameterNodePtr parent = std::dynamic_pointer_cast<ParameterNode>(getParentNode());
+			Parameter* parent_parameter = (Parameter*)parent->getData();
+
+			Upvalue upvalue = { Upvalue::TYPE::GET_LOCAL };
+			upvalue.name = m_action->parameters[0]->value;;
+			upvalue.type = parent_parameter->type_name;;
+
+			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
+			root->hasUpvalue = true;
+
+			//向上传参
+			getValue([&](NodePtr ptr) {
+				if (ptr->getType() == TYPE::CLOSURE) {
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					node->upvalue_map.emplace(upvalue.name, upvalue.type);
+					return true; 
+				} 
+				return false;
+			});
+
+			return getUpvalue(func, upvalue);
+		}
+	};
+
+	
+	class YDWESetAnyTypeLocalVariable : public ActionNode {
+	public:
+		REGISTER_FROM_ACTION(YDWESetAnyTypeLocalVariable)
+
+		virtual std::string toString(TriggerFunction* func) override {
+			auto params = getParameterList();
+
+			Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
+			upvalue.name = m_action->parameters[1]->value;;
+			upvalue.type = m_action->parameters[0]->value + 11;;
+			upvalue.value = params[2]->toString(func);;
+
+			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
+			root->hasUpvalue = true;
+
+			return func->getSpaces() + "call " + getUpvalue(func, upvalue) + "\n";
+		}
+	};
+
+
+	class YDWEGetAnyTypeLocalArray : public ActionNode {
+	public:
+		REGISTER_FROM_ACTION(YDWEGetAnyTypeLocalArray)
+
+		virtual std::string toString(TriggerFunction* func) override {
+
+			ParameterNodePtr parent = std::dynamic_pointer_cast<ParameterNode>(getParentNode());
+			Parameter* parent_parameter = (Parameter*)parent->getData();
+
+			auto params = getParameterList();
+
+			Upvalue upvalue = { Upvalue::TYPE::GET_ARRAY };
+			upvalue.name = m_action->parameters[0]->value;;
+			upvalue.type = parent_parameter->type_name;;
+			upvalue.index = params[1]->toString(func);;
+
+			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
+			root->hasUpvalue = true;
+
+			return getUpvalue(func, upvalue);
+		}
+	};
+
+	class YDWESetAnyTypeLocalArray : public ActionNode {
+	public:
+		REGISTER_FROM_ACTION(YDWESetAnyTypeLocalArray)
+
+		virtual std::string toString(TriggerFunction* func) override {
+			auto params = getParameterList();
+
+			Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
+			upvalue.name = m_action->parameters[1]->value;
+			upvalue.type = m_action->parameters[0]->value + 11;
+			upvalue.index = params[2]->toString(func);
+			upvalue.value = params[3]->toString(func);;
+
+			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
+			root->hasUpvalue = true;
+
+			return func->getSpaces() + "call " + getUpvalue(func, upvalue) + "\n";
+		}
+	};
+
+	//case "YDWEGetAnyTypeLocalVariable"s_hash:
+	//{
+	//	std::string var_name = parameters[0]->value;
+	//	std::string var_type = paramter->type_name;
+	//
+	//	auto mapPtr = node->getLastVarTable();
+	//
+	//	if (mapPtr->find(var_name) != mapPtr->end() && mapPtr->at(var_name) != var_type)
+	//		var_name = "error" + var_name;
+	//	mapPtr->emplace(var_name, var_type);
+	//	output += getLocal(node, var_name, var_type);
+	//	return true;
+	//}
+	//case "YDWEGetAnyTypeLocalArray"s_hash:
+	//{
+	//	std::string var_name = parameters[0]->value;
+	//	std::string var_type = paramter->type_name;
+	//	std::string index = editor.convertParameter(parameters[1], node, pre_actions);
+	//
+	//	output += getLocalArray(node, var_name, var_type, index);
+	//	return true;
+	//}
+		//case "YDWESetAnyTypeLocalVariable"s_hash:
+		//{
+		//
+		//	std::string var_name = parameters[1]->value;
+		//	std::string var_type = parameters[0]->value + 11;
+		//
+		//	std::string var_value = editor.convertParameter(parameters[2], node, pre_actions);
+		//
+		//	output += setLocal(node, var_name, var_type, var_value);
+		//
+		//	return true;
+		//}
+		//case "YDWESetAnyTypeLocalArray"s_hash:
+		//{
+		//
+		//	std::string var_name = parameters[1]->value;
+		//	std::string var_type = parameters[0]->value + 11;
+		//
+		//	std::string index = editor.convertParameter(parameters[2], node, pre_actions);
+		//	std::string var_value = editor.convertParameter(parameters[3], node, pre_actions);
+		//
+		//	output += setLocalArray(node, var_name, var_type, index, var_value);
+		//	return true;
+		//}
+
 	//跨域 让触发器api 在计时器里也能访问到对象
 	class CrossDomain : public ActionNode {
 	public:
@@ -871,10 +983,11 @@ namespace mh {
 			ParameterNodePtr parent = std::dynamic_pointer_cast<ParameterNode>(getParentNode());
 			Parameter* parent_parameter = (Parameter*)parent->getData();
 
-			std::string& var_name = *m_name;
-			std::string var_type = "AUTO_" + editor.getBaseType(parent_parameter->type_name);
-
 			std::string result;
+
+			Upvalue upvalue = { Upvalue::TYPE::GET_ARRAY };
+			upvalue.name = *m_name;
+			upvalue.type = "AUTO_" + editor.getBaseType(parent_parameter->type_name);
 
 			getValue([&](NodePtr ptr) {
 				auto type = ptr->getType();
@@ -882,9 +995,10 @@ namespace mh {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
 					if (node->isCrossDomain()) {
 						//向上投递
-						node->upvalue_map.emplace(var_name, var_type);
+						node->upvalue_map.emplace(upvalue.name, upvalue.type);
 						if (node->getCurrentGroupId() > node->getCrossDomainIndex()) {
 
+							result += func->getSpaces() + node->getUpvalue(func, upvalue) + "\n";
 							return true;
 						}
 					}
@@ -978,6 +1092,11 @@ namespace mh {
 		{"GetEnumUnit",								GetEnumUnit::From },
 		{"GetFilterUnit",							GetEnumUnit::From },
 		{"YDWEForLoopLocVarIndex",					YDWEForLoopLocVarIndex::From },
+
+		{"YDWEGetAnyTypeLocalVariable",				YDWEGetAnyTypeLocalVariable::From},
+		{"YDWESetAnyTypeLocalVariable",				YDWESetAnyTypeLocalVariable::From},
+		{"YDWEGetAnyTypeLocalArray",				YDWEGetAnyTypeLocalArray::From},
+		{"YDWESetAnyTypeLocalArray",				YDWESetAnyTypeLocalArray::From},
 
 		{"GetTriggeringTrigger",					CrossDomain::From},
 		{"GetTriggerEventId",						CrossDomain::From},

@@ -172,14 +172,12 @@ namespace mh {
 			return getParentNode()->getTriggerVariableName();
 		}
 
-		virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) override {
-			return std::string();
+
+		//生成逆天局部变量代码 
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) override {
+			return getParentNode()->getUpvalue(func, info);
 		}
 
-
-		virtual std::string getHandleName() override {
-			return std::string();
-		}
 
 	protected:
 		Parameter* m_parameter;

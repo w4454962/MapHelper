@@ -108,11 +108,19 @@ namespace mh {
 			//action 
 			{
 				auto& actions = func->action;
+				func->push(&actions);
 				for (auto& node : nodes[Action::Type::action]) {
 					actions << node->toString(func);
 				}
+				func->pop();
+				//如果当前触发里有逆天变量的话 则在开头跟结束插入2段代码
+				if (hasUpvalue) {
+					actions.insert_begin += func->getSpaces() + "YDLocalInitialize()\n";
+					actions.insert_end += func->getSpaces() + "YDLocal1Release()\n";
+				}
 			}
 
+			
 			return func->toString();
 		}
 
@@ -125,31 +133,30 @@ namespace mh {
 			return m_trigger_variable_name;
 		}
 
-	
-		virtual std::string getUpvalueScriptName(UPVALUE_TYPE type) override {
-			switch (type) {
-			case mh::Node::UPVALUE_TYPE::SET_LOCAL:
-				return "YDLocal1Set";
-			case mh::Node::UPVALUE_TYPE::GET_LOCAL:
-				return "YDLocal1Get";
-			case mh::Node::UPVALUE_TYPE::SET_ARRAY:
-				return "YDLocal1ArraySet";
-			case mh::Node::UPVALUE_TYPE::GET_ARRAY:
-				return "YDLocal1ArrayGet";
+		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+			std::string result;
+
+			switch (info.uptype)
+			{
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocal1Set({}, \"{}\", {})", info.type, info.name, info.value);
+				break;
+			case Upvalue::TYPE::GET_LOCAL:
+				result = std::format("YDLocal1Get({}, \"{}\")", info.type, info.name);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocal1ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = std::format("YDLocal1ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
+				break;
 			default:
 				break;
 			}
-			return std::string();
+			return result;
 		}
-
-		virtual std::string getHandleName() override {
-			return std::string();
-		}
-
-
 	public:
-		//逆天局部变量表
-		std::map<std::string, std::string> upvalue_map;
+		bool hasUpvalue = false;
 
 	private:
 		TriggerNode(Trigger* trigger) {
