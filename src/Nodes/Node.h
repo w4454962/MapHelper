@@ -82,6 +82,8 @@ namespace mh {
 			std::string type;
 			std::string value;
 			std::string index;
+
+			bool is_func = false;
 		};
 
 		//生成逆天局部变量代码 

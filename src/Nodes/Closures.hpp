@@ -35,8 +35,7 @@ namespace mh {
 		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
 			std::string result;
 
-			switch (info.uptype)
-			{
+			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
 				result = std::format("YDLocal2Set({}, \"{}\", {})", info.type, info.name, info.value);
 				break;
@@ -86,8 +85,7 @@ namespace mh {
 		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
 			std::string result;
 
-			switch (info.uptype)
-			{
+			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
 				result = std::format("YDLocal5Set({}, \"{}\", {})", info.type, info.name, info.value);
 				break;
@@ -132,8 +130,7 @@ namespace mh {
 				return result;
 			}
 
-			switch (info.uptype)
-			{
+			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
 				result = std::format("YDLocalSet({}, {}, \"{}\", {})", getHandleName(), info.type, info.name, info.value);
 				break;
@@ -207,8 +204,7 @@ namespace mh {
 				return result;
 			}
 
-			switch (info.uptype)
-			{
+			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
 				result = std::format("YDLocalSet({}, {}, \"{}\", {})", getHandleName(), info.type, info.name, info.value);
 				break;
@@ -272,8 +268,7 @@ namespace mh {
 				return result;
 			}
 
-			switch (info.uptype)
-			{
+			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
 				result = std::format("YDLocal6Set({}, {}, \"{}\", {})", func->current()->getName(), info.type, info.name, info.value);
 				break;

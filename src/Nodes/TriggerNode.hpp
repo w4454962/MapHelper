@@ -116,7 +116,7 @@ namespace mh {
 				//如果当前触发里有逆天变量的话 则在开头跟结束插入2段代码
 				if (hasUpvalue) {
 					actions.insert_begin += func->getSpaces() + "YDLocalInitialize()\n";
-					actions.insert_end += func->getSpaces() + "YDLocal1Release()\n";
+					actions.insert_end += func->getSpaces() + "call YDLocal1Release()\n";
 				}
 			}
 
@@ -135,6 +135,11 @@ namespace mh {
 
 		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
 			std::string result;
+
+			//传递过来的是一个函数名 
+			if (info.uptype == Upvalue::TYPE::GET_LOCAL && info.is_func) {
+				return info.name + "()";
+			}
 
 			switch (info.uptype)
 			{

@@ -73,7 +73,7 @@ namespace mh {
 				upvalues += node->toString(func);
 			}
 
-			std::map<std::string, std::string>* prev_upvalue_map_ptr = nullptr;
+			std::map<std::string, Upvalue>* prev_upvalue_map_ptr = nullptr;
 
 			//找到上一层闭包 的逆天局部变量表
 			getValue([&](const NodePtr ptr) {
@@ -106,20 +106,21 @@ namespace mh {
 				}
 			}
 			
-			for (auto&& [n, t] : upvalue_map) {
+			for (auto&& [n, v] : upvalue_map) {
 				//生成保存状态代码
 				Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
-				upvalue.name = n;
-				upvalue.type = t;
+				upvalue.name = v.name;
+				upvalue.type = v.type;
+				upvalue.is_func = v.is_func;
 
 				m_current_group_id = getCrossDomainIndex();
-				upvalue.value = getUpvalue(func, { Upvalue::TYPE::GET_LOCAL, n, t });
+				upvalue.value = getUpvalue(func, { Upvalue::TYPE::GET_LOCAL, v.name, v.type, "", "", v.is_func });
 				m_current_group_id = 0;
 				upvalues += func->getSpaces() + "call " + getUpvalue(func, upvalue) + "\n";
 
 				if (prev_upvalue_map_ptr && prev_upvalue_map_ptr != &upvalue_map) { 
 					//将通知上一层闭包 让他们保存状态
-					prev_upvalue_map_ptr->emplace(n, t);
+					prev_upvalue_map_ptr->emplace(n, upvalue);
 				}
 			}
 
@@ -134,7 +135,7 @@ namespace mh {
 
 	public:
 		//逆天局部变量表
-		std::map<std::string, std::string> upvalue_map;
+		std::map<std::string, Upvalue> upvalue_map;
 
 		int m_current_group_id;
 	};

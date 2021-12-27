@@ -850,7 +850,7 @@ namespace mh {
 			getValue([&](NodePtr ptr) {
 				if (ptr->getType() == TYPE::CLOSURE) {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
-					node->upvalue_map.emplace(upvalue.name, upvalue.type);
+					node->upvalue_map.emplace(upvalue.name, upvalue);
 					return true; 
 				} 
 				return false;
@@ -924,53 +924,6 @@ namespace mh {
 		}
 	};
 
-	//case "YDWEGetAnyTypeLocalVariable"s_hash:
-	//{
-	//	std::string var_name = parameters[0]->value;
-	//	std::string var_type = paramter->type_name;
-	//
-	//	auto mapPtr = node->getLastVarTable();
-	//
-	//	if (mapPtr->find(var_name) != mapPtr->end() && mapPtr->at(var_name) != var_type)
-	//		var_name = "error" + var_name;
-	//	mapPtr->emplace(var_name, var_type);
-	//	output += getLocal(node, var_name, var_type);
-	//	return true;
-	//}
-	//case "YDWEGetAnyTypeLocalArray"s_hash:
-	//{
-	//	std::string var_name = parameters[0]->value;
-	//	std::string var_type = paramter->type_name;
-	//	std::string index = editor.convertParameter(parameters[1], node, pre_actions);
-	//
-	//	output += getLocalArray(node, var_name, var_type, index);
-	//	return true;
-	//}
-		//case "YDWESetAnyTypeLocalVariable"s_hash:
-		//{
-		//
-		//	std::string var_name = parameters[1]->value;
-		//	std::string var_type = parameters[0]->value + 11;
-		//
-		//	std::string var_value = editor.convertParameter(parameters[2], node, pre_actions);
-		//
-		//	output += setLocal(node, var_name, var_type, var_value);
-		//
-		//	return true;
-		//}
-		//case "YDWESetAnyTypeLocalArray"s_hash:
-		//{
-		//
-		//	std::string var_name = parameters[1]->value;
-		//	std::string var_type = parameters[0]->value + 11;
-		//
-		//	std::string index = editor.convertParameter(parameters[2], node, pre_actions);
-		//	std::string var_value = editor.convertParameter(parameters[3], node, pre_actions);
-		//
-		//	output += setLocalArray(node, var_name, var_type, index, var_value);
-		//	return true;
-		//}
-
 	//跨域 让触发器api 在计时器里也能访问到对象
 	class CrossDomain : public ActionNode {
 	public:
@@ -985,9 +938,10 @@ namespace mh {
 
 			std::string result;
 
-			Upvalue upvalue = { Upvalue::TYPE::GET_ARRAY };
+			Upvalue upvalue = { Upvalue::TYPE::GET_LOCAL };
 			upvalue.name = *m_name;
-			upvalue.type = "AUTO_" + editor.getBaseType(parent_parameter->type_name);
+			upvalue.type = editor.getBaseType(parent_parameter->type_name);
+			upvalue.is_func = true;
 
 			getValue([&](NodePtr ptr) {
 				auto type = ptr->getType();
@@ -995,16 +949,23 @@ namespace mh {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
 					if (node->isCrossDomain()) {
 						//向上投递
-						node->upvalue_map.emplace(upvalue.name, upvalue.type);
+						node->upvalue_map.emplace(upvalue.name, upvalue);
 						if (node->getCurrentGroupId() > node->getCrossDomainIndex()) {
-
-							result += func->getSpaces() + node->getUpvalue(func, upvalue) + "\n";
+							result += node->getUpvalue(func, upvalue);
 							return true;
 						}
+					} else {
+						return true;
 					}
 				}
 				return false;
 			});
+
+
+			//如果没能从上一层作用域里拿到函数值 则自己调用
+			if (result.empty()) {
+				result = upvalue.name + "()";
+			}
 			return result;
 		}
 	};
@@ -1212,8 +1173,7 @@ namespace mh {
 
 
 	bool IsHandleType(const std::string& type) {
-		switch (hash_(type.c_str()))
-		{
+		switch (hash_(type.c_str())) {
 		case "nothing"s_hash:
 		case "integer"s_hash:
 		case "real"s_hash:
