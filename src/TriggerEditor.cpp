@@ -1,11 +1,11 @@
 ﻿#include "stdafx.h"
-#include "YDTrigger.h"
 #include "TriggerEditor.h"
 #include "WorldEditor.h"
 #include <algorithm>
 #include <assert.h>
 #include <iostream>
 #include <regex>
+#include "Nodes\Node.h"
 
 #include "SaveLoadCheck.h"
 
@@ -26,7 +26,6 @@ TriggerEditor::TriggerEditor()
 	m_configData(nullptr),
 	m_version(7)
 { 
-	space_stack = 0;
 	for (int i = 0; i < 200; i++)
 	{
 		for (int k = 0; k < i; k++)
@@ -64,7 +63,6 @@ void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 		TriggerType* type_data = &data->array[i];
 		m_typesTable[type_data->type] = type_data;
 	}
-	m_ydweTrigger = YDTrigger::getInstance();
 }
 
 void TriggerEditor::saveTriggers(const char* path)
@@ -439,10 +437,10 @@ void TriggerEditor::saveSctipt(const char* path)
 	writer.write_string(seperator);
 
 	
-	if (m_ydweTrigger->isEnable())
-	{
-		m_ydweTrigger->onGlobals(writer);
-	}
+	writer.write_string("#define USE_BJ_ANTI_LEAK\n");
+	writer.write_string("#include <YDTrigger/Import.h>\n");
+	writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
+
 	
 	writer.write_string("globals\n");
 
@@ -489,14 +487,9 @@ void TriggerEditor::saveSctipt(const char* path)
 		}
 	}
 
-	if (m_ydweTrigger->isEnable())
-	{
-		m_ydweTrigger->onEndGlobals(writer);
-	}
-	else
-	{
-		writer.write_string("endglobals\n");
-	}
+	writer.write_string("#include <YDTrigger/Globals.h>\n");
+	writer.write_string("endglobals\n");
+	writer.write_string("#include <YDTrigger/Function.h>\n");
 
 	//开始初始化全局变量
 	writer.write_string("function InitGlobals takes nothing returns nothing\n");
@@ -1305,7 +1298,7 @@ endfunction
 				continue;
 			}
 
-			if (m_initTriggerTable.find(trigger) != m_initTriggerTable.end() || trigger->is_initialize)
+			if (mh::g_initTriggerMap.find(trigger) != mh::g_initTriggerMap.end() || trigger->is_initialize)
 			{
 				std::string trigger_name = std::string(trigger->name);
 				convert_name(trigger_name);
@@ -1316,7 +1309,7 @@ endfunction
 				
 			}
 
-			if (m_ydweTrigger->isEnable() && m_ydweTrigger->hasDisableRegister(trigger))
+			if (mh::g_disableTriggerMap.find(trigger) != mh::g_disableTriggerMap.end())
 			{
 				continue;
 			}
@@ -1615,7 +1608,7 @@ endfunction
 
 	m_initFuncTable.clear();
 
-	m_initTriggerTable.clear();
+	mh::g_initTriggerMap.clear();
 
 }
 
@@ -1624,716 +1617,11 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 {
 	SaveLoadCheck_Reset();
 
-	ActionNodePtr root(new ActionNode(trigger));
+	mh::NodePtr node = mh::NodeFromTrigger(trigger);
 
-	std::string trigger_name = *root->getTriggerNamePtr();
-
-	std::string trigger_variable_name = "gg_trg_" + trigger_name;
-	std::string trigger_action_name = "Trig_" + trigger_name + "Actions";
-
-
-	std::string events;
-	std::string conditions;
-	std::string pre_actions;
-	std::string actions;
-	std::string action_code;
-
-	events += "function InitTrig_" + trigger_name + " takes nothing returns nothing\n";
-	events += "\tset " + trigger_variable_name + " = CreateTrigger()\n";
-	if (trigger->is_disable_init)
-	{
-		events += "\tcall DisableTrigger(" + trigger_variable_name + ")\n";
-	}
-
-	space_stack++;
-
-	m_initFuncTable["InitTrig_" + trigger_name] = true;
-
-	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
-
-	if (m_ydweTrigger->isEnable())
-	{
-		m_ydweTrigger->onActionsToFuncBegin(actions, root);
-
-		m_ydweTrigger->onRegisterTrigger(events, root->getName(), trigger_variable_name);
-	}
-	 
-	std::vector<ActionNodePtr> list;
-	root->getChildNodeList(list);
-
-	bool firstBoolexper = true;
-	  
-	// 逐条解析动作
-	for (auto& node : list)
-	{
-		Action* action = node->getAction();
-		std::string name = action->name;
-
-		switch (node->getActionType())
-		{
-		case Action::Type::event:
-			if (m_ydweTrigger->isEnable())
-			{
-				//返回false 跳过注册事件
-				if (!m_ydweTrigger->onRegisterEvent(events,node))
-					continue;
-
-			}
-			if (node->getNameId() == "MapInitializationEvent"s_hash )
-			{
-				m_initTriggerTable[trigger] = true;
-				continue;
-			}
-			events += "\tcall " + getBaseName(node) + "(" + trigger_variable_name;
-
-			for (size_t k = 0; k < action->param_count; k++)
-			{
-				Parameter* param = action->parameters[k];
-
-
-				auto type { std::string(param->type_name) };
-
-				events += ", ";
-				events += convertParameter(param, node, pre_actions);
-			}
-			events += ")\n";
-			if (m_ydweTrigger->isEnable())
-			{
-				m_ydweTrigger->onRegisterEvent2(events,node);
-			}
-
-			break;
-		case Action::Type::condition:
-			//conditions += "\tif (not (" + convertAction(node, pre_actions, true) + ")) then\n";
-			//conditions += "\treturn false\n";
-			//conditions += "\tendif\n";
-			if (firstBoolexper) {
-				firstBoolexper = false;
-				conditions += "\treturn ";
-			}
-			else
-				conditions += " and ";
-			conditions += "(" + convertAction(node, pre_actions, true) + ")";
-			break;
-		case Action::Type::action:
-			space_stack = 1;
-			action_code += spaces[space_stack];
-
-			action_code += convertAction(node, pre_actions, false) + "\n";
-			break;
-		default: 
-			break;
-		}
-	}
-
-	if (m_ydweTrigger->isEnable())
-	{
-		actions += action_code;
-		m_ydweTrigger->onActionsToFuncEnd(actions,root);
-	}
-	else
-	{
-		actions += action_code;
-	}
-	
-
-	actions += "endfunction\n\n";
-
-	if (!conditions.empty()) {
-		conditions = "function Trig_" + trigger_name + "_Conditions takes nothing returns boolean\n" + conditions + "\n";
-		conditions += "endfunction\n\n";
-
-		events += "\tcall TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
-	}
-
-	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
-	events += "endfunction\n\n";
-
-	std::string logo = base::a2u("//自定义jass生成器 作者： 阿七  \n//有bug到魔兽地图编辑器吧 @w4454962 \n//技术交流群：1019770872\n");
-
-
-	return seperator + "// Trigger: " + root->getName() + "\n" + logo + seperator + pre_actions + conditions + actions + seperator + events;
+	return node->toString();
 }
 
-
-std::string TriggerEditor::convertAction(ActionNodePtr node, std::string& pre_actions, bool nested)
-{
-	Action* action = node->getAction();
-
-	if (!action->enable || !((int)action->group_id < node->getParentGroupCount()))
-		return "";
-
-	std::string output;
-
-	bool is_loopa = false;
-	bool flag = false;
-
-	Parameter** parameters = action->parameters;
-
-	std::vector<ActionNodePtr> list;
-
-	switch (node->getNameId())
-	{
-
-	case "WaitForCondition"s_hash:
-	{
-		output += "loop\n";
-		output += spaces[++space_stack];
-		output += "exitwhen (" + convertParameter(parameters[0], node, pre_actions) + ")\n";
-		output += spaces[space_stack];
-		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + convertParameter(parameters[1], node, pre_actions) + "))\n";
-		output += spaces[--space_stack];
-		output += "endloop";
-		return output;
-	}
-
-	case "ForLoopAMultiple"s_hash:
-		is_loopa = true;
-	case "ForLoopBMultiple"s_hash:
-	{
-		std::string loop_index = is_loopa ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
-		std::string loop_index_end = is_loopa ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
-
-		output += "set " + loop_index + "=" + convertParameter(parameters[0], node, pre_actions) + "\n";
-		output += spaces[space_stack];
-		output += "set " + loop_index_end + "=" + convertParameter(parameters[1], node, pre_actions) + "\n";
-		output += spaces[space_stack];
-		output += "loop\n";
-		output += spaces[++space_stack];
-		output += "exitwhen " + loop_index + " > " + loop_index_end + "\n";
-		
-		node->getChildNodeList(list);
-
-		for (auto& child : list)
-		{
-			output += spaces[space_stack];
-			output += convertAction(child, pre_actions, false) + "\n";
-		}
-		output += spaces[space_stack];
-		output += "set " + loop_index + " = " + loop_index + " + 1\n";
-		output += spaces[--space_stack];
-		output += "endloop\n";
-		return output;
-	}
-	  
-	case "ForLoopVarMultiple"s_hash:
-	{
-		std::string variable = convertParameter(parameters[0], node, pre_actions);
-		output += "set " + variable + " = ";
-		output += convertParameter(parameters[1], node, pre_actions) + "\n";
-		output += spaces[space_stack];
-		output += "loop\n";
-		output += spaces[++space_stack];
-		output += "exitwhen " + variable + " > " + convertParameter(parameters[2], node, pre_actions) + "\n";
-		
-		node->getChildNodeList(list);
-
-		for (auto& child : list)
-		{
-			output += spaces[space_stack];
-			output += convertAction(child, pre_actions, false) + "\n";
-		}
-		output += spaces[space_stack];
-		output += "set " + variable + " = " + variable + " + 1\n";
-		output += spaces[--space_stack];
-		output += "endloop\n";
-		return output;
-	} 
-	
-	case "IfThenElseMultiple"s_hash:
-	{
-		std::string iftext;
-		std::string thentext;
-		std::string elsetext;
-
-
-		bool firstBoolexper = true;
-
-		space_stack++;
-
-		node->getChildNodeList(list);
-
-		for (auto& child : list)
-		{
-			switch (child->getActionType())
-			{
-			case Action::Type::condition:
-			{
-				if (firstBoolexper)
-				{
-					firstBoolexper = false;
-				}
-				else
-				{
-					iftext += " and ";
-				}
-				iftext += "(" + convertAction(child, pre_actions, true) + ")";
-				break;
-			}
-			case Action::Type::action:
-			{
-				auto action = child->getAction();
-				if (action->group_id == 1)
-				{
-					thentext += spaces[space_stack];
-					thentext += convertAction(child, pre_actions, false) + "\n";
-				}
-				else
-				{
-					elsetext += spaces[space_stack];
-					elsetext += convertAction(child, pre_actions, false) + "\n";
-				}
-				break;
-			}
-			default:
-				break;
-			}
-		}
-		if (iftext.empty())
-		{
-			iftext += "true";
-		}
-		space_stack--;
-		output += "if (";
-		output += iftext;
-		output += ") then\n";
-		output += thentext;
-		output += spaces[space_stack];
-		output += "else\n";
-		output += elsetext;
-		output += spaces[space_stack];
-		output += "endif";
-
-		return output;
-	}
-
-	case "ForForceMultiple"s_hash:
-	case "ForGroupMultiple"s_hash:
-
-	case "EnumDestructablesInRectAllMultiple"s_hash:
-	case "EnumDestructablesInCircleBJMultiple"s_hash:
-	case "EnumItemsInRectBJMultiple"s_hash:
-	{
-		const std::string function_name = generate_function_name(node->getTriggerNamePtr());
-		node->setFunctionNamePtr(function_name);
-		auto name = std::string(node->getName());
-
-		// Remove multiple
-		output += "call " + name.substr(0, name.length() - 8) + "(";
-		
-		for (size_t k = 0; k < action->param_count; k++)
-		{
-			Parameter* param = action->parameters[k];
-			if (strcmp(param->type_name, "code") != 0)
-			{
-				output += convertParameter(param, node, pre_actions);
-				output += ",";
-			}
-		}
-		output += " function " + function_name + ")\n";
-
-
-		std::string toto;
-
-		int stack = space_stack;
-		space_stack = 1;
-
-		node->getChildNodeList(list);
-
-		for (auto& child : list)
-		{
-			toto += spaces[space_stack];
-			toto += convertAction(child, pre_actions, false) + "\n";
-		}
-
-		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-		if (m_ydweTrigger->isEnable())
-		{
-			m_ydweTrigger->onActionsToFuncBegin(pre_actions, node);
-			pre_actions += toto;
-			m_ydweTrigger->onActionsToFuncEnd(pre_actions, node);
-		}
-		else
-		{
-			pre_actions += toto;
-		}
-	
-		pre_actions += "\nendfunction\n";
-		space_stack = stack;
-		return output;
-	}
-
-	case "AndMultiple"s_hash:
-	{
-
-		std::string iftext;
-
-		node->getChildNodeList(list);
-		size_t i = 0;
-		for (auto& child : list)
-		{
-			iftext += "(" + convertAction(child, pre_actions, true) + ")";
-			if (++i < list.size())
-			{
-				iftext += " and ";
-			}
-		}
-		if (i == 0)
-		{
-			return "true";
-		}
-		return iftext;
-	}
-
-	case "OrMultiple"s_hash:
-	{
-
-		std::string iftext;
-
-		node->getChildNodeList(list);
-		size_t i = 0;
-		for (auto& child : list)
-		{
-			iftext += "(" + convertAction(child, pre_actions, true) + ")";
-			if (++i < list.size())
-			{
-				iftext += " or ";
-			}
-		}
-		if (i == 0)
-		{
-			return "true";
-		}
-		return iftext;
-	}
-
-
-	case "SetVariable"s_hash:
-	{
-		const std::string first = convertParameter(parameters[0], node, pre_actions);
-		const std::string second = convertParameter(parameters[1], node, pre_actions);
-		return "set " + first + " = " + second;
-	}
-	case "AddTriggerEvent"s_hash:
-	{
-		
-		Action* event_action = parameters[1]->funcParam;
-		auto trg = convertParameter(parameters[0], node, pre_actions);
-		auto event_name = std::string(event_action->name);
-
-		auto events = "\tcall " + event_name + "(" + trg;
-
-		auto temp{ std::make_shared<ActionNode>(event_action, node) };
-		for (size_t k = 0; k < event_action->param_count; k++)
-		{
-			auto param = event_action->parameters[k];
-
-
-			std::string type = param->type_name;
-
-			events += ", ";
-			events += convertParameter(param, temp, pre_actions);
-		}
-		events += ")\n";
-
-		return events;
-	}
-
-	}
-
-	if (m_ydweTrigger->isEnable())
-	{
-		std::string actions;
-		if (m_ydweTrigger->onActionToJass(actions, node, pre_actions, nested))
-		{
-			return actions;
-		}
-	}
-
-	return convertCall(node, pre_actions, !nested);
-}
-
-std::string TriggerEditor::convertParameter(Parameter* parameter, ActionNodePtr node, std::string& pre_actions, bool add_call) 
-{
-	if (parameter == nullptr)
-	{
-		return "";
-	}
-	if (m_ydweTrigger->isEnable())
-	{
-		std::string output;
-
-		if (m_ydweTrigger->onParamterToJass(parameter, node, output, pre_actions, add_call))
-		{
-			return output;
-		}
-	}
-	
-
-	if (parameter->funcParam) 
-	{
-		auto childNode{ std::make_shared<ActionNode>(parameter->funcParam, parameter, node) };
-		return convertAction(childNode, pre_actions, !add_call);
-	}
-	auto value = std::string(parameter->value);
-
-	switch (parameter->typeId)
-	{
-	case Parameter::Type::invalid:
-	
-		return "";
-	case Parameter::Type::preset: 
-		{
-			auto& world = get_world_editor();
-			const auto preset_type = world.getConfigData("TriggerParams", value, 1);
-
-			if (getBaseType(preset_type) == "string" || preset_type == "OrderType") {
-				return string_replaced(world.getConfigData("TriggerParams",value, 2), "`", "\"");
-			}
-			return world.getConfigData("TriggerParams", value, 2);
-		}
-	case Parameter::Type::function:
-		return value + "()";
-	case Parameter::Type::variable:
-		{
-			 
-			auto output = value;
-
-			if (!output._Starts_with("gg_")) 
-			{
-				output = "udg_" + output;
-			}
-
-			if (value == "Armagedontimerwindow") 
-			{  
-				puts("s");
-			}
-			if (parameter->arrayParam) {
-				output += "[" + convertParameter(&parameter->arrayParam[0], node, pre_actions) + "]";
-			}
-			return output;
-		}
-	case Parameter::Type::string:
-		{
-			
-			uint32_t is_import_path = 0;
-			auto type{ std::string (parameter->type_name)};
-
-			auto it = m_typesTable.find(type);
-			if (it != m_typesTable.end())
-				is_import_path = it->second->is_import_path;;
-
-			if (type == "scriptcode")
-			{
-				return value;
-			}
-			if (type == "HotKey" &&  value == "HotKeyNull") {
-				return "0";
-			}
-			if (is_import_path || getBaseType(type) == "string") {
-				value = string_replaced(value, "\\", "\\\\");
-				return "\"" + string_replaced(value, "\"", "\\\"") + "\"";
-			}
-			switch (hash_(type.c_str()))
-			{
-			case "abilcode"s_hash:
-			case "heroskillcode"s_hash:
-			case "buffcode"s_hash:
-			case "destructablecode"s_hash:
-			case "itemcode"s_hash:
-			//case "ordercode"s_hash:
-			case "techcode"s_hash:
-			// 处理下装饰物没有判断的问题
-			case "doodadcode"s_hash:
-			case "unitcode"s_hash:
-				return "'" + value + "'";
-			default:
-				return value;
-			}
-		}
-	default: 
-		break;
-	}
-	assert(false);
-	return "";
-}
-
-
-
-std::string TriggerEditor::convertCall(ActionNodePtr node, std::string& pre_actions, bool add_call)
-{
-	std::string output;
-
-	auto action = node->getAction();
-	auto parameters = action->parameters;
-
-	switch (hash_(action->name))
-	{
-
-	case "CommentString"s_hash:
-	{
-		return "//" + convertParameter(parameters[0], node, pre_actions);
-	}
-
-	case "CustomScriptCode"s_hash:
-	{
-		return parameters[0]->value;
-	}
-
-	case "GetTriggerName"s_hash:
-	{
-		return "\"" + *node->getTriggerNamePtr() + "\"";
-	}
-	case "OperatorString"s_hash:
-	{
-		output += "(" + convertParameter(parameters[0], node, pre_actions);
-		output += " + ";
-		output += convertParameter(parameters[1], node, pre_actions) + ")";
-		return output;
-	}
-	case "ForLoopA"s_hash:
-	case "ForLoopB"s_hash:
-	{
-		std::string variable = "bj_forLoopAIndex";
-		if (node->getNameId() == "ForLoopB"s_hash)
-		{
-			variable = "bj_forLoopBIndex";
-		}
-		output += "set " + variable + " = ";
-		output += convertParameter(parameters[0], node, pre_actions) + "\n";
-		output += spaces[space_stack];
-		output += "loop\n";
-		output += spaces[space_stack + 1];
-		output += "exitwhen " + variable + " > " + convertParameter(parameters[1], node, pre_actions) + "\n";
-		output += spaces[space_stack + 1];
-		output += convertParameter(parameters[2], node, pre_actions, true) + "\n";
-		output += spaces[space_stack + 1];
-		output += "set " + variable + " = " + variable + " + 1\n";
-		output += spaces[space_stack];
-		output += "endloop\n";
-		return output;
-	}
-
-	case "ForLoopVar"s_hash:
-	{
-		//std::string variable = "udg_" + convertParameter(parameters[0], trigger_name, pre_actions, "integer");
-		std::string variable = convertParameter(parameters[0], node, pre_actions);
-
-		output += "set " + variable + " = ";
-		output += convertParameter(parameters[1], node, pre_actions) + "\n";
-		output += spaces[space_stack];
-		output += "loop\n";
-		output += spaces[space_stack + 1];
-		output += "exitwhen " + variable + " > " + convertParameter(parameters[2], node, pre_actions) + "\n";
-		output += spaces[space_stack + 1];
-		output += convertParameter(parameters[3], node, pre_actions, true) + "\n";
-		output += spaces[space_stack + 1];
-		output += "set " + variable + " = " + variable + " + 1\n";
-		output += spaces[space_stack];
-		output += "endloop\n";
-		return output;
-	}
-
-	case "IfThenElse"s_hash:
-	{
-		std::string thentext;
-		std::string elsetext;
-		
-
-		output += "if (" + convertParameter(parameters[0], node, pre_actions) + ") then\n";
-		ActionNodePtr child_then(new ActionNode(parameters[1]->funcParam, node));
-		ActionNodePtr child_else(new ActionNode(parameters[2]->funcParam, node));
-
-		output += spaces[space_stack + 1];
-		output += convertAction(child_then, pre_actions, false) + "\n";
-		output += spaces[space_stack];
-		output += "else\n";
-		output += spaces[space_stack + 1];
-		output += convertAction(child_else, pre_actions, false) + "\n";
-		output += spaces[space_stack];
-		output += "endif";
-
-		return output;
-	}
-
-	case "GetBooleanAnd"s_hash:
-	{
-
-		auto first_parameter = convertParameter(parameters[0], node, pre_actions);
-		auto second_parameter = convertParameter(parameters[1], node, pre_actions);
-
-		return "(" + first_parameter + " and " + second_parameter + ")";
-	}
-
-	case "GetBooleanOr"s_hash:
-	{
-		auto first_parameter = convertParameter(parameters[0], node, pre_actions);
-		auto second_parameter = convertParameter(parameters[1], node, pre_actions);
-
-		return "(" + first_parameter + " or " + second_parameter + ")";
-		
-	}
-
-	case "OperatorInt"s_hash:
-	case"OperatorReal"s_hash:
-	{
-		output += "(" + convertParameter(parameters[0], node, pre_actions);
-		output += " " + convertParameter(parameters[1], node, pre_actions) + " ";
-		output += convertParameter(parameters[2], node, pre_actions) + ")";
-		return output;
-	}
-	default:
-		break;
-	}
-
-	if (node->getName().substr(0, 15) == "OperatorCompare") {
-		output += convertParameter(parameters[0], node, pre_actions);
-		output += " " + convertParameter(parameters[1], node, pre_actions) + " ";
-		output += convertParameter(parameters[2], node, pre_actions);
-		return output;
-	}
-	auto size = action->param_count;
-
-	for (size_t k = 0; k < size; k++) {
-		auto param = parameters[k];
-
-		const auto child_type = std::string(param->type_name);
-		 
-		if (child_type == "boolexpr") {
-			const auto function_name = generate_function_name(node->getTriggerNamePtr());
-			node->setFunctionNamePtr(function_name);
-			auto tttt = convertParameter(param, node, pre_actions);
-
-			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
-			pre_actions += "\treturn " + tttt + "\n";
-			pre_actions += "endfunction\n\n";
-
-			output += "Condition(function " + function_name + ")";
-		}
-		else if (child_type == "code")
-		{
-			const auto function_name = generate_function_name(node->getTriggerNamePtr());
-			node->setFunctionNamePtr(function_name);
-			auto childNode{ std::make_shared<ActionNode>(param->funcParam, param, node) };
-
-			auto tttt = convertAction(childNode, pre_actions, false);
-
-			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-			pre_actions += "\t" + tttt + "\n";
-			pre_actions += "endfunction\n\n";
-			output += "function " + function_name;
-		}
-		else {
-			output += convertParameter(param, node, pre_actions);
-		}
-
-		if (k < size - 1) {
-			output += ", ";
-		}
-	}
-
-	return (add_call ? "call " : "") + getBaseName(node) + "(" + output + ")";
-}
 
 TriggerType* TriggerEditor::getTypeData(const std::string& type)
 {
@@ -2358,27 +1646,6 @@ std::string TriggerEditor::getBaseType(const std::string& type) const
 	return type;
 }
 
-std::string TriggerEditor::getBaseName(ActionNodePtr node)
-{
-	auto name = node->getName();
-	const auto key{ std::string("_" + name + "_ScriptName") };
-	std::string parent_key;
-	if (node->getActionType() == Action::event)
-	{
-		parent_key = "TriggerEvents";
-	}
-	else 
-	{ 
-		parent_key = "TriggerActions";
-	}
-	auto& v_we = get_world_editor();
-	auto func_name = v_we.getConfigData(parent_key, key, 0);
-	if (func_name.length() > 0)
-	{
-		return func_name;
-	}
-	return name;
-}
 
 std::string TriggerEditor::getScriptName(Action* action)
 {
@@ -2397,33 +1664,23 @@ std::string TriggerEditor::getScriptName(Action* action)
 	return name;
 }
 
-std::string TriggerEditor::generate_function_name(std::shared_ptr<std::string> trigger_name) const {
-	const auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	return "Trig_" + *trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
-}
-
-
-#include "Nodes\Node.h"
 
 bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {
 	if (trigger->is_custom_srcipt || trigger->is_comment)
 		return false;
 
-	mh::NodePtr node = mh::NodeFromTrigger(trigger);
-
 	std::string pre_actions;
 
-	print("%s\n", base::u2a(node->toString()).c_str());
 
 	auto& world = get_world_editor();
 
 	const auto script = convertTrigger(trigger);
 	
-	if (m_initTriggerTable.find(trigger) != m_initTriggerTable.end())
+	if (mh::g_initTriggerMap.find(trigger) != mh::g_initTriggerMap.end())
 	{
 		trigger->is_initialize = 1;
-		m_initTriggerTable.erase(trigger);
+		mh::g_initTriggerMap.erase(trigger);
 	}
 
 	trigger->is_custom_srcipt = 1;

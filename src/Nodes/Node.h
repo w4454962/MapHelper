@@ -87,7 +87,7 @@ namespace mh {
 		};
 
 		//生成逆天局部变量代码 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) = 0;
+		virtual std::string getUpvalue(const Upvalue& info) = 0;
 	};
 
 
@@ -104,7 +104,6 @@ namespace mh {
 	extern bool g_YDTrigger;
 
 	extern std::unordered_map<Trigger*, bool> g_initTriggerMap;
-
 	extern std::unordered_map<Trigger*, bool> g_disableTriggerMap;
 
 	extern std::unordered_map<std::string, MakeNode> MakeActionNodeMap;

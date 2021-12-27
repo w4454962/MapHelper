@@ -60,7 +60,10 @@ namespace mh {
 		}
 
 		void addLocal(const std::string& name, const std::string type, const std::string& value = std::string(), bool is_array = false) {
-			m_locals.push_back( Local({ name, type, value, is_array}));
+			if (m_locals_map.find(name) == m_locals_map.end()) {
+				m_locals.push_back(Local({ name, type, value, is_array }));
+				m_locals_map[name] = true;
+			}
 		}
 
 		void addSpace() {
@@ -132,7 +135,7 @@ namespace mh {
 		uint32_t m_end_pos;
 		std::vector<uint32_t> m_ends;
 		std::vector<Local> m_locals;
-
+		std::map<std::string, bool> m_locals_map;
 	
 
 		int m_space;
@@ -145,7 +148,7 @@ namespace mh {
 	public:
 		TriggerFunction(const std::string& name, const std::string& trigger_name) 
 			:event("Init" + name, "nothing"),
-			condition(name + "_Conditions", "boolean"),
+			condition(name + "Conditions", "boolean"),
 			action(name + "Actions", "nothing")
 		{
 			m_comment = seperator;
@@ -207,11 +210,12 @@ namespace mh {
 
 			result = m_comment;
 			
-			for(auto& func: m_func_list){
-				result += func->toString();
-			}
 			if (!condition.isEmpty()) {
 				result += condition.toString();
+			}
+
+			for(auto& func: m_func_list){
+				result += func->toString();
 			}
 			result += action.toString();
 			result += seperator;

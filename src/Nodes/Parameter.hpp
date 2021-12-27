@@ -174,8 +174,8 @@ namespace mh {
 
 
 		//生成逆天局部变量代码 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) override {
-			return getParentNode()->getUpvalue(func, info);
+		virtual std::string getUpvalue(const Upvalue& info) override {
+			return getParentNode()->getUpvalue(info);
 		}
 
 

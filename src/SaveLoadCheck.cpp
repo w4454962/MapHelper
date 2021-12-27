@@ -106,13 +106,13 @@ void SaveLoadCloseLog()
 	g_SaveLoadCheck.CloseLog();
 }
 
-void SaveLoadError(ActionNodePtr node, std::string name, std::string type)
-{
-	const size_t len = 0x400;
-	auto buffer = std::vector<char>(len);
-	std::string fmt = base::a2u("YDTrigger Warning: 触发器\"%s\": 你使用的局部变量\"loc_%s\"类型为\"%s\",但是在同触发器其他地方声明类型为\"%s\"");
-	sprintf_s(buffer.data(), len, fmt.c_str(), node->getRootNode()->getName().c_str(), name.c_str(), type.c_str(), SaveLoadCheck_Get(name).c_str());
-	auto log = std::string(buffer.data());
-	print("%s\n", base::u2a(log).c_str());
-	g_SaveLoadCheck.WriteLog(log);
-}
+//void SaveLoadError(ActionNodePtr node, std::string name, std::string type)
+//{
+//	const size_t len = 0x400;
+//	auto buffer = std::vector<char>(len);
+//	std::string fmt = base::a2u("YDTrigger Warning: 触发器\"%s\": 你使用的局部变量\"loc_%s\"类型为\"%s\",但是在同触发器其他地方声明类型为\"%s\"");
+//	sprintf_s(buffer.data(), len, fmt.c_str(), node->getRootNode()->getName().c_str(), name.c_str(), type.c_str(), SaveLoadCheck_Get(name).c_str());
+//	auto log = std::string(buffer.data());
+//	print("%s\n", base::u2a(log).c_str());
+//	g_SaveLoadCheck.WriteLog(log);
+//}

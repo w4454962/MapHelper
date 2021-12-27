@@ -29,12 +29,14 @@ namespace mh {
 		REGISTER_FROM_PARAM(BoolexprNode)
 
 		virtual std::string toString(TriggerFunction* func) override {
-			std::string func_name = getFuncName();
-			auto& code = func->pushFunction(func_name, "boolean");
-			func->push(&code);
-			code.line(func->getSpaces() + "return (" + ParameterNode::toString(func) + ")\n", true);
-			func->pop();
-			return  "Condition(function " + func_name + ")";;
+			NodePtr node = shared_from_this();
+
+			NodePtr param = getParamActionNode();
+
+			//创建一个闭包
+			SigleNodeClosurePtr closure = SigleNodeClosurePtr(new SigleNodeClosure(param, "boolean", node));
+
+			return  "Condition(" + closure->toString(func) + ")";;
 		}
 	};
 
@@ -43,15 +45,15 @@ namespace mh {
 		REGISTER_FROM_PARAM(CodeNode)
 
 		virtual std::string toString(TriggerFunction* func) override {
+			NodePtr node = shared_from_this();
 
-			auto node = getParamActionNode();
-			node->setType(TYPE::CALL);
-			std::string func_name = getFuncName();
-			auto& code = func->pushFunction(func_name, "nothing");
-			func->push(&code);
-			code.line(node->toString(func), true);
-			func->pop();
-			return "function " + func_name;
+			NodePtr param = getParamActionNode();
+			param->setType(TYPE::CALL);
+			//创建一个闭包
+			SigleNodeClosurePtr closure = SigleNodeClosurePtr(new SigleNodeClosure(param, "nothing", node));
+
+
+			return closure->toString(func);
 		}
 	};
 
@@ -155,11 +157,27 @@ namespace mh {
 		virtual std::string toString(TriggerFunction* func) override {
 			std::string result;
 			auto params = getParameterList();
-			result += func->getSpaces() + "if (" + params[0]->toString(func) + ") then\n";
-			result += func->getSpaces(1) + params[1]->toString(func) + "\n";
+
+			auto node0 = (std::dynamic_pointer_cast<ParameterNode>(params[0]))->getParamActionNode();
+			auto node1 = (std::dynamic_pointer_cast<ParameterNode>(params[1]))->getParamActionNode();
+			auto node2 = (std::dynamic_pointer_cast<ParameterNode>(params[2]))->getParamActionNode();
+
+			node1->setType(TYPE::CALL);
+			node2->setType(TYPE::CALL);
+
+	
+		
+			result += func->getSpaces() + "if (" + node0->toString(func) + ") then\n";
+			func->addSpace();
+			result += node1->toString(func);
+			func->subSpace();
 			result += func->getSpaces() + "else\n";
-			result += func->getSpaces(1) + params[2]->toString(func) + "\n";
+			func->addSpace();
+			result += node2->toString(func);
+			func->subSpace();
 			result += func->getSpaces() + "endif\n";
+		;
+		
 			return result;
 		}
 	};
@@ -314,7 +332,9 @@ namespace mh {
 				elsetext += node->toString(func);
 			}
 			func->subSpace();
-
+			if (iftext.empty()) {
+				iftext = "true";
+			}
 			result += func->getSpaces() + "if (" + iftext + ") then\n";
 			result += thentext;
 			result += func->getSpaces() + "else\n";
@@ -616,10 +636,9 @@ namespace mh {
 
 			std::string result;
 			if (in_block) {
-				result = ActionNode::toString(func);
-			}
-			else {
 				result += "不要在逆天计时器/逆天触发器内使用等待";
+			} else {
+				result = ActionNode::toString(func);
 			}
 
 			if (parent.get() && parent->getType() == TYPE::ROOT) {
@@ -856,7 +875,7 @@ namespace mh {
 				return false;
 			});
 
-			return getUpvalue(func, upvalue);
+			return getUpvalue(upvalue);
 		}
 	};
 
@@ -876,7 +895,7 @@ namespace mh {
 			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
 			root->hasUpvalue = true;
 
-			return func->getSpaces() + "call " + getUpvalue(func, upvalue) + "\n";
+			return func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
 		}
 	};
 
@@ -900,7 +919,7 @@ namespace mh {
 			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
 			root->hasUpvalue = true;
 
-			return getUpvalue(func, upvalue);
+			return getUpvalue(upvalue);
 		}
 	};
 
@@ -920,7 +939,7 @@ namespace mh {
 			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
 			root->hasUpvalue = true;
 
-			return func->getSpaces() + "call " + getUpvalue(func, upvalue) + "\n";
+			return func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
 		}
 	};
 
@@ -951,7 +970,7 @@ namespace mh {
 						//向上投递
 						node->upvalue_map.emplace(upvalue.name, upvalue);
 						if (node->getCurrentGroupId() > node->getCrossDomainIndex()) {
-							result += node->getUpvalue(func, upvalue);
+							result += node->getUpvalue(upvalue);
 							return true;
 						}
 					} else {

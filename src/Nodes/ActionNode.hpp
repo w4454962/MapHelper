@@ -120,8 +120,6 @@ namespace mh {
 				result = "call ";
 			}
 
-			NodePtr node = shared_from_this();
-
 			auto& editor = get_trigger_editor();
 			std::string name = editor.getScriptName(m_action);
 
@@ -161,9 +159,9 @@ namespace mh {
 
 
 		//生成逆天局部变量代码 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) override {
+		virtual std::string getUpvalue(const Upvalue& info) override {
 	
-			return getParentNode()->getUpvalue(func, info);
+			return getParentNode()->getUpvalue(info);
 		}
 
 	protected:

@@ -40,9 +40,6 @@
     <ClCompile Include="3rd\Detours\src\modules.cpp">
       <Filter>3rd\detours</Filter>
     </ClCompile>
-    <ClCompile Include="src\ActionNode.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\dllmain.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -56,9 +53,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\WorldEditor.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\YDTrigger.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\inline.cpp">
@@ -78,9 +72,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\ActionNode.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\MapHelper.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -91,9 +82,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\WorldEditor.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\YDTrigger.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\BinaryWriter.h">

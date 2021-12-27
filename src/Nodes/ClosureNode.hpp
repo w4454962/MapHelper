@@ -35,7 +35,7 @@ namespace mh {
 			return std::string();
 		}
 	
-		int getCurrentGroupId() {
+		uint32_t getCurrentGroupId() {
 			return m_current_group_id;
 		}
 
@@ -114,9 +114,9 @@ namespace mh {
 				upvalue.is_func = v.is_func;
 
 				m_current_group_id = getCrossDomainIndex();
-				upvalue.value = getUpvalue(func, { Upvalue::TYPE::GET_LOCAL, v.name, v.type, "", "", v.is_func });
-				m_current_group_id = 0;
-				upvalues += func->getSpaces() + "call " + getUpvalue(func, upvalue) + "\n";
+				upvalue.value = getUpvalue({ Upvalue::TYPE::GET_LOCAL, v.name, v.type, "", "", v.is_func });
+				upvalues += func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
+				m_current_group_id = -1;
 
 				if (prev_upvalue_map_ptr && prev_upvalue_map_ptr != &upvalue_map) { 
 					//将通知上一层闭包 让他们保存状态
@@ -126,17 +126,24 @@ namespace mh {
 
 			upvalue_map.clear();
 
+			m_current_group_id = -1;
+
 			return closure;
 		}
 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+		virtual std::string getUpvalue(const Upvalue& info) override  {
 			return std::string();
 		}
+
+	public:
+			bool params_finish;
 
 	public:
 		//逆天局部变量表
 		std::map<std::string, Upvalue> upvalue_map;
 
-		int m_current_group_id;
+		uint32_t m_current_group_id = -1;
+
+	
 	};
 }

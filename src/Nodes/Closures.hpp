@@ -3,6 +3,78 @@
 
 namespace mh {
 
+
+	typedef std::shared_ptr<class SigleNodeClosure> SigleNodeClosurePtr;
+	//闭包
+	class SigleNodeClosure : public ClosureNode {
+		REGISTER_FROM_CLOSUER(SigleNodeClosure)
+	public:
+
+		SigleNodeClosure(NodePtr node, const std::string& return_type, NodePtr parent)
+			:SigleNodeClosure((Action*)node->getData(), 0, node)
+		{
+			m_node = node;
+			m_return_type = return_type;
+		}
+
+
+		virtual std::string toString(TriggerFunction* func) override {
+
+			auto& editor = get_trigger_editor();
+			// script_name
+			std::string name = editor.getScriptName(m_action);
+			std::string func_name = getParentNode()->getFuncName();
+
+			std::string result;
+
+			NodePtr node = shared_from_this();
+
+			//为当前闭包添加一条动作
+			NodePtr fake = NodeFromAction(m_action, 0, node);
+
+			//将动作编译到函数里 返回函数名
+			result = "function " + func_name;
+			Function* code = new Function(func_name, m_return_type);
+			func->push(code);
+			if (m_return_type == "nothing") {
+				*func << fake->toString(func);
+			} else {
+				func->current()->nextIsRetn();
+				*func << func->getSpaces() + "return " + fake->toString(func) + "\n";
+			}
+			func->pop();
+			func->addFunction(code);
+			return result;
+		}
+
+		virtual std::string getUpvalue(const Upvalue& info) override {
+			std::string result;
+
+			switch (info.uptype) {
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocal2Set({}, \"{}\", {})", info.type, info.name, info.value);
+				break;
+			case Upvalue::TYPE::GET_LOCAL:
+				result = std::format("YDLocal2Get({}, \"{}\")", info.type, info.name);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocal2ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = std::format("YDLocal2ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
+				break;
+			default:
+				break;
+			}
+			return result;
+		}
+
+	private:
+		NodePtr m_node;
+		std::string m_return_type;
+	};
+
+
 	class ForForceMultiple : public ClosureNode {
 	public:
 		REGISTER_FROM_CLOSUER(ForForceMultiple)
@@ -14,26 +86,38 @@ namespace mh {
 			std::string name = editor.getScriptName(m_action);
 			std::string func_name = getFuncName() + "A";
 
-			std::string result = name + "(";
+			std::string result = func->getSpaces() + "call " + name + "(";
+
+
+			params_finish = false;
 
 			for (auto& param : getParameterList()) {
 				result += " " + param->toString(func);
 				result += ",";
 			}
-			result += "function " + func_name + ")";
+			result += "function " + func_name + ")\n";
 
 			Function* code = new Function(func_name, "nothing");
 			func->push(code);
+
+			params_finish = true;
+
 			for (auto& node : getChildList()) {
 				*func << node->toString(func);
 			}
 			func->pop();
 			func->addFunction(code);
-			return toLine(result, func);
+			return result;
 		}
 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+		virtual std::string getUpvalue(const Upvalue& info) override {
+
+			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
+				return getParentNode()->getUpvalue(info);
+			}
+
 			std::string result;
+			
 
 			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
@@ -70,9 +154,11 @@ namespace mh {
 
 			std::string result;
 
+			params_finish = false; 
 			result += func->getSpaces() + "set ydl_trigger = " + params[0]->toString(func) + "\n";
 			result += "YDLocalExecuteTrigger(ydl_trigger)\n";
 
+			params_finish = true;
 			for (auto& node : getChildList()) {
 				result += node->toString(func);
 			}
@@ -82,7 +168,11 @@ namespace mh {
 		}
 
 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+		virtual std::string getUpvalue(const Upvalue& info) override {
+			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
+				return getParentNode()->getUpvalue(info);
+			}
+
 			std::string result;
 
 			switch (info.uptype) {
@@ -90,13 +180,13 @@ namespace mh {
 				result = std::format("YDLocal5Set({}, \"{}\", {})", info.type, info.name, info.value);
 				break;
 			case Upvalue::TYPE::GET_LOCAL:
-				result = getParentNode()->getUpvalue(func, info);
+				result = getParentNode()->getUpvalue(info);
 				break;
 			case Upvalue::TYPE::SET_ARRAY:
 				result = std::format("YDLocal5ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
 				break;
 			case Upvalue::TYPE::GET_ARRAY:
-				result = getParentNode()->getUpvalue(func, info);
+				result = getParentNode()->getUpvalue(info);
 				break;
 			default:
 				break;
@@ -121,12 +211,16 @@ namespace mh {
 			return "GetExpiredTimer()";
 		}
 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+		virtual std::string getUpvalue(const Upvalue& info) override {
+			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
+				return getParentNode()->getUpvalue(info);
+			}
+
 			std::string result;
 
 			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
 			if (getCrossDomainIndex() == getCurrentGroupId() && is_get) {	//如果当前是传参区 则使用上一层的局部变量
-				result = getParentNode()->getUpvalue(func, info);
+				result = getParentNode()->getUpvalue(info);
 				return result;
 			}
 
@@ -160,8 +254,11 @@ namespace mh {
 			std::string save_state;
 
 			std::string func_name = getFuncName() + "T";
-			
+			params_finish = false; 
+
 			result += func->getSpaces() + "set ydl_timer = " + params[0]->toString(func) + "\n";
+
+			params_finish = true;
 
 			Function* closure = getBlock(func, func_name, save_state);
 			result += save_state;
@@ -195,12 +292,13 @@ namespace mh {
 			return "GetTriggeringTrigger()";
 		}
 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+		virtual std::string getUpvalue(const Upvalue& info) override {
 			std::string result;
 
 			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
-			if (getCrossDomainIndex() == getCurrentGroupId() && is_get) {	//如果当前是传参区 则使用上一层的局部变量
-				result = getParentNode()->getUpvalue(func, info);
+
+			if ((getCrossDomainIndex() == getCurrentGroupId() && is_get) || !params_finish) {	//如果当前是传参区 则使用上一层的局部变量
+				result = getParentNode()->getUpvalue(info);
 				return result;
 			}
 
@@ -235,11 +333,15 @@ namespace mh {
 
 			std::string func_name = getFuncName() + "Conditions";
 	
+			params_finish = false;
+
 			result += func->getSpaces() + "set ydl_trigger = " + params[0]->toString(func) + "\n";
+
+			params_finish = true;
 
 			Function* closure = getBlock(func, func_name, save_state);
 			result += save_state;
-			result += func->getSpaces() + "call TriggerAddCondition( ydl_trigger, Condition(function " + func_name + ")\n";
+			result += func->getSpaces() + "call TriggerAddCondition( ydl_trigger, Condition(function " + func_name + "))\n";
 
 			
 
@@ -259,27 +361,27 @@ namespace mh {
 
 		virtual bool isCrossDomain() override { return true; }
 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+		virtual std::string getUpvalue(const Upvalue& info) override {
 			std::string result;
 
 			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
-			if (getCrossDomainIndex() == getCurrentGroupId() && is_get) {	//如果当前是传参区 则使用上一层的局部变量
-				result = getParentNode()->getUpvalue(func, info);
+			if ((getCrossDomainIndex() == getCurrentGroupId() && is_get)|| !params_finish) {	//如果当前是传参区 则使用上一层的局部变量
+				result = getParentNode()->getUpvalue(info);
 				return result;
 			}
 
 			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
-				result = std::format("YDLocal6Set({}, {}, \"{}\", {})", func->current()->getName(), info.type, info.name, info.value);
+				result = std::format("YDLocal6Set(\"{}\", {}, \"{}\", {})", m_function, info.type, info.name, info.value);
 				break;
 			case Upvalue::TYPE::GET_LOCAL:
-				result = std::format("YDLocal6Get({}, {}, \"{}\")", func->current()->getName(), info.type, info.name);
+				result = std::format("YDLocal6Get(\"{}\", {}, \"{}\")", m_function, info.type, info.name);
 				break;
 			case Upvalue::TYPE::SET_ARRAY:
-				result = std::format("YDLocal6ArraySet({}, {}, \"{}\", {}, {})", func->current()->getName(), info.type, info.name, info.index, info.value);
+				result = std::format("YDLocal6ArraySet(\"{}\", {}, \"{}\", {}, {})", m_function, info.type, info.name, info.index, info.value);
 				break;
 			case Upvalue::TYPE::GET_ARRAY:
-				result = std::format("YDLocal6ArrayGet({}, {}, \"{}\", {})", func->current()->getName(), info.type, info.name, info.index);
+				result = std::format("YDLocal6ArrayGet(\"{}\", {}, \"{}\", {})", m_function, info.type, info.name, info.index);
 				break;
 			default:
 				break;
@@ -296,38 +398,65 @@ namespace mh {
 
 			std::string result;
 
-			std::string func_name = getFuncName() + "T";
+			params_finish = false;
 
 			result += func->getSpaces() + "if GetLocalPlayer() == " + params[0]->toString(func) + " then\n";
-			result += getScript(func, action_name, func_name, params);
+			result += getScript(func, action_name, params);
 			result += func->getSpaces() + "endif\n";
 
-			Function* closure = getBlock(func, func_name, result);
+
+			std::string upvalues;
+
+			params_finish = true;
+
+			Function* closure = getBlock(func, m_function, upvalues);
 			func->addFunction(closure);
 
-			return result;
+			return upvalues + result;
 		}
 
-		virtual std::string getScript(TriggerFunction* func, const std::string& name, const std::string func_name, const std::vector<NodePtr>& params) {
+		virtual std::string getScript(TriggerFunction* func, const std::string& name, const std::vector<NodePtr>& params) {
 
 			std::string result;
 			std::vector<std::string> args;
 
+			std::string key = "T";
+			switch (m_nameId) {
+			case "DzTriggerRegisterMouseEventMultiple"s_hash:
+				key = "MT";  break;
+			case "DzTriggerRegisterKeyEventMultiple"s_hash:
+				key = "KT";  break;
+			case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
+				key = "WT";  break;
+			case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
+				key = "MMT";  break;
+			case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
+				key = "WRT";  break;
+			case "DzFrameSetUpdateCallbackMultiple"s_hash:
+				key = "CT";  break;
+				break;
+			case "DzFrameSetScriptMultiple"s_hash:
+				key = "FT";  break;
+			default:
+				break;
+			}
+			m_function = getFuncName() + key;
+
 			switch (m_nameId) {
 			case "DzTriggerRegisterMouseEventMultiple"s_hash:
 			case "DzTriggerRegisterKeyEventMultiple"s_hash:
-				args = { "null", params[2]->toString(func), params[1]->toString(func), "false", "function " + func_name };
+				args = { "null", params[2]->toString(func), params[1]->toString(func), "false", "function " + m_function };
 				break;
 			case "DzTriggerRegisterMouseWheelEventMultiple"s_hash:
 			case "DzTriggerRegisterMouseMoveEventMultiple"s_hash:
 			case "DzTriggerRegisterWindowResizeEventMultiple"s_hash:
-				args = { "null", "false", "function " + func_name };
+				args = { "null", "false", "function " + m_function };
 				break;
 			case "DzFrameSetUpdateCallbackMultiple"s_hash:
-				args = { "function " + func_name };
+				args = { "function " + m_function };
 				break;
 			case "DzFrameSetScriptMultiple"s_hash:
-				args = { params[2]->toString(func), params[1]->toString(func), "false" };
+				args = { params[2]->toString(func), params[1]->toString(func), "function " + m_function, "false"};
 				break;
 			default:
 				break;
@@ -340,9 +469,12 @@ namespace mh {
 					result += ", ";
 				}
 			}
-			result += "\n";
+			result += ")\n";
 			return  result;
 		}
+
+	private:
+		std::string m_function;
 
 	};
 }

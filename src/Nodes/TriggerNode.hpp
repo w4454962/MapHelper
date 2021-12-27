@@ -81,9 +81,9 @@ namespace mh {
 				}
 
 				if (!nodes[Action::Type::condition].empty()) {
-					events << "\tcall TriggerAddCondition(" + m_trigger_variable_name + ", Condition(function " + *m_funcName + "_Conditions))\n";
+					events << "\tcall TriggerAddCondition(" + m_trigger_variable_name + ", Condition(function " + func->condition.getName() + "))\n";
 				}
-				events << "\tcall TriggerAddAction(" + m_trigger_variable_name + ", function " + *m_funcName + "Actions)\n";
+				events << "\tcall TriggerAddAction(" + m_trigger_variable_name + ", function " + func->action.getName() + ")\n";
 				func->pop();
 			}
 			 
@@ -133,7 +133,7 @@ namespace mh {
 			return m_trigger_variable_name;
 		}
 
-		virtual std::string getUpvalue(TriggerFunction* func, const Upvalue& info) {
+		virtual std::string getUpvalue(const Upvalue& info) override {
 			std::string result;
 
 			//传递过来的是一个函数名 
