@@ -87,14 +87,13 @@ namespace mh {
 				const auto preset_value = world.getConfigData("TriggerParams", value, 2);
 				bool has_quote_symbol = preset_value.find('`') == 0;
 
-				if (editor.getBaseType(preset_type) == "string") {
-					auto result = world.getConfigData("TriggerParams", value, 2);;
-					if (has_quote_symbol) { 
-						result = string_replaced(result, "`", "\"");
-					}
-					return result;
+				if (editor.getBaseType(preset_type) == "string" || preset_type == "OrderType") {
+					return string_replaced(world.getConfigData("TriggerParams", value, 2), "`", "\"");
+				} else if (has_quote_symbol == true) {
+					return string_replaced(preset_value, "`", "\"");
+				} else {
+					return preset_value;
 				}
-				return world.getConfigData("TriggerParams", value, 2);
 			}
 			case Parameter::Type::variable:
 			{
@@ -143,6 +142,9 @@ namespace mh {
 					return "'" + value + "'";
 				default:
 				{
+					
+
+
 					uint32_t is_import_path = 0;
 					auto* type_data = editor.getTypeData(type);
 					if (type_data) {
@@ -151,6 +153,9 @@ namespace mh {
 					if (type == "HotKey" && value == "HotKeyNull") {
 						return "0";
 					}
+
+
+
 					if (is_import_path || editor.getBaseType(type) == "string") {
 						value = string_replaced(value, "\\", "\\\\");
 						return "\"" + string_replaced(value, "\"", "\\\"") + "\"";

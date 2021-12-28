@@ -150,13 +150,14 @@ namespace mh {
 			auto params = getParameterList();
 
 			//添加局部变量
+			func->current()->addLocal("ydl_triggerstep", "integer");
 			func->current()->addLocal("ydl_trigger", "trigger", std::string(), false);
 
 			std::string result;
 
 			params_finish = false; 
 			result += func->getSpaces() + "set ydl_trigger = " + params[0]->toString(func) + "\n";
-			result += "YDLocalExecuteTrigger(ydl_trigger)\n";
+			result += func->getSpaces() + "YDLocalExecuteTrigger(ydl_trigger)\n";
 
 			params_finish = true;
 			for (auto& node : getChildList()) {
