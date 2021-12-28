@@ -111,7 +111,10 @@ namespace mh {
 			if (!release.empty()) { //正则 将__RETURN__ 替换成实际 退出代码
 		
 				result = std::regex_replace(result, std::regex("__RETURN__"), release);
+			} else {
+				result = std::regex_replace(result, std::regex("__RETURN__"), "");
 			}
+
 	
 			return result;
 		}
