@@ -1115,7 +1115,7 @@ namespace mh {
 		{"YDWELoadAnyTypeDataByUserData",			YDWELoadAnyTypeDataByUserData::From },
 		{"YDWEHaveSavedAnyTypeDataByUserData",		YDWEHaveSavedAnyTypeDataByUserData::From },
 		{"GetEnumUnit",								GetEnumUnit::From },
-		{"GetFilterUnit",							GetEnumUnit::From },
+		{"GetFilterUnit",							GetFilterUnit::From },
 		{"YDWEForLoopLocVarIndex",					YDWEForLoopLocVarIndex::From },
 
 		{"YDWEGetAnyTypeLocalVariable",				YDWEGetAnyTypeLocalVariable::From},
