@@ -320,6 +320,7 @@ namespace mh {
 				if (!iftext.empty()) {
 					iftext += " and ";
 				}
+				node->setType(TYPE::GET);
 				iftext += node->toString(func);
 			}
 			func->addSpace();
@@ -1090,6 +1091,7 @@ namespace mh {
 		{"YDWERegisterTriggerMultiple",			YDWERegisterTriggerMultiple::From },
 		{"YDWETimerStartFlush",					YDWETimerStartFlush::From },
 
+		{"YDWERegisterTriggerFlush",			YDWERegisterTriggerFlush::From },
 		{"TriggerSleepAction",					TriggerSleepAction::From },
 		{"PolledWait",							TriggerSleepAction::From },
 

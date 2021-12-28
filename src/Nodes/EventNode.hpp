@@ -57,7 +57,6 @@ namespace mh {
 
 				} else if (m_nameId == "MapInitializationEvent"s_hash) {
 					g_initTriggerMap[trigger] = true;
-
 					return "";
 				}
 

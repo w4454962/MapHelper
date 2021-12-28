@@ -136,6 +136,11 @@ namespace mh {
 				}
 			}
 
+
+			auto& editor = get_trigger_editor();
+
+			editor.m_initFuncTable[func->event.getName()] = true;
+
 			return func->toString();
 		}
 
