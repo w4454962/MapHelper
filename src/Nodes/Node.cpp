@@ -804,37 +804,13 @@ namespace mh {
 			if (in_block) {
 				result += "ydl_unit";
 			} else {
-				result += "GetEnumUnit()";
-			}
-
-			return result;
-		}
-	};
-
-	class GetFilterUnit : public ActionNode {
-	public:
-		REGISTER_FROM_ACTION(GetFilterUnit)
-
-		virtual std::string toString(TriggerFunction* func) override {
-			bool in_block = false;
-
-			getValue([&](NodePtr ptr) {
-				if (ptr->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash) {
-					in_block = true;
-					return true;
-				}
-				return false;
-				});
-			std::string result;
-			if (in_block) {
-				result += "ydl_unit";
-			}
-			else {
 				result += m_name + "()";
 			}
+
 			return result;
 		}
 	};
+
 
 	class YDWEForLoopLocVarIndex : public ActionNode {
 	public:
@@ -962,7 +938,7 @@ namespace mh {
 		virtual std::string toString(TriggerFunction* func) override {
 			auto params = getParameterList();
 
-			Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
+			Upvalue upvalue = { Upvalue::TYPE::SET_ARRAY };
 			upvalue.name = m_action->parameters[1]->value;
 			upvalue.type = m_action->parameters[0]->value + 11;
 			upvalue.index = params[2]->toString(func);
@@ -1115,7 +1091,7 @@ namespace mh {
 		{"YDWELoadAnyTypeDataByUserData",			YDWELoadAnyTypeDataByUserData::From },
 		{"YDWEHaveSavedAnyTypeDataByUserData",		YDWEHaveSavedAnyTypeDataByUserData::From },
 		{"GetEnumUnit",								GetEnumUnit::From },
-		{"GetFilterUnit",							GetFilterUnit::From },
+		{"GetFilterUnit",							GetEnumUnit::From },
 		{"YDWEForLoopLocVarIndex",					YDWEForLoopLocVarIndex::From },
 
 		{"YDWEGetAnyTypeLocalVariable",				YDWEGetAnyTypeLocalVariable::From},

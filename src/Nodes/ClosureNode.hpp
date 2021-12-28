@@ -8,9 +8,6 @@ namespace mh {
 	//生成一个静态方法 + 基于ClosureNode的构造方法
 #define REGISTER_FROM_CLOSUER(name) REGISTER_FROM(name,	Action*); name(Action* param, uint32_t index, NodePtr parent): ClosureNode(param, index, parent) { } ;
 
-#define REGISTER_FROM_CLOSUER_CHILD(name, parent_class) REGISTER_FROM(name,	Action*); name(Action* param, uint32_t index, NodePtr parent): parent_class(param, index, parent) { } ;
-
-
 	typedef std::shared_ptr<class ClosureNode> ClosureNodePtr;
 
 	class ClosureNode : public ActionNode {
@@ -105,13 +102,21 @@ namespace mh {
 				//当前这层允许跨域 才生成逆天的自动传参代码。
 				if ((!v.is_func && isVariableCrossDomain()) || (v.is_func && isFunctionCrossDomain())) {
 					//生成保存状态代码
-					Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
+					Upvalue upvalue = { };
+					auto set = Upvalue::TYPE::SET_LOCAL;
+					auto get = Upvalue::TYPE::GET_LOCAL;
+					//if (v.uptype == Upvalue::TYPE::GET_ARRAY || v.uptype == Upvalue::TYPE::SET_ARRAY) {
+					//	set = Upvalue::TYPE::SET_ARRAY;
+					//	get = Upvalue::TYPE::GET_ARRAY;
+					//}
+					upvalue.uptype = set;
 					upvalue.name = v.name;
 					upvalue.type = v.type;
 					upvalue.is_func = v.is_func;
+					upvalue.index = v.index;
 
 					m_current_group_id = getCrossDomainIndex();
-					upvalue.value = getUpvalue({ Upvalue::TYPE::GET_LOCAL, v.name, v.type, "", "", v.is_func });
+					upvalue.value = getUpvalue({ get, v.name, v.type, "", v.index, v.is_func });
 					upvalues += func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
 					m_current_group_id = -1;
 
