@@ -3,6 +3,7 @@
 #include "../stdafx.h"
 #include <stack>
 #include "../TriggerEditor.h"
+#include <regex>
 
 namespace mh {
 
@@ -36,8 +37,7 @@ namespace mh {
 	class Function {
 	public:
 		Function(const std::string& _name, const std::string& _returnt_type) 
-			:m_end_pos(-1),
-			m_space(1)
+			: m_space(1)
 		{
 			m_name = _name;
 			m_return_type = _returnt_type;
@@ -48,15 +48,8 @@ namespace mh {
 			return self;
 		}
 
-		void line(const std::string& line, bool is_retn) {
+		void line(const std::string& line) {
 			m_lines.push_back(line);
-			if (is_retn) {
-				m_ends.push_back(m_lines.size() - 1);
-			}
-		}
-
-		void nextIsRetn() {
-			m_ends.push_back(m_lines.size());
 		}
 
 		void addLocal(const std::string& name, const std::string type, const std::string& value = std::string(), bool is_array = false) {
@@ -78,8 +71,11 @@ namespace mh {
 		const std::string& getSpaces(int offset = 0) {
 			auto& editor = get_trigger_editor();
 
-			int index = max(0, m_space - offset);
-			return editor.spaces[index];
+			int index = m_space + offset;
+			if (index >= 0) {
+				return editor.spaces[index];
+			}
+			return "";
 		}
 
 		bool isEmpty() {
@@ -102,12 +98,7 @@ namespace mh {
 					release += local.toString(true);
 				}
 			}
-			if (!release.empty()) {
-				for (auto& pos : m_ends) {
-					auto& line = m_lines[pos];
-					line = release + line;
-				}
-			}
+			
 			if (m_return_type == "nothing") {
 				m_lines.push_back(release);
 			}
@@ -115,8 +106,13 @@ namespace mh {
 			for (auto& line : m_lines) {
 				result += line;
 			}
-			
 			result += "endfunction\n\n";
+
+			if (!release.empty()) { //正则 将__RETURN__ 替换成实际 退出代码
+		
+				result = std::regex_replace(result, std::regex("__RETURN__"), release);
+			}
+	
 			return result;
 		}
 
@@ -132,8 +128,7 @@ namespace mh {
 		std::string m_name;
 		std::string m_return_type;
 		std::vector<std::string> m_lines;
-		uint32_t m_end_pos;
-		std::vector<uint32_t> m_ends;
+	
 		std::vector<Local> m_locals;
 		std::map<std::string, bool> m_locals_map;
 	
@@ -202,7 +197,7 @@ namespace mh {
 		}
 
 		const std::string& getSpaces(int offset = 0) {
-			return current()->getSpaces();
+			return current()->getSpaces(offset);
 		}
 
 		std::string toString() {

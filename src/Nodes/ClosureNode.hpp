@@ -15,7 +15,7 @@ namespace mh {
 		REGISTER_FROM_ACTION(ClosureNode)
 	
 		//逆天参数区索引
-		virtual uint32_t getCrossDomainIndex() { return 0; }
+		virtual int getCrossDomainIndex() { return 0; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
 		virtual bool isVariableCrossDomain() {  return true; }
@@ -29,7 +29,7 @@ namespace mh {
 			return std::string();
 		}
 	
-		uint32_t getCurrentGroupId() { return m_current_group_id; }
+		int getCurrentGroupId() { return m_current_group_id; }
 
 		virtual Function* getBlock(TriggerFunction* func, const std::string& closure_name, std::string& upvalues) {
 			std::vector<NodePtr> upvalues_scope; //所有参数区的节点
@@ -143,7 +143,7 @@ namespace mh {
 		//逆天局部变量表
 		std::map<std::string, Upvalue> upvalue_map;
 
-		uint32_t m_current_group_id = -1;
+		int m_current_group_id = -1;
 
 		bool params_finish;
 	

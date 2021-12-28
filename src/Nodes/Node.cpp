@@ -652,22 +652,9 @@ namespace mh {
 		REGISTER_FROM_ACTION(ReturnAction)
 
 		virtual std::string toString(TriggerFunction* func) override {
-			//bool in_block = false;
-			//
-			//NodePtr parent = nullptr;
-			//
-			//getValue([&](NodePtr ptr) {
-			//	if (ptr->getType() == TYPE::CLOSURE || ptr->getType() == TYPE::ROOT) {
-			//		parent = ptr;
-			//		return true;
-			//	}
-			//	return false;
-			//});
 
-			std::string result = func->getSpaces() + "return\n";
-			
-			//标记下一行加进去的 就是结束
-			func->current()->nextIsRetn();
+			std::string result = func->getSpaces(-1) + "__RETURN__" 
+				+ func->getSpaces() + "return\n";
 
 			return result;
 		}
@@ -844,7 +831,9 @@ namespace mh {
 			getValue([&](NodePtr ptr) {
 				if (ptr->getType() == TYPE::CLOSURE) {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
-					node->upvalue_map.emplace(upvalue.name, upvalue);
+					if (node->getCurrentGroupId() > node->getCrossDomainIndex()) {
+						node->upvalue_map.emplace(upvalue.name, upvalue);
+					}
 					return true; 
 				} 
 				return false;
@@ -1033,7 +1022,8 @@ namespace mh {
 
 		{"OperatorInt",				OperatorInt::From},
 		{"OperatorReal",			OperatorInt::From}, //跟int一样
-
+		{"OperatorDegree",			OperatorInt::From},
+		
 		{"OperatorCompare",			OperatorCompare::From},
 		{"OperatorCompare",			OperatorCompare::From},
 		{"WaitForCondition",		WaitForCondition::From},

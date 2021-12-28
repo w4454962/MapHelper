@@ -39,7 +39,7 @@ namespace mh {
 			if (m_return_type == "nothing") {
 				*func << fake->toString(func);
 			} else {
-				func->current()->nextIsRetn();
+				*func << func->getSpaces(-1) + "__RETURN__";
 				*func << func->getSpaces() + "return " + fake->toString(func) + "\n";
 			}
 			func->pop();
@@ -224,7 +224,7 @@ namespace mh {
 	public:
 		REGISTER_FROM_CLOSUER(YDWETimerStartMultiple)
 
-		virtual uint32_t getCrossDomainIndex() override { return 0; }
+		virtual int getCrossDomainIndex() override { return 0; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
 		virtual bool isVariableCrossDomain() { return true; }
@@ -309,7 +309,7 @@ namespace mh {
 	public:
 		REGISTER_FROM_CLOSUER(YDWERegisterTriggerMultiple)
 
-		virtual uint32_t getCrossDomainIndex() override { return 1; }
+		virtual int getCrossDomainIndex() override { return 1; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
 		virtual bool isVariableCrossDomain() { return true; }
@@ -326,6 +326,10 @@ namespace mh {
 
 		virtual std::string getUpvalue(const Upvalue& info) override {
 			std::string result;
+
+			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
+				return getParentNode()->getUpvalue(info);
+			}
 
 			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
 
@@ -389,7 +393,7 @@ namespace mh {
 	public:
 		REGISTER_FROM_CLOSUER(DzTriggerRegisterMouseEventMultiple)
 
-		virtual uint32_t getCrossDomainIndex() override { return 0; }
+		virtual int getCrossDomainIndex() override { return 0; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
 		virtual bool isVariableCrossDomain() { return true; }
@@ -399,6 +403,11 @@ namespace mh {
 
 		virtual std::string getUpvalue(const Upvalue& info) override {
 			std::string result;
+
+
+			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
+				return getParentNode()->getUpvalue(info);
+			}
 
 			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
 			if ((getCrossDomainIndex() == getCurrentGroupId() && is_get)|| !params_finish) {	//如果当前是传参区 则使用上一层的局部变量
