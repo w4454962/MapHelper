@@ -11,12 +11,7 @@ Action::Type get_action_type(Action* action);
 
 namespace mh {
 
-	class Node;
-
-	typedef std::shared_ptr<Node> NodePtr;
-
-	typedef std::function<bool(NodePtr node)> NodeFilter;
-
+	typedef std::shared_ptr<class Node> NodePtr;
 
 	class Node :public std::enable_shared_from_this<Node> {
 	public:
@@ -51,6 +46,8 @@ namespace mh {
 		//获取子动作列表
 		virtual std::vector<NodePtr> getChildList() = 0;
 
+		//过滤器
+		typedef std::function<bool(NodePtr node)> NodeFilter;
 		//获取值
 		virtual bool getValue(const NodeFilter& filter) = 0;
 
@@ -63,7 +60,6 @@ namespace mh {
 		//触发变量名
 		virtual const std::string& getTriggerVariableName() = 0;
 
-	
 		//逆天局部变量的信息
 		struct Upvalue{
 
@@ -96,13 +92,15 @@ namespace mh {
 	NodePtr NodeFramParameter(Parameter* parameter, uint32_t index, NodePtr parent);
 
 
-	typedef NodePtr(*MakeNode)(void* action, uint32_t childId, NodePtr parent);
 
 
-	extern bool g_YDTrigger;
-
+	//需要初始化的触发器
 	extern std::unordered_map<Trigger*, bool> g_initTriggerMap;
+	//需要屏蔽的触发器
 	extern std::unordered_map<Trigger*, bool> g_disableTriggerMap;
+
+
+	typedef NodePtr(*MakeNode)(void* action, uint32_t childId, NodePtr parent);
 
 	extern std::unordered_map<std::string, MakeNode> MakeActionNodeMap;
 	extern std::unordered_map<std::string, MakeNode> MakeParameterNodeMap;

@@ -18,8 +18,6 @@
 namespace mh {
 	typedef std::shared_ptr<class ActionNode> ActionNodePtr;
 
-	bool g_YDTrigger = true;
-
 	std::unordered_map<Trigger*, bool> g_initTriggerMap;
 	std::unordered_map<Trigger*, bool> g_disableTriggerMap;
 
@@ -966,7 +964,7 @@ namespace mh {
 				auto type = ptr->getType();
 				if (type == TYPE::CLOSURE) {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
-					if (node->isCrossDomain()) {
+					if (node->isFunctionCrossDomain()) {
 						//ÏòÉÏÍ¶µÝ
 						node->upvalue_map.emplace(upvalue.name, upvalue);
 						if (node->getCurrentGroupId() > node->getCrossDomainIndex()) {

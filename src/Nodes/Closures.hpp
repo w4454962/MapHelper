@@ -202,7 +202,11 @@ namespace mh {
 
 		virtual uint32_t getCrossDomainIndex() override { return 0; }
 
-		virtual bool isCrossDomain() override { return true; }
+		//是否自动传递逆天局部变量  类似闭包里跨域引用
+		virtual bool isVariableCrossDomain() { return true; }
+
+		//是否自动传递 获取触发单位 获取触发玩家 这些函数值
+		virtual bool isFunctionCrossDomain() { return true; }
 
 		std::string getHandleName() {
 			if (getCurrentGroupId() <= getCrossDomainIndex()) {
@@ -283,7 +287,11 @@ namespace mh {
 
 		virtual uint32_t getCrossDomainIndex() override { return 1; }
 
-		virtual bool isCrossDomain() override { return false; }
+		//是否自动传递逆天局部变量  类似闭包里跨域引用
+		virtual bool isVariableCrossDomain() { return true; }
+
+		//是否自动传递 获取触发单位 获取触发玩家 这些函数值
+		virtual bool isFunctionCrossDomain() { return false; }
 
 		std::string getHandleName() {
 			if (getCurrentGroupId() <= getCrossDomainIndex()) {
@@ -359,7 +367,11 @@ namespace mh {
 
 		virtual uint32_t getCrossDomainIndex() override { return 0; }
 
-		virtual bool isCrossDomain() override { return true; }
+		//是否自动传递逆天局部变量  类似闭包里跨域引用
+		virtual bool isVariableCrossDomain() { return true; }
+
+		//是否自动传递 获取触发单位 获取触发玩家 这些函数值
+		virtual bool isFunctionCrossDomain() { return false; }
 
 		virtual std::string getUpvalue(const Upvalue& info) override {
 			std::string result;
@@ -369,19 +381,21 @@ namespace mh {
 				result = getParentNode()->getUpvalue(info);
 				return result;
 			}
+	
+			std::string func_name = getFuncName();
 
 			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
-				result = std::format("YDLocal6Set(\"{}\", {}, \"{}\", {})", m_function, info.type, info.name, info.value);
+				result = std::format("YDLocal6Set(\"{}\", {}, \"{}\", {})", func_name, info.type, info.name, info.value);
 				break;
 			case Upvalue::TYPE::GET_LOCAL:
-				result = std::format("YDLocal6Get(\"{}\", {}, \"{}\")", m_function, info.type, info.name);
+				result = std::format("YDLocal6Get(\"{}\", {}, \"{}\")", func_name, info.type, info.name);
 				break;
 			case Upvalue::TYPE::SET_ARRAY:
-				result = std::format("YDLocal6ArraySet(\"{}\", {}, \"{}\", {}, {})", m_function, info.type, info.name, info.index, info.value);
+				result = std::format("YDLocal6ArraySet(\"{}\", {}, \"{}\", {}, {})", func_name, info.type, info.name, info.index, info.value);
 				break;
 			case Upvalue::TYPE::GET_ARRAY:
-				result = std::format("YDLocal6ArrayGet(\"{}\", {}, \"{}\", {})", m_function, info.type, info.name, info.index);
+				result = std::format("YDLocal6ArrayGet(\"{}\", {}, \"{}\", {})", func_name, info.type, info.name, info.index);
 				break;
 			default:
 				break;
@@ -401,7 +415,9 @@ namespace mh {
 			params_finish = false;
 
 			result += func->getSpaces() + "if GetLocalPlayer() == " + params[0]->toString(func) + " then\n";
+			func->addSpace();
 			result += getScript(func, action_name, params);
+			func->subSpace();
 			result += func->getSpaces() + "endif\n";
 
 
@@ -461,7 +477,7 @@ namespace mh {
 			default:
 				break;
 			}
-			result += func->getSpaces(1) + "call " + name + "( ";
+			result += func->getSpaces() + "call " + name + "( ";
 			for (size_t i = 0; i < args.size(); i++) {
 				auto& arg = args[i];
 				result += arg;

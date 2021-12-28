@@ -18,26 +18,21 @@ namespace mh {
 		REGISTER_FROM_ACTION(ClosureNode)
 	
 		//逆天参数区索引
-		virtual uint32_t getCrossDomainIndex() {
-			return 0;
-		}
+		virtual uint32_t getCrossDomainIndex() { return 0; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
-		virtual bool isCrossDomain() { 
-			return true;
-		}
+		virtual bool isVariableCrossDomain() {  return true; }
 
-		virtual TYPE getType() override { 
-			return TYPE::CLOSURE;
-		}
+		//是否自动传递 获取触发单位 获取触发玩家 这些函数值
+		virtual bool isFunctionCrossDomain() { return true; }
 
-		virtual std::string toString(TriggerFunction* func) override {
+		virtual TYPE getType() override {  return TYPE::CLOSURE; }
+
+		virtual std::string toString(TriggerFunction* func) override { 
 			return std::string();
 		}
 	
-		uint32_t getCurrentGroupId() {
-			return m_current_group_id;
-		}
+		uint32_t getCurrentGroupId() { return m_current_group_id; }
 
 		virtual Function* getBlock(TriggerFunction* func, const std::string& closure_name, std::string& upvalues) {
 			std::vector<NodePtr> upvalues_scope; //所有参数区的节点
@@ -107,20 +102,23 @@ namespace mh {
 			}
 			
 			for (auto&& [n, v] : upvalue_map) {
-				//生成保存状态代码
-				Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
-				upvalue.name = v.name;
-				upvalue.type = v.type;
-				upvalue.is_func = v.is_func;
+				//当前这层允许跨域 才生成逆天的自动传参代码。
+				if ((!v.is_func && isVariableCrossDomain()) || (v.is_func && isFunctionCrossDomain())) {
+					//生成保存状态代码
+					Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
+					upvalue.name = v.name;
+					upvalue.type = v.type;
+					upvalue.is_func = v.is_func;
 
-				m_current_group_id = getCrossDomainIndex();
-				upvalue.value = getUpvalue({ Upvalue::TYPE::GET_LOCAL, v.name, v.type, "", "", v.is_func });
-				upvalues += func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
-				m_current_group_id = -1;
+					m_current_group_id = getCrossDomainIndex();
+					upvalue.value = getUpvalue({ Upvalue::TYPE::GET_LOCAL, v.name, v.type, "", "", v.is_func });
+					upvalues += func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
+					m_current_group_id = -1;
 
-				if (prev_upvalue_map_ptr && prev_upvalue_map_ptr != &upvalue_map) { 
-					//将通知上一层闭包 让他们保存状态
-					prev_upvalue_map_ptr->emplace(n, upvalue);
+					if (prev_upvalue_map_ptr && prev_upvalue_map_ptr != &upvalue_map) {
+						//将通知上一层闭包 让他们保存状态
+						prev_upvalue_map_ptr->emplace(n, upvalue);
+					}
 				}
 			}
 
