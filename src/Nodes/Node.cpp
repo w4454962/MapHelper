@@ -83,7 +83,7 @@ namespace mh {
 		REGISTER_FROM_ACTION(GetTriggerName)
 
 		virtual std::string toString(TriggerFunction* func) override {
-			return "\"" + *getRootNode()->getName() + "\"";
+			return "\"" + getRootNode()->getName() + "\"";
 		}
 	};
 	
@@ -251,8 +251,8 @@ namespace mh {
 		virtual std::string toString(TriggerFunction* func) override {
 			auto params = getParameterList();
 
-			std::string loop_index = *getName() == "ForLoopAMultiple" ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
-			std::string loop_index_end = *getName() == "ForLoopAMultiple" ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
+			std::string loop_index = getName() == "ForLoopAMultiple" ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
+			std::string loop_index_end = getName() == "ForLoopAMultiple" ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
 			std::string result;
 			result += func->getSpaces() + "set " + loop_index + " = " + params[0]->toString(func) + "\n";
@@ -355,7 +355,7 @@ namespace mh {
 
 			virtual std::string toString(TriggerFunction* func) override {
 
-			std::string oper = *m_name == "AndMultiple" ? " and " : " or ";
+			std::string oper = m_name == "AndMultiple" ? " and " : " or ";
 
 			std::string iftext;
 
@@ -831,7 +831,7 @@ namespace mh {
 				result += "ydl_unit";
 			}
 			else {
-				result += *m_name + "()";
+				result += m_name + "()";
 			}
 			return result;
 		}
@@ -958,7 +958,7 @@ namespace mh {
 			std::string result;
 
 			Upvalue upvalue = { Upvalue::TYPE::GET_LOCAL };
-			upvalue.name = *m_name;
+			upvalue.name = m_name;
 			upvalue.type = editor.getBaseType(parent_parameter->type_name);
 			upvalue.is_func = true;
 

@@ -20,7 +20,7 @@ namespace mh {
 			m_index = index;
 
 			m_action = parameter->funcParam;
-			m_name = StringPtr(new std::string());
+			m_name = std::string();
 			m_nameId = 0;
 
 			if (parent->getType() == TYPE::ROOT) {
@@ -40,7 +40,7 @@ namespace mh {
 
 		virtual void* getData() override { return m_parameter; }
 
-		virtual StringPtr getName() override { return m_name; }
+		virtual const std::string& getName() override { return m_name; }
 
 		virtual uint32_t getNameId() override { return m_nameId; }
 
@@ -186,7 +186,7 @@ namespace mh {
 		NodePtr m_root;
 		NodePtr m_parent;
 
-		StringPtr m_name;
+		std::string m_name;
 		uint32_t m_nameId;
 		uint32_t m_index;
 	};

@@ -393,7 +393,7 @@ namespace mh {
 
 			auto params = getParameterList();
 
-			std::string action_name = *getName();
+			std::string action_name = getName();
 			action_name = action_name.replace(action_name.find("Multiple"), -1, "ByCode");
 
 			std::string result;

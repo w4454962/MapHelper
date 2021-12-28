@@ -13,7 +13,7 @@ namespace mh {
 
 		virtual void* getData() override { return m_trigger; }
 
-		virtual StringPtr getName() override { return m_name; }
+		virtual const std::string& getName() override { return m_name; }
 
 		virtual uint32_t getNameId() override { return m_nameId; }
 
@@ -49,7 +49,7 @@ namespace mh {
 		virtual std::string toString(TriggerFunction* func) override {
 		
 	
-			TriggerFunction tfunc(*m_funcName, *m_name);
+			TriggerFunction tfunc(m_funcName, m_name);
 			
 			func = &tfunc;
 
@@ -70,7 +70,7 @@ namespace mh {
 				
 				events << "\tset " + m_trigger_variable_name + " = CreateTrigger()\n";
 				events << "#ifdef DEBUG\n";
-				events << "\tcall YDWESaveTriggerName(" + m_trigger_variable_name + ",\"" + *m_name + "\")\n";
+				events << "\tcall YDWESaveTriggerName(" + m_trigger_variable_name + ",\"" + m_name + "\")\n";
 				events << "#endif\n";
 
 				if (m_trigger->is_disable_init) {
@@ -126,7 +126,7 @@ namespace mh {
 
 
 		virtual std::string getFuncName() override {
-			return *m_funcName;
+			return m_funcName;
 		}
 
 		virtual const std::string& getTriggerVariableName() override {
@@ -171,17 +171,17 @@ namespace mh {
 			convert_name(name);
 
 			m_trigger_variable_name = "gg_trg_" + name;
-			m_funcName = StringPtr(new std::string("Trig_" + name));
+			m_funcName = std::string("Trig_" + name);
 
-			m_name = StringPtr(new std::string(trigger->name));
-			m_nameId = hash_(m_name->c_str());
+			m_name = std::string(trigger->name);
+			m_nameId = hash_(m_name.c_str());
 		}
 	protected:
 		Trigger* m_trigger;
-		StringPtr m_name;
+		std::string m_name;
 		uint32_t m_nameId;
 
-		StringPtr m_funcName;
+		std::string m_funcName;
 		std::string m_trigger_variable_name;
 
 	};

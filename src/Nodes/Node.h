@@ -7,13 +7,11 @@
 int __fastcall fakeGetChildCount(Action* action);
 Action::Type get_action_type(Action* action);
 
-#include "Function.hpp"
+
 
 namespace mh {
 
 	class Node;
-
-	typedef std::shared_ptr<std::string> StringPtr;
 
 	typedef std::shared_ptr<Node> NodePtr;
 
@@ -34,7 +32,7 @@ namespace mh {
 		virtual void* getData() = 0;
 
 		//获取当前节点名字
-		virtual StringPtr getName() = 0;
+		virtual const std::string& getName() = 0;
 
 		//当前名字id
 		virtual uint32_t getNameId() = 0;
@@ -57,7 +55,7 @@ namespace mh {
 		virtual bool getValue(const NodeFilter& filter) = 0;
 
 		//获取文本
-		virtual std::string toString(TriggerFunction* func = nullptr) = 0;
+		virtual std::string toString(class TriggerFunction* func = nullptr) = 0;
 
 		//生成函数名 
 		virtual std::string getFuncName() = 0;

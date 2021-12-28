@@ -22,7 +22,7 @@ namespace mh {
 
 			m_index = index;
 
-			m_name = StringPtr(new std::string(action->name));
+			m_name = std::string(action->name);
 			m_nameId = hash_(action->name);
 
 			if (parent->getType() == TYPE::PARAM || parent->getType() == TYPE::GET) {
@@ -66,7 +66,7 @@ namespace mh {
 
 		virtual void* getData() override { return m_action; }
 
-		virtual StringPtr getName() override { return m_name; }
+		virtual const std::string& getName() override { return m_name; }
 
 		virtual uint32_t getNameId() override { return m_nameId; }
 
@@ -171,7 +171,7 @@ namespace mh {
 		NodePtr m_root;
 		NodePtr m_parent;
 
-		StringPtr m_name;
+		std::string m_name;
 		uint32_t m_nameId;
 
 		uint32_t m_index; //自身作为子动作的id
