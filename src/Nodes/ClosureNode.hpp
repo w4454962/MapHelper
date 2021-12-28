@@ -31,7 +31,7 @@ namespace mh {
 	
 		int getCurrentGroupId() { return m_current_group_id; }
 
-		virtual Function* getBlock(TriggerFunction* func, const std::string& closure_name, std::string& upvalues) {
+		virtual Function* getBlock(TriggerFunction* func, const std::string& closure_name, std::string& upvalues, std::vector<std::string>& upactions) {
 			std::vector<NodePtr> upvalues_scope; //所有参数区的节点
 			std::vector<NodePtr> closure_scope;  //所有动作区的节点
 
@@ -52,17 +52,20 @@ namespace mh {
 			//生成事件以及参数区的代码 并搜索主动申请的逆天局部变量表
 			for (auto& node : upvalues_scope) {
 				Action* action = (Action*)node->getData();
-				if (action->group_id == getCrossDomainIndex()) { //如果是参数区
-					uint32_t id = node->getNameId();
-					if (id == "YDWESetAnyTypeLocalArray"s_hash or id == "YDWESetAnyTypeLocalVariable"s_hash) {
-						std::string upvalue_name = action->parameters[1]->value;
-						std::string upvalue_type = action->parameters[0]->value + 11;
-						search_upvalue_map.emplace(upvalue_name, upvalue_type);
+				m_current_group_id = action->group_id;
+				uint32_t id = node->getNameId();
+				//如果是参数区
+				if (action->group_id == getCrossDomainIndex() && (id == "YDWESetAnyTypeLocalArray"s_hash || id == "YDWESetAnyTypeLocalVariable"s_hash)) {
+					std::string upvalue_name = action->parameters[1]->value;
+					std::string upvalue_type = action->parameters[0]->value + 11;
+					search_upvalue_map.emplace(upvalue_name, upvalue_type);
+					upvalues += node->toString(func);
+				} else {
+					if (m_current_group_id >= 0) {
+						upactions[m_current_group_id] += node->toString(func);
 					}
 				}
 
-				m_current_group_id = action->group_id;
-				upvalues += node->toString(func);
 			}
 
 			std::map<std::string, Upvalue>* prev_upvalue_map_ptr = nullptr;

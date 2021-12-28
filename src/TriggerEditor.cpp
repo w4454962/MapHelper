@@ -437,6 +437,8 @@ void TriggerEditor::saveSctipt(const char* path)
 	writer.write_string("#define USE_BJ_ANTI_LEAK\n");
 	writer.write_string("#include <YDTrigger/Import.h>\n");
 	writer.write_string("#include <YDTrigger/YDTrigger.h>\n");
+	writer.write_string("#include <YDTrigger/ImportSaveLoadSystem.h>\n");
+	writer.write_string("#include <YDTrigger/Hash.h>\n");
 
 	
 	writer.write_string("globals\n");

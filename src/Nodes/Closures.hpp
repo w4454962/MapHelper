@@ -293,11 +293,15 @@ namespace mh {
 
 			params_finish = true;
 
-			Function* closure = getBlock(func, func_name, save_state);
+			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
+
+			Function* closure = getBlock(func, func_name, save_state, upactions);
 			result += save_state;
 			result += start;
 
-		
+			for (auto& action : upactions) {
+				result += action;
+			}
 			 
 			func->addFunction(closure);
 
@@ -339,6 +343,10 @@ namespace mh {
 				result = getParentNode()->getUpvalue(info);
 				return result;
 			}
+			if (getCrossDomainIndex() < getCurrentGroupId()) {  //事件也使用上一层的变量
+				result = getParentNode()->getUpvalue(info);
+				return result;
+			}
 
 			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
@@ -377,8 +385,13 @@ namespace mh {
 
 			params_finish = true;
 
-			Function* closure = getBlock(func, func_name, save_state);
+			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
+
+			Function* closure = getBlock(func, func_name, save_state, upactions);
 			result += save_state;
+			for (auto& action : upactions) {
+				result += action;
+			}
 			result += func->getSpaces() + "call TriggerAddCondition( ydl_trigger, Condition(function " + func_name + "))\n";
 
 			
@@ -460,7 +473,9 @@ namespace mh {
 
 			params_finish = true;
 
-			Function* closure = getBlock(func, m_function, upvalues);
+			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
+
+			Function* closure = getBlock(func, m_function, upvalues, upactions);
 			func->addFunction(closure);
 
 			return upvalues + result;
