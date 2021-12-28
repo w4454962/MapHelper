@@ -48,6 +48,18 @@ namespace mh {
 		}
 
 		virtual std::string getUpvalue(const Upvalue& info) override {
+
+			NodePtr last_closure = nullptr;
+			getValue([&](NodePtr ptr) {
+				if (ptr.get() != this && ptr->getType() == TYPE::CLOSURE) {
+					last_closure = ptr;
+				}
+				return false;
+				});
+			if (last_closure) { //如果有上一层闭包  则使用上一层闭包里的环境  如果没有 则是在根触发里 就使用下面的规则
+				return last_closure->getUpvalue(info);
+			}
+
 			std::string result;
 
 			switch (info.uptype) {
@@ -114,6 +126,17 @@ namespace mh {
 
 			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
 				return getParentNode()->getUpvalue(info);
+			}
+
+			NodePtr last_closure = nullptr;
+			getValue([&](NodePtr ptr) {
+				if (ptr.get() != this && ptr->getType() == TYPE::CLOSURE) {
+					last_closure = ptr;
+				}
+				return false;
+			});
+			if (last_closure) { //如果有上一层闭包  则使用上一层闭包里的环境  如果没有 则是在根触发里 就使用下面的规则
+				return last_closure->getUpvalue(info);
 			}
 
 			std::string result;
