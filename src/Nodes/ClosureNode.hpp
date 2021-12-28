@@ -133,8 +133,6 @@ namespace mh {
 			return std::string();
 		}
 
-	public:
-			bool params_finish;
 
 	public:
 		//逆天局部变量表
@@ -142,6 +140,7 @@ namespace mh {
 
 		uint32_t m_current_group_id = -1;
 
+		bool params_finish;
 	
 	};
 }

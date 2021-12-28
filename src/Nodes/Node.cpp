@@ -873,7 +873,18 @@ namespace mh {
 				return false;
 			});
 
-			return getUpvalue(upvalue);
+			
+			std::string result = getUpvalue(upvalue);
+
+			//记录逆天变量 用来类型检查
+			auto& map = root->all_upvalue_map[upvalue.name];
+			auto& editor = get_trigger_editor();
+			auto base = editor.getBaseType(upvalue.type);
+			if (map.find(base) == map.end()) {
+				map.emplace(base, result);
+			}
+
+			return result;
 		}
 	};
 
@@ -893,7 +904,18 @@ namespace mh {
 			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
 			root->hasUpvalue = true;
 
-			return func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
+
+			std::string result = "call " + getUpvalue(upvalue);
+
+			//记录逆天变量 用来类型检查
+			auto& map = root->all_upvalue_map[upvalue.name];
+			auto& editor = get_trigger_editor();
+			auto base = editor.getBaseType(upvalue.type);
+			if (map.find(base) == map.end()) {
+				map.emplace(base, result);
+			}
+
+			return func->getSpaces() + result + "\n";
 		}
 	};
 
@@ -917,7 +939,18 @@ namespace mh {
 			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
 			root->hasUpvalue = true;
 
-			return getUpvalue(upvalue);
+
+			std::string result = getUpvalue(upvalue);
+
+			//记录逆天变量 用来类型检查
+			auto& map = root->all_upvalue_map[upvalue.name];
+			auto& editor = get_trigger_editor();
+			auto base = editor.getBaseType(upvalue.type);
+			if (map.find(base) == map.end()) {
+				map.emplace(base, result);
+			}
+
+			return result;
 		}
 	};
 
@@ -937,7 +970,19 @@ namespace mh {
 			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
 			root->hasUpvalue = true;
 
-			return func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
+			std::string result = "call " + getUpvalue(upvalue);
+
+
+			//记录逆天变量 用来类型检查
+			auto& map = root->all_upvalue_map[upvalue.name];
+			auto& editor = get_trigger_editor();
+			auto base = editor.getBaseType(upvalue.type);
+			if (map.find(base) == map.end()) {
+				map.emplace(base, result);
+			}
+
+
+			return func->getSpaces() + result + "\n";
 		}
 	};
 

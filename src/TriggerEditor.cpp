@@ -7,8 +7,6 @@
 #include <regex>
 #include "Nodes\Node.h"
 
-#include "SaveLoadCheck.h"
-
 //所有物品类型的jass变量名
 std::string randomItemTypes[] = {
 	"ITEM_TYPE_ANY",
@@ -416,7 +414,6 @@ void TriggerEditor::saveSctipt(const char* path)
 
 	print("自定义保存jass文件\n");
 
-	SaveLoadInitLog();
 	auto start = clock();
 
 	auto data = m_editorData;
@@ -1604,7 +1601,7 @@ endfunction
 
 	print("自定义jass 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
-	SaveLoadCloseLog();
+
 
 	m_initFuncTable.clear();
 
@@ -1615,8 +1612,6 @@ endfunction
 
 std::string TriggerEditor::convertTrigger(Trigger* trigger) 
 {
-	SaveLoadCheck_Reset();
-
 	mh::NodePtr node = mh::NodeFromTrigger(trigger);
 
 	return node->toString();

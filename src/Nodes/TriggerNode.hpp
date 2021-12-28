@@ -2,6 +2,7 @@
 
 #include "Node.h"
 #include "Function.hpp"
+#include <set>
 
 namespace mh {
 	//触发器节点
@@ -120,7 +121,21 @@ namespace mh {
 				}
 			}
 
+			auto& world = get_world_editor();
 			
+			//检查逆天变量类型 发出警告
+			for (auto&& [name, map] : all_upvalue_map) {
+				if (map.size() > 1) {
+					std::string warning = std::format("Warning: 触发器[{}]: 逆天局部变量[loc_{}] 有多个类型，请尽快修复:\n", base::u2a(m_name), base::u2a(name));
+					print(warning.c_str());
+					for (auto&& [type, code] : map) {
+						std::string type_name = world.getConfigData("TriggerTypes", type, 3);
+						print("[%s] %s\n", base::u2a(type_name).c_str(), base::u2a(code).c_str());
+					}
+					print("\n");
+				}
+			}
+
 			return func->toString();
 		}
 
@@ -162,6 +177,9 @@ namespace mh {
 		}
 	public:
 		bool hasUpvalue = false;
+
+		// all_upvalue_map[name] = {type, action}
+		std::map<std::string, std::map<std::string, std::string>> all_upvalue_map;
 
 	private:
 		TriggerNode(Trigger* trigger) {

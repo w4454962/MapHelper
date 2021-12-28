@@ -46,9 +46,6 @@
     <ClCompile Include="src\MapHelper.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\SaveLoadCheck.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\TriggerEditor.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -73,9 +70,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\MapHelper.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SaveLoadCheck.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\TriggerEditor.h">

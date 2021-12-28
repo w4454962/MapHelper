@@ -190,7 +190,6 @@
     <ClInclude Include="src\Nodes\Function.hpp" />
     <ClInclude Include="src\Nodes\EventNode.hpp" />
     <ClInclude Include="src\Nodes\TriggerNode.hpp" />
-    <ClCompile Include="src\SaveLoadCheck.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\TriggerEditor.cpp" />
     <ClCompile Include="src\utils\inline.cpp" />
@@ -206,7 +205,6 @@
     <ClInclude Include="src\Nodes\Node.h" />
     <ClCompile Include="src\Nodes\Node.cpp" />
     <ClInclude Include="src\Nodes\Parameter.hpp" />
-    <ClInclude Include="src\SaveLoadCheck.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\TriggerEditor.h" />
     <ClInclude Include="src\utils\BinaryWriter.h" />
