@@ -279,24 +279,26 @@ namespace mh {
 			func->current()->addLocal("ydl_timer", "timer", std::string(), false);
 
 			std::string result;
-			std::string save_state;
+			std::string save_state; 
+			std::string start;
 
 			std::string func_name = getFuncName() + "T";
 			params_finish = false; 
 
-			result += func->getSpaces() + "set ydl_timer = " + params[0]->toString(func) + "\n";
+			result = func->getSpaces() + "set ydl_timer = " + params[0]->toString(func) + "\n";
+			start = func->getSpaces() + "call TimerStart(ydl_timer, "
+				+ params[1]->toString(func) + ", "
+				+ params[2]->toString(func)
+				+ ", function " + func_name + ")\n";
 
 			params_finish = true;
 
 			Function* closure = getBlock(func, func_name, save_state);
 			result += save_state;
-			result += func->getSpaces() + "call TimerStart(ydl_timer, "
-				+ params[1]->toString(func) + ", "
-				+ params[2]->toString(func)
-				+ ", function " + func_name + ")\n";
+			result += start;
 
 		
-
+			 
 			func->addFunction(closure);
 
 			return result;
