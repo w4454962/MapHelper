@@ -343,7 +343,7 @@ namespace mh {
 				result = getParentNode()->getUpvalue(info);
 				return result;
 			}
-			if (getCrossDomainIndex() < getCurrentGroupId()) {  //事件也使用上一层的变量
+			if (getCurrentGroupId() < getCrossDomainIndex()) {  //事件也使用上一层的变量
 				result = getParentNode()->getUpvalue(info);
 				return result;
 			}
