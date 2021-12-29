@@ -1297,7 +1297,7 @@ endfunction
 				continue;
 			}
 
-			if (mh::g_initTriggerMap.find(trigger) != mh::g_initTriggerMap.end() || trigger->is_initialize)
+			if (mh::g_initTriggerMap.find(trigger) != mh::g_initTriggerMap.end() && trigger->is_disable_init != 1)
 			{
 				std::string trigger_name = std::string(trigger->name);
 				convert_name(trigger_name);

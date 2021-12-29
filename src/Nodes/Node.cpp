@@ -584,7 +584,6 @@ namespace mh {
 					if (ptr->getNameId() == "YDWETimerStartMultiple"s_hash) {
 						in_block = true;
 					}
-					return true;
 				}
 				return false;
 			});
@@ -614,7 +613,6 @@ namespace mh {
 					if (ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash) {
 						in_block = true;
 					}
-					return true;
 				}
 				return false;
 			});
@@ -696,7 +694,9 @@ namespace mh {
 
 		virtual std::string toString(TriggerFunction* func) override {
 
-			std::string script = m_action->parameters[0]->value;
+			auto params = getParameterList();
+			std::string script = params[0]->toString(func);
+
 			if (getType() == TYPE::CALL) { //将自定义值里的 局部变量申明进行拆分
 				
 				//匹配局部变量数组 
@@ -917,6 +917,19 @@ namespace mh {
 
 			std::string result = "call " + getUpvalue(upvalue);
 
+			//主动申明
+			getValue([&](NodePtr ptr) {
+				if (ptr->getType() == TYPE::CLOSURE) {
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					if (node->getCurrentGroupId() == node->getCrossDomainIndex()) {
+						node->define_upvalue_map.emplace(upvalue.name, upvalue);
+					}
+					return true;
+				}
+				return false;
+			});
+
+
 			//记录逆天变量 用来类型检查
 			auto& map = root->all_upvalue_map[upvalue.name];
 			auto& editor = get_trigger_editor();
@@ -951,6 +964,18 @@ namespace mh {
 
 
 			std::string result = getUpvalue(upvalue);
+
+			//主动申明
+			getValue([&](NodePtr ptr) {
+				if (ptr->getType() == TYPE::CLOSURE) {
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					if (node->getCurrentGroupId() == node->getCrossDomainIndex()) {
+						node->define_upvalue_map.emplace(upvalue.name, upvalue);
+					}
+					return true;
+				}
+				return false;
+			});
 
 			//记录逆天变量 用来类型检查
 			auto& map = root->all_upvalue_map[upvalue.name];

@@ -68,7 +68,7 @@ namespace mh {
 				auto events = func->event;
 				func->push(events);
 
-				
+				current_progress = Action::Type::event;
 
 				*events << "\tset " + m_trigger_variable_name + " = CreateTrigger()\n";
 				if (m_trigger->is_disable_init) {
@@ -92,6 +92,8 @@ namespace mh {
 			 
 			//condition
 			{
+				current_progress = Action::Type::condition;
+
 				auto conditions = func->condition;
 				func->push(conditions);
 				for (auto& node : nodes[Action::Type::condition]) {
@@ -115,6 +117,8 @@ namespace mh {
 			
 			//action 
 			{
+				current_progress = Action::Type::action;
+
 				auto actions = func->action;
 				func->push(actions);
 				for (auto& node : nodes[Action::Type::action]) {
@@ -168,30 +172,52 @@ namespace mh {
 				return info.name + "()";
 			}
 
-			switch (info.uptype)
-			{
-			case Upvalue::TYPE::SET_LOCAL:
-				result = std::format("YDLocal1Set({}, \"{}\", {})", info.type, info.name, info.value);
-				break;
-			case Upvalue::TYPE::GET_LOCAL:
-				result = std::format("YDLocal1Get({}, \"{}\")", info.type, info.name);
-				break;
-			case Upvalue::TYPE::SET_ARRAY:
-				result = std::format("YDLocal1ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
-				break;
-			case Upvalue::TYPE::GET_ARRAY:
-				result = std::format("YDLocal1ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
-				break;
-			default:
-				break;
+			if (current_progress == Action::Type::action) { //正在编译触发动作
+				switch (info.uptype) {
+				case Upvalue::TYPE::SET_LOCAL:
+					result = std::format("YDLocal1Set({}, \"{}\", {})", info.type, info.name, info.value);
+					break;
+				case Upvalue::TYPE::GET_LOCAL:
+					result = std::format("YDLocal1Get({}, \"{}\")", info.type, info.name);
+					break;
+				case Upvalue::TYPE::SET_ARRAY:
+					result = std::format("YDLocal1ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
+					break;
+				case Upvalue::TYPE::GET_ARRAY:
+					result = std::format("YDLocal1ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
+					break;
+				default:
+					break;
+				}
+			} else { //否则是编译事件跟条件
+				switch (info.uptype) {
+				case Upvalue::TYPE::SET_LOCAL:
+					result = std::format("YDLocal2Set({}, \"{}\", {})", info.type, info.name, info.value);
+					break;
+				case Upvalue::TYPE::GET_LOCAL:
+					result = std::format("YDLocal2Get({}, \"{}\")", info.type, info.name);
+					break;
+				case Upvalue::TYPE::SET_ARRAY:
+					result = std::format("YDLocal2ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
+					break;
+				case Upvalue::TYPE::GET_ARRAY:
+					result = std::format("YDLocal2ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
+					break;
+				default:
+					break;
+				}
 			}
+			
 			return result;
 		}
+
 	public:
 		bool hasUpvalue = false;
 
 		// all_upvalue_map[name] = {type, action}
 		std::map<std::string, std::map<std::string, std::string>> all_upvalue_map;
+
+		Action::Type current_progress;
 
 	private:
 		TriggerNode(Trigger* trigger) {

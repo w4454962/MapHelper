@@ -40,8 +40,6 @@ namespace mh {
 			std::vector<NodePtr> upvalues_scope; //所有参数区的节点
 			std::vector<NodePtr> closure_scope;  //所有动作区的节点
 
-			std::map<std::string, std::string> search_upvalue_map;
-
 			m_current_group_id = -1;
 
 			//分类
@@ -58,19 +56,10 @@ namespace mh {
 			for (auto& node : upvalues_scope) {
 				Action* action = (Action*)node->getData();
 				m_current_group_id = action->group_id;
-				uint32_t id = node->getNameId();
-				//如果是参数区
-				if (action->group_id == getCrossDomainIndex() && (id == "YDWESetAnyTypeLocalArray"s_hash || id == "YDWESetAnyTypeLocalVariable"s_hash)) {
-					std::string upvalue_name = action->parameters[1]->value;
-					std::string upvalue_type = action->parameters[0]->value + 11;
-					search_upvalue_map.emplace(upvalue_name, upvalue_type);
-					upvalues += node->toString(func);
-				} else {
-					if (m_current_group_id >= 0 && getCrossDomainIndex() >= 0 && upactions.size() > m_current_group_id) {
-						upactions[m_current_group_id] += node->toString(func);
-					}
+	
+				if (m_current_group_id >= 0 && getCrossDomainIndex() >= 0 && upactions.size() > m_current_group_id) {
+					upactions[m_current_group_id] += node->toString(func);
 				}
-
 			}
 
 			std::map<std::string, Upvalue>* prev_upvalue_map_ptr = nullptr;
@@ -105,7 +94,7 @@ namespace mh {
 
 			
 			//主动申明在参数区的逆天局部变量 不用上一层处理
-			for (auto& [n, t] : search_upvalue_map) {
+			for (auto&& [n, v] : define_upvalue_map) {
 				upvalue_map.erase(n);
 				if (prev_upvalue_map_ptr) {
 					prev_upvalue_map_ptr->erase(n);
@@ -160,6 +149,9 @@ namespace mh {
 	public:
 		//逆天局部变量表
 		std::map<std::string, Upvalue> upvalue_map;
+
+		//逆天参数区里主动申明的局部变量
+		std::map<std::string, Upvalue> define_upvalue_map;
 
 		int m_current_group_id = -1;
 

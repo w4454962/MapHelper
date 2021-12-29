@@ -73,10 +73,7 @@ namespace mh {
 			if (last_closure) {
 				return last_closure->getUpvalue(info);
 			} 
-			return getUpvalueInTrigger(info);
-		}
 
-		virtual std::string getUpvalueInTrigger(const Upvalue& info) {
 			std::string result;
 
 			switch (info.uptype) {
@@ -95,30 +92,10 @@ namespace mh {
 			default:
 				break;
 			}
+
 			return result;
 		}
 
-		virtual std::string getUpvalueInTimer(const Upvalue& info) {
-			std::string result;
-
-			switch (info.uptype) {
-			case Upvalue::TYPE::SET_LOCAL:
-				result = std::format("YDLocal3Set({}, \"{}\", {})", info.type, info.name, info.value);
-				break;
-			case Upvalue::TYPE::GET_LOCAL:
-				result = std::format("YDLocal3Get({}, \"{}\")", info.type, info.name);
-				break;
-			case Upvalue::TYPE::SET_ARRAY:
-				result = std::format("YDLocal3ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
-				break;
-			case Upvalue::TYPE::GET_ARRAY:
-				result = std::format("YDLocal3ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
-				break;
-			default:
-				break;
-			}
-			return result;
-		}
 	private:
 		NodePtr m_node;
 		std::string m_return_type;
@@ -343,13 +320,10 @@ namespace mh {
 			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
 
 			FunctionPtr closure = getBlock(func, func_name, "nothing", save_state, upactions);
-			result += save_state;
-			result += start;
+			result += upactions[0]; //参数区
+			result += save_state;	//自动传参
+			result += start;		//开始计时器
 
-			for (auto& action : upactions) {
-				result += action;
-			}
-			 
 			func->addFunction(closure);
 
 			return result;
@@ -440,13 +414,11 @@ namespace mh {
 			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
 
 			FunctionPtr closure = getBlock(func, func_name, "nothing", save_state, upactions);
-			result += save_state;
-			for (auto& action : upactions) {
-				result += action;
-			}
+			result += upactions[1]; //参数区
+			result += save_state;	//自动传参代码
+			result += upactions[0];	//事件区
 			result += func->getSpaces() + "call TriggerAddCondition( ydl_trigger, Condition(function " + func_name + "))\n";
 
-			
 
 			func->addFunction(closure);
 
