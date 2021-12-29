@@ -167,6 +167,7 @@ namespace mh {
 			auto node1 = (std::dynamic_pointer_cast<ParameterNode>(params[1]))->getParamActionNode();
 			auto node2 = (std::dynamic_pointer_cast<ParameterNode>(params[2]))->getParamActionNode();
 
+			node0->setType(TYPE::GET);
 			node1->setType(TYPE::CALL);
 			node2->setType(TYPE::CALL);
 

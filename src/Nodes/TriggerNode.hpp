@@ -100,6 +100,7 @@ namespace mh {
 					} else {
 						*conditions << "\treturn ";
 					}
+					node->setType(TYPE::GET);
 					*conditions << "(" + node->toString(func) + ")";
 				}
 				if (!conditions->isEmpty()) {

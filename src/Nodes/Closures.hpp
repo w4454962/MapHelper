@@ -55,18 +55,25 @@ namespace mh {
 		}
 
 		virtual std::string getUpvalue(const Upvalue& info) override {
+			auto ptr = getParentNode();
 
+			
 			NodePtr last_closure = nullptr;
 			getValue([&](NodePtr ptr) {
 				if (ptr.get() != this && ptr->getType() == TYPE::CLOSURE) {
 					last_closure = ptr;
+					return true;
 				}
 				return false;
-				});
-			if (last_closure) { //如果有上一层闭包  则使用上一层闭包里的环境  如果没有 则是在根触发里 就使用下面的规则
-				return last_closure->getUpvalue(info);
-			}
+			});
 
+			if (last_closure) {
+				return last_closure->getUpvalue(info);
+			} 
+			return getUpvalueInTrigger(info);
+		}
+
+		virtual std::string getUpvalueInTrigger(const Upvalue& info) {
 			std::string result;
 
 			switch (info.uptype) {
@@ -88,6 +95,27 @@ namespace mh {
 			return result;
 		}
 
+		virtual std::string getUpvalueInTimer(const Upvalue& info) {
+			std::string result;
+
+			switch (info.uptype) {
+			case Upvalue::TYPE::SET_LOCAL:
+				result = std::format("YDLocal3Set({}, \"{}\", {})", info.type, info.name, info.value);
+				break;
+			case Upvalue::TYPE::GET_LOCAL:
+				result = std::format("YDLocal3Get({}, \"{}\")", info.type, info.name);
+				break;
+			case Upvalue::TYPE::SET_ARRAY:
+				result = std::format("YDLocal3ArraySet({}, \"{}\", {}, {})", info.type, info.name, info.index, info.value);
+				break;
+			case Upvalue::TYPE::GET_ARRAY:
+				result = std::format("YDLocal3ArrayGet({}, \"{}\", {})", info.type, info.name, info.index);
+				break;
+			default:
+				break;
+			}
+			return result;
+		}
 	private:
 		NodePtr m_node;
 		std::string m_return_type;
@@ -144,11 +172,15 @@ namespace mh {
 			getValue([&](NodePtr ptr) {
 				if (ptr.get() != this && ptr->getType() == TYPE::CLOSURE) {
 					last_closure = ptr;
+					return true;
 				}
 				return false;
 			});
 			if (last_closure) { //如果有上一层闭包  则使用上一层闭包里的环境  如果没有 则是在根触发里 就使用下面的规则
 				return last_closure->getUpvalue(info);
+			} else if (info.is_func){
+				//如果是根触发  并且是要获取函数值 则直接使用根触发里的
+				return getRootNode()->getUpvalue(info);
 			}
 
 			std::string result;
