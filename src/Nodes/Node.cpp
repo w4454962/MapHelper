@@ -677,13 +677,34 @@ namespace mh {
 		virtual std::string toString(TriggerFunction* func) override {
 
 			std::string script = m_action->parameters[0]->value;
-			if (getType() == TYPE::CALL) {
-				std::regex reg("^\\s*local\\s+\\w+\\s+array\\s+\\w+\\s*");
-				script = regex_replace(script, reg, "");
-				reg = std::regex("^\\s*local\\s+\\w+\\s+(\\w+)\\s*=");
-				script = regex_replace(script, reg, "set $1 =");
-				reg = std::regex("^\\s*local\\s+\\w+\\s+\\w+\\s*");
-				script = regex_replace(script, reg, "");
+			if (getType() == TYPE::CALL) { //将自定义值里的 局部变量申明进行拆分
+				
+				//匹配局部变量数组 
+				std::regex reg("^\\s*local\\s+(\\w+)\\s+array\\s+(\\w+)");
+		
+				auto it_end = std::sregex_iterator();
+				auto it = std::sregex_iterator(script.begin(), script.end(), reg);
+				for (; it != it_end; ++it) {
+					func->current()->addLocal(it->str(2), it->str(1), std::string(), true);
+				}
+
+				//匹配局部变量
+				reg = std::regex("^\\s*local\\s+(\\w+)\\s+(\\w+)");
+				it = std::sregex_iterator(script.begin(), script.end(), reg);
+				for (; it != it_end; ++it) {
+					if (it->str(2) != "array") {
+						func->current()->addLocal(it->str(2), it->str(1), std::string(), false);
+					}
+				}
+
+				//将数组申明删掉
+				script = regex_replace(script, std::regex("^\\s*local\\s+\\w+\\s+array\\s+\\w+\\s*"), "");
+
+				//将局部变量申明赋值 申明部分删掉
+				script = regex_replace(script, std::regex("^\\s*local\\s+\\w+\\s+(\\w+)\\s*="), "set $1 =");
+
+				//将局部变量申明删掉
+				script = regex_replace(script, std::regex("^\\s*local\\s+\\w+\\s+\\w+\\s*"), "");	
 			}
 			return toLine(script, func);
 		}
