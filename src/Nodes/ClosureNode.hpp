@@ -93,12 +93,9 @@ namespace mh {
 			func->pop();
 
 			
-			//主动申明在参数区的逆天局部变量 不用上一层处理
+			//主动申明在参数区的逆天局部变量 不用处理
 			for (auto&& [n, v] : define_upvalue_map) {
 				upvalue_map.erase(n);
-				if (prev_upvalue_map_ptr) {
-					prev_upvalue_map_ptr->erase(n);
-				}
 			}
 			
 			for (auto&& [n, v] : upvalue_map) {

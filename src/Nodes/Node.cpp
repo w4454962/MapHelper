@@ -640,12 +640,11 @@ namespace mh {
 			NodePtr parent = nullptr;
 
 			getValue([&](NodePtr ptr) {
-				if (ptr.get() != this && (ptr->getType() == TYPE::CLOSURE || ptr->getType() == TYPE::ROOT)) {
+				if ((ptr->getType() == TYPE::CLOSURE || ptr->getType() == TYPE::ROOT)) {
 					if (ptr->getNameId() == "YDWETimerStartMultiple"s_hash || ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash) {
 						in_block = true;
 					}
 					parent = ptr;
-					return true;
 				}
 				return false;
 			});
@@ -658,7 +657,9 @@ namespace mh {
 				result = ActionNode::toString(func);
 			}
 
-			if (parent.get() && parent->getType() == TYPE::ROOT) {
+			if (parent == nullptr || parent->getType() == TYPE::ROOT) {
+				auto node = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
+				node->hasUpvalue = true;
 				result += "call YDLocalReset()\n";
 			}
 			return result;
