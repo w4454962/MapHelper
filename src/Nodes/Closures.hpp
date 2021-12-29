@@ -61,8 +61,11 @@ namespace mh {
 			NodePtr last_closure = nullptr;
 			getValue([&](NodePtr ptr) {
 				if (ptr.get() != this && ptr->getType() == TYPE::CLOSURE) {
-					last_closure = ptr;
-					return true;
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					if (node->params_finish) {
+						last_closure = ptr;
+						return true;
+					}
 				}
 				return false;
 			});
