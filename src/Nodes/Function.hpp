@@ -34,6 +34,8 @@ namespace mh {
 		}
 	};
 
+	typedef std::shared_ptr<class Function> FunctionPtr;
+
 	class Function {
 	public:
 		Function(const std::string& _name, const std::string& _returnt_type) 
@@ -145,9 +147,9 @@ namespace mh {
 	class TriggerFunction {
 	public:
 		TriggerFunction(const std::string& name, const std::string& trigger_name) 
-			:event("Init" + name, "nothing"),
-			condition(name + "Conditions", "boolean"),
-			action(name + "Actions", "nothing")
+			:event(new Function("Init" + name, "nothing")),
+			condition(new Function(name + "Conditions", "boolean")),
+			action(new Function(name + "Actions", "nothing"))
 		{
 			m_comment = seperator;
 			m_comment += "// Trigger: " + trigger_name + "\n";
@@ -163,17 +165,17 @@ namespace mh {
 			return self;
 		}
 
-		void addFunction(Function* func) {
+		void addFunction(FunctionPtr func) {
 			m_func_list.push_back(func);
 		}
 
 		Function& pushFunction(const std::string& name, const std::string return_type) {
-			Function* func = new Function(name, return_type);
+			FunctionPtr func = FunctionPtr(new Function(name, return_type));
 			m_func_list.push_back(func);
 			return *func;
 		}
 
-		void push(Function* func) {
+		void push(FunctionPtr func) {
 			if (m_stack.empty() || m_stack.top() != func) {
 				m_stack.push(func);
 			}
@@ -184,11 +186,11 @@ namespace mh {
 				m_stack.pop();
 			}
 		}
-		Function* current() {
+		FunctionPtr current() {
 			if (!m_stack.empty()) {
 				return m_stack.top();
 			}
-			return &action;
+			return action;
 		}
 
 		void addSpace() {
@@ -208,29 +210,29 @@ namespace mh {
 
 			result = m_comment;
 			
-			if (!condition.isEmpty()) {
-				result += condition.toString();
+			if (!condition->isEmpty()) {
+				result += condition->toString();
 			}
 
 			for(auto& func: m_func_list){
 				result += func->toString();
 			}
-			result += action.toString();
+			result += action->toString();
 			result += seperator;
-			result += event.toString();
+			result += event->toString();
 
 			return result;
 		}
 
 	public:
-		Function event;
-		Function condition;
-		Function action;
+		FunctionPtr event;
+		FunctionPtr condition;
+		FunctionPtr action;
 
 	private:
 		std::string m_comment;
-		std::vector<Function*> m_func_list;
-		std::stack<Function*> m_stack;
+		std::vector<FunctionPtr> m_func_list;
+		std::stack<FunctionPtr> m_stack;
 
 	};
 }

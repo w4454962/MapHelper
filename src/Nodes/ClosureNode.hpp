@@ -31,7 +31,12 @@ namespace mh {
 	
 		int getCurrentGroupId() { return m_current_group_id; }
 
-		virtual Function* getBlock(TriggerFunction* func, const std::string& closure_name, std::string& upvalues, std::vector<std::string>& upactions) {
+		virtual FunctionPtr getBlock(TriggerFunction* func, 
+			const std::string& closure_name, 
+			const std::string& return_type,
+			std::string& upvalues, 
+			std::vector<std::string>& upactions
+		) {
 			std::vector<NodePtr> upvalues_scope; //所有参数区的节点
 			std::vector<NodePtr> closure_scope;  //所有动作区的节点
 
@@ -42,7 +47,7 @@ namespace mh {
 			//分类
 			for (auto& node : getChildList()) {
 				Action* action = (Action*)node->getData();
-				if (action->group_id <= getCrossDomainIndex()) {
+				if ((int)action->group_id <= getCrossDomainIndex() && getCrossDomainIndex() >= 0) {
 					upvalues_scope.push_back(node);
 				} else {
 					closure_scope.push_back(node);
@@ -61,7 +66,7 @@ namespace mh {
 					search_upvalue_map.emplace(upvalue_name, upvalue_type);
 					upvalues += node->toString(func);
 				} else {
-					if (m_current_group_id >= 0) {
+					if (m_current_group_id >= 0 && getCrossDomainIndex() >= 0 && upactions.size() > m_current_group_id) {
 						upactions[m_current_group_id] += node->toString(func);
 					}
 				}
@@ -83,12 +88,18 @@ namespace mh {
 			});
 			
 
-			Function* closure = new Function(closure_name, "nothing");
+			FunctionPtr closure = FunctionPtr(new Function(closure_name, return_type));
 			func->push(closure);
 			//生成闭包代码
+			int i = 0;
 			for (auto& node : closure_scope) {
 				m_current_group_id = ((Action*)node->getData())->group_id;
-				*closure << node->toString(func);
+				if (++i == closure_scope.size() && return_type != "nothing") { //最后一行
+					*closure << func->getSpaces(-1) + "__RETURN__";
+					*closure << func->getSpaces() + "return " + node->toString(func) + "\n";
+				} else {
+					*closure << node->toString(func);
+				}
 			}
 			func->pop();
 
@@ -104,6 +115,7 @@ namespace mh {
 			for (auto&& [n, v] : upvalue_map) {
 				//当前这层允许跨域 才生成逆天的自动传参代码。
 				if ((!v.is_func && isVariableCrossDomain()) || (v.is_func && isFunctionCrossDomain())) {
+
 					//生成保存状态代码
 					Upvalue upvalue = { };
 					auto set = Upvalue::TYPE::SET_LOCAL;
@@ -120,7 +132,10 @@ namespace mh {
 
 					m_current_group_id = getCrossDomainIndex();
 					upvalue.value = getUpvalue({ get, v.name, v.type, "", v.index, v.is_func });
-					upvalues += func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
+
+					if (getCrossDomainIndex() >= 0) { //拥有参数区的 才进行保存代码
+						upvalues += func->getSpaces() + "call " + getUpvalue(upvalue) + "\n";
+					}
 					m_current_group_id = -1;
 
 					if (prev_upvalue_map_ptr && prev_upvalue_map_ptr != &upvalue_map) {

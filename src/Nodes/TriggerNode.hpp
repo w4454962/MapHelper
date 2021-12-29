@@ -65,59 +65,61 @@ namespace mh {
 
 			//event
 			{
-				auto& events = func->event;
-				func->push(&events);
+				auto events = func->event;
+				func->push(events);
 
 				
-				events << "\tset " + m_trigger_variable_name + " = CreateTrigger()\n";
-				events << "#ifdef DEBUG\n";
-				events << "\tcall YDWESaveTriggerName(" + m_trigger_variable_name + ",\"" + m_name + "\")\n";
-				events << "#endif\n";
 
+				*events << "\tset " + m_trigger_variable_name + " = CreateTrigger()\n";
 				if (m_trigger->is_disable_init) {
-					events << "\tcall DisableTrigger(" + m_trigger_variable_name + ")\n";
+					*events << "\tcall DisableTrigger(" + m_trigger_variable_name + ")\n";
 				}
+
+				*events << "#ifdef DEBUG\n";
+				*events << "\tcall YDWESaveTriggerName(" + m_trigger_variable_name + ",\"" + m_name + "\")\n";
+				*events << "#endif\n";
+
 				for (auto& node : nodes[Action::Type::event]) {
-					events << node->toString(func);
+					*events << node->toString(func);
 				}
 
 				if (!nodes[Action::Type::condition].empty()) {
-					events << "\tcall TriggerAddCondition(" + m_trigger_variable_name + ", Condition(function " + func->condition.getName() + "))\n";
+					*events << "\tcall TriggerAddCondition(" + m_trigger_variable_name + ", Condition(function " + func->condition->getName() + "))\n";
 				}
-				events << "\tcall TriggerAddAction(" + m_trigger_variable_name + ", function " + func->action.getName() + ")\n";
+				*events << "\tcall TriggerAddAction(" + m_trigger_variable_name + ", function " + func->action->getName() + ")\n";
 				func->pop();
 			}
 			 
 			//condition
 			{
-				auto& conditions = func->condition;
-				func->push(&conditions);
+				auto conditions = func->condition;
+				func->push(conditions);
 				for (auto& node : nodes[Action::Type::condition]) {
-					if (!conditions.isEmpty()) {
-						conditions << " and ";
+					if (!conditions->isEmpty()) {
+						*conditions << " and ";
 					} else {
-						conditions << "\treturn ";
+						*conditions << "\treturn ";
 					}
-					conditions << "(" + node->toString(func) + ")";
+					*conditions << "(" + node->toString(func) + ")";
 				}
-				if (!conditions.isEmpty()) {
-					conditions << "\n";
+				if (!conditions->isEmpty()) {
+					*conditions << "\n";
 				}
 				func->pop();
 			}
 			
 			//action 
 			{
-				auto& actions = func->action;
-				func->push(&actions);
+				auto actions = func->action;
+				func->push(actions);
 				for (auto& node : nodes[Action::Type::action]) {
-					actions << node->toString(func);
+					*actions << node->toString(func);
 				} 
 				func->pop();
 				//如果当前触发里有逆天变量的话 则在开头跟结束插入2段代码
 				if (hasUpvalue) {
-					actions.insert_begin += func->getSpaces() + "YDLocalInitialize()\n";
-					actions.insert_end += func->getSpaces() + "call YDLocal1Release()\n";
+					actions->insert_begin += func->getSpaces() + "YDLocalInitialize()\n";
+					actions->insert_end += func->getSpaces() + "call YDLocal1Release()\n";
 				}
 			} 
 
@@ -139,7 +141,7 @@ namespace mh {
 
 			auto& editor = get_trigger_editor();
 
-			editor.m_initFuncTable[func->event.getName()] = true;
+			editor.m_initFuncTable[func->event->getName()] = true;
 
 			return func->toString();
 		}

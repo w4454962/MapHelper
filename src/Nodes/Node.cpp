@@ -105,6 +105,9 @@ namespace mh {
 	
 			auto params = getParameterList();
 	
+			auto node = std::dynamic_pointer_cast<ParameterNode>(params[2])->getParamActionNode();
+			node->setType(TYPE::CALL);
+
 			std::string variable = m_nameId == "ForLoopA"s_hash ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		
 			result += func->getSpaces() + "set " + variable + " = " + params[0]->toString(func) + "\n";
@@ -112,7 +115,8 @@ namespace mh {
 			func->addSpace();
 	
 			result += func->getSpaces() + "exitwhen " + variable + ">" + params[1]->toString(func) + "\n";
-			result += func->getSpaces() + params[2]->toString(func) + "\n";
+
+			result += node->toString(func) + "\n";
 			result += func->getSpaces() + "set " + variable + " = " + variable + " + 1\n";
 			func->subSpace();
 			result += func->getSpaces() + "endloop\n";
@@ -133,12 +137,15 @@ namespace mh {
 	
 			std::string variable = params[0]->toString(func);
 	
+			auto node = std::dynamic_pointer_cast<ParameterNode>(params[3])->getParamActionNode();
+			node->setType(TYPE::CALL);
+
 			result += func->getSpaces() + "set " + variable + " = " + params[1]->toString(func) + "\n";
 			result += func->getSpaces() + "loop\n";
 			func->addSpace();
 	
 			result += func->getSpaces() + "exitwhen " + variable + ">" + params[2]->toString(func) + "\n";
-			result += func->getSpaces() + params[3]->toString(func) + "\n";
+			result += node->toString(func) + "\n";
 			result += func->getSpaces() + "set " + variable + " = " + variable + " + 1\n";
 			func->subSpace();
 			result += func->getSpaces() + "endloop\n";

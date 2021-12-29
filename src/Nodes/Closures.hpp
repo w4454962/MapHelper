@@ -17,7 +17,21 @@ namespace mh {
 			m_return_type = return_type;
 		}
 
+		//没有逆天参数 所以-1
+		virtual int getCrossDomainIndex() { return -1; }
 
+
+		virtual std::vector<NodePtr> getChildList() {
+			std::vector<NodePtr> list;
+
+			NodePtr node = shared_from_this();
+
+			//为当前闭包添加一条动作
+			NodePtr fake = NodeFromAction(m_action, 0, node);
+
+			list.push_back(fake);
+			return list;
+		}
 		virtual std::string toString(TriggerFunction* func) override {
 
 			auto& editor = get_trigger_editor();
@@ -27,23 +41,16 @@ namespace mh {
 
 			std::string result;
 
-			NodePtr node = shared_from_this();
-
-			//为当前闭包添加一条动作
-			NodePtr fake = NodeFromAction(m_action, 0, node);
-
 			//将动作编译到函数里 返回函数名
 			result = "function " + func_name;
-			Function* code = new Function(func_name, m_return_type);
-			func->push(code);
-			if (m_return_type == "nothing") {
-				*func << fake->toString(func);
-			} else {
-				*func << func->getSpaces(-1) + "__RETURN__";
-				*func << func->getSpaces() + "return " + fake->toString(func) + "\n";
-			}
-			func->pop();
+
+			std::string upvalues;
+			std::vector<std::string> actions;
+
+			FunctionPtr code = getBlock(func, func_name, m_return_type, upvalues, actions);
+
 			func->addFunction(code);
+
 			return result;
 		}
 
@@ -91,6 +98,9 @@ namespace mh {
 	public:
 		REGISTER_FROM_CLOSUER(ForForceMultiple)
 
+		//没有逆天参数 所以-1
+		virtual int getCrossDomainIndex() { return -1; }
+
 		virtual std::string toString(TriggerFunction* func) override {
 
 			auto& editor = get_trigger_editor();
@@ -100,6 +110,7 @@ namespace mh {
 
 			std::string result = func->getSpaces() + "call " + name + "(";
 
+			
 
 			params_finish = false;
 
@@ -109,15 +120,16 @@ namespace mh {
 			}
 			result += "function " + func_name + ")\n";
 
-			Function* code = new Function(func_name, "nothing");
-			func->push(code);
-
 			params_finish = true;
 
-			for (auto& node : getChildList()) {
-				*func << node->toString(func);
+			std::string upvalues;
+			std::vector<std::string> upactions;
+			FunctionPtr code = getBlock(func, func_name, "nothing", upvalues, upactions);
+
+			for (auto& action : upactions) {
+				result += action;
 			}
-			func->pop();
+
 			func->addFunction(code);
 			return result;
 		}
@@ -295,7 +307,7 @@ namespace mh {
 
 			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
 
-			Function* closure = getBlock(func, func_name, save_state, upactions);
+			FunctionPtr closure = getBlock(func, func_name, "nothing", save_state, upactions);
 			result += save_state;
 			result += start;
 
@@ -339,15 +351,20 @@ namespace mh {
 
 			bool is_get = info.uptype == Upvalue::TYPE::GET_LOCAL || info.uptype == Upvalue::TYPE::GET_ARRAY;
 
-			if ((getCrossDomainIndex() == getCurrentGroupId() && is_get) || !params_finish) {	//如果当前是传参区 则使用上一层的局部变量
-				result = getParentNode()->getUpvalue(info);
-				return result;
-			}
-			if (getCurrentGroupId() < getCrossDomainIndex()) {  //事件也使用上一层的变量
-				result = getParentNode()->getUpvalue(info);
-				return result;
-			}
+			//如果当前是传参区 则使用上一层的局部变量
+			bool is_param_block = (getCrossDomainIndex() == getCurrentGroupId() && is_get);
 
+			//事件也使用上一层的变量
+			bool is_event_block = getCurrentGroupId() < getCrossDomainIndex();
+
+			//如果是函数值 并且当前不允许函数值跨域 也使用上一层
+			bool is_func = info.is_func && !isFunctionCrossDomain();
+
+			if (is_param_block || is_event_block || is_func) {
+				result = getParentNode()->getUpvalue(info);
+				return result;
+			}
+		
 			switch (info.uptype) {
 			case Upvalue::TYPE::SET_LOCAL:
 				result = std::format("YDLocalSet({}, {}, \"{}\", {})", getHandleName(), info.type, info.name, info.value);
@@ -387,7 +404,7 @@ namespace mh {
 
 			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
 
-			Function* closure = getBlock(func, func_name, save_state, upactions);
+			FunctionPtr closure = getBlock(func, func_name, "nothing", save_state, upactions);
 			result += save_state;
 			for (auto& action : upactions) {
 				result += action;
@@ -475,7 +492,7 @@ namespace mh {
 
 			std::vector<std::string> upactions(getCrossDomainIndex() + 1);
 
-			Function* closure = getBlock(func, m_function, upvalues, upactions);
+			FunctionPtr closure = getBlock(func, m_function, "nothing", upvalues, upactions);
 			func->addFunction(closure);
 
 			return upvalues + result;
