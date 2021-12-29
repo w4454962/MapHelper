@@ -859,7 +859,7 @@ namespace mh {
 			getValue([&](NodePtr ptr) {
 				if (ptr->getType() == TYPE::CLOSURE) {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
-					if (node->getCurrentGroupId() > node->getCrossDomainIndex()) {
+					if (node->getCurrentGroupId() > node->getCrossDomainIndex() || node->getCrossDomainIndex() == -1) {
 						node->upvalue_map.emplace(upvalue.name, upvalue);
 					}
 					return true; 
