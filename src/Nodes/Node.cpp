@@ -469,6 +469,8 @@ namespace mh {
 
 			auto params = getParameterList();
 
+			params_finish = false;
+
 			//添加局部变量
 			func->current()->addLocal("ydl_group", "group", std::string(), false);
 			func->current()->addLocal("ydl_unit", "unit", std::string(), false);
@@ -480,6 +482,8 @@ namespace mh {
 				+ params[0]->toString(func) + ", " \
 				+ params[1]->toString(func) + ", " \
 				+ params[2]->toString(func) + ", null)\n";
+
+			params_finish = true;
 
 			result += func->getSpaces() + "loop\n";
 			func->addSpace();
@@ -493,8 +497,13 @@ namespace mh {
 			func->subSpace();
 			result += func->getSpaces() + "endloop\n";
 			result += func->getSpaces() + "call DestroyGroup(ydl_group)\n";
+
+
 			return result;
 		}
+
+	public:
+		bool params_finish = false;
 	};
 
 
@@ -584,7 +593,8 @@ namespace mh {
 				result += func->getSpaces() + "call YDLocal3Release()\n";
 				result += func->getSpaces() + "call DestroyTimer(GetExpiredTimer())\n";
 			} else {
-				result += "不要在逆天计时器的动作外使用<清除逆天计时器>";
+				//result += "不要在逆天计时器的动作外使用<清除逆天计时器>";
+				print("Warning: 触发器[%s] 在逆天计时器的动作外使用<清除逆天计时器>, 请尽快修复\n\n", base::u2a(getRootNode()->getName()).c_str());
 			}
 			
 			return result;
@@ -613,7 +623,8 @@ namespace mh {
 				result += func->getSpaces() + "call YDLocal4Release()\n";
 				result += func->getSpaces() + "call DestroyTrigger(GetTriggeringTrigger())\n";
 			} else {
-				result += "不要在逆天触发器的动作外使用<清除逆天触发器>";
+				//result += "不要在逆天触发器的动作外使用<清除逆天触发器>";
+				print("Warning: 触发器[%s] 在逆天触发器的动作外使用<清除逆天触发器>, 请尽快修复\n\n", base::u2a(getRootNode()->getName()).c_str());
 			}
 			
 			return result;
@@ -642,7 +653,8 @@ namespace mh {
 
 			std::string result;
 			if (in_block) {
-				result += "不要在逆天计时器/逆天触发器内使用等待";
+				//result += "不要在逆天计时器/逆天触发器内使用等待";
+				print("Warning: 触发器[%s] 在逆天计时器/逆天触发器内使用等待, 请尽快修复\n\n", base::u2a(getRootNode()->getName()).c_str());
 			} else {
 				result = ActionNode::toString(func);
 			}
@@ -809,7 +821,10 @@ namespace mh {
 
 			getValue([&](NodePtr ptr) {
 				if (ptr->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash) {
-					in_block = true;
+					auto node = std::dynamic_pointer_cast<YDWEEnumUnitsInRangeMultiple>(ptr);
+					if (node->params_finish) {
+						in_block = true;
+					}
 					return true;
 				}
 				return false;

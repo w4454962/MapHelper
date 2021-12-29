@@ -106,6 +106,10 @@ namespace mh {
 					*conditions << "\n";
 				}
 				func->pop();
+
+				if (!conditions->isEmpty()) {
+					func->addFunction(conditions);
+				}
 			}
 			
 			//action 

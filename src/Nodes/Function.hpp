@@ -205,15 +205,14 @@ namespace mh {
 			return current()->getSpaces(offset);
 		}
 
+
+		
 		std::string toString() {
 			std::string result;
 
 			result = m_comment;
 			
-			if (!condition->isEmpty()) {
-				result += condition->toString();
-			}
-
+			
 			for(auto& func: m_func_list){
 				result += func->toString();
 			}
