@@ -6,7 +6,7 @@
 #include "TriggerEditor.h"
 #include "..\include\Export.h"
 
-
+#ifdef  ENABLE_OFFLINE
 #include <libnyquist/Decoders.h>
 
 #ifdef _DEBUG
@@ -18,6 +18,9 @@
 #pragma comment(lib,"libwavpack.lib")
 
 #endif 
+#endif //  ENABLE_OFFLINE
+
+
 
 
 Helper g_CHelper;
@@ -72,11 +75,12 @@ void ConverJassScript(MakeEditorData* data, const char* ouput_path)
 	triggerEditor.loadTriggerConfig(data->config_data);
 	triggerEditor.loadTriggers(data->editor_data->triggers);
 	triggerEditor.saveSctipt(ouput_path);
-}
+} 
  
 int GetSoundPlayTime(const char* path, const char* data, uint32_t size)
 {
-
+	int time = 0;
+#ifdef  ENABLE_OFFLINE
 	nqr::NyquistIO loader;
 	nqr::AudioData audio_data;
 	std::vector<uint8_t> buffer(size);
@@ -84,7 +88,8 @@ int GetSoundPlayTime(const char* path, const char* data, uint32_t size)
 
 	loader.Load(&audio_data, buffer);
 
-	int time = (int)ceil(audio_data.lengthSeconds * 1000); //转毫秒
+	time = (int)ceil(audio_data.lengthSeconds * 1000); //转毫秒
+#endif
 
 	return time;
 }
