@@ -255,8 +255,10 @@ struct Unit
 	uint32_t random_item_count;//0x128
 	uint32_t random_item_count2;//0x12c
 	ItemTableInfo* random_items;//0x130
-
-	char unknow25[0x18];//0x134
+	uint32_t unknow134; //0x134
+	uint32_t passive_color_index; //0x138  中立被动建筑颜色
+	uint32_t pass_door_rect_index; //0x13c 传送门索引
+	char unknow25[0xc];//0x140
 	uint32_t doodas_life;// 0x14c 可破坏物的生命
 	char unknow21[0x8];//0x150
 	uint32_t index;//0x158 全局预设变量的id

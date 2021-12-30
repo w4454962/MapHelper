@@ -1051,6 +1051,19 @@ endfunction
 		if (unit->state_int != 0) 
 			writer.write_string("\tcall SetHeroInt(" + unit_reference + ", " + std::to_string(unit->state_int) + ", true)\n");
 		
+		
+		if (unit->passive_color_index != -1 && unit->passive_color_index < 16) 
+			writer.write_string("\tcall SetUnitColor(" + unit_reference + ", ConvertPlayerColor(" + std::to_string(unit->passive_color_index) + "))\n");
+
+		if (unit->pass_door_rect_index != -1 && unit->pass_door_rect_index < worldData->regions->region_count) {
+			auto region = worldData->regions->array[unit->pass_door_rect_index];
+
+			std::string region_name = std::string("gg_rct_") + region->name;
+			convert_name(region_name);
+			writer.write_string("\tcall WaygateSetDestination(" + unit_reference + ", GetRectCenterX(" + region_name + "), GetRectCenterY(" + region_name + "))\n");
+			writer.write_string("\tcall WaygateActivate(" + unit_reference + ", true)\n");
+		}
+
 		float range;
 		if (unit->warning_range != -1.f) 
 		{
