@@ -1305,35 +1305,34 @@ endfunction
 		for (uint32_t n = 0; n < trigger_count; n++)
 		{
 			Trigger* trigger = categoriy->triggers[n];
-			if (trigger->is_comment || !trigger->is_enable)
-			{
+			if (trigger->is_comment || !trigger->is_enable){
+				continue;
+			}
+			std::string trigger_name = std::string(trigger->name);
+			convert_name(trigger_name);
+
+			bool has_init_event = mh::g_initTriggerMap.find(trigger) != mh::g_initTriggerMap.end();
+
+			if (has_init_event && trigger->is_disable_init != 1) {
+				initions += "\tcall ConditionalTriggerExecute(gg_trg_" + trigger_name + ")\n";
+			}
+
+			if (mh::g_disableTriggerMap.find(trigger) != mh::g_disableTriggerMap.end()) {
 				continue;
 			}
 
-			if (mh::g_initTriggerMap.find(trigger) != mh::g_initTriggerMap.end() && trigger->is_disable_init != 1)
-			{
-				std::string trigger_name = std::string(trigger->name);
-				convert_name(trigger_name);
+			std::string name = "InitTrig_" + trigger_name;
+		
+			bool has_init_func = m_initFuncTable.find(name) != m_initFuncTable.end();
 
-				std::string trigger_variable_name = "gg_trg_" + trigger_name;
+			if (has_init_func) {
+				writer.write_string("\tcall " + name + "()\n");
 
-				initions += "\tcall ConditionalTriggerExecute(" + trigger_variable_name + ")\n";
-				
+				if (trigger->is_custom_srcipt && trigger->is_initialize) {
+					initions += "\tcall ConditionalTriggerExecute(gg_trg_" + trigger_name + ")\n";
+				}
 			}
-
-			if (mh::g_disableTriggerMap.find(trigger) != mh::g_disableTriggerMap.end())
-			{
-				continue;
-			}
-
-			std::string name = "InitTrig_" + std::string(trigger->name);
-			convert_name(name);
-			if (m_initFuncTable.find(name) == m_initFuncTable.end())
-			{
-				continue;
-			}
-			writer.write_string("\tcall " + name + "()\n");
-
+			
 		}
 	}
 	writer.write_string("endfunction\n");

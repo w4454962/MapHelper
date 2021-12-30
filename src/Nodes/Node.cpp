@@ -876,10 +876,12 @@ namespace mh {
 			getValue([&](NodePtr ptr) {
 				if (ptr->getType() == TYPE::CLOSURE) {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					//如果是动作区 并且 不存在参数区的 默认传参
 					if (node->getCurrentGroupId() > node->getCrossDomainIndex() || node->getCrossDomainIndex() == -1) {
 						node->upvalue_map.emplace(upvalue.name, upvalue);
-					}
-					return true; 
+						return true;
+					} 
+
 				} 
 				return false;
 			});

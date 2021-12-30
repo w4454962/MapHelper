@@ -486,11 +486,12 @@ namespace mh {
 
 			params_finish = false;
 
-			result += func->getSpaces() + "if GetLocalPlayer() == " + params[0]->toString(func) + " then\n";
+			std::string action;
+			action += func->getSpaces() + "if GetLocalPlayer() == " + params[0]->toString(func) + " then\n";
 			func->addSpace();
-			result += getScript(func, action_name, params);
+			action += getScript(func, action_name, params);
 			func->subSpace();
-			result += func->getSpaces() + "endif\n";
+			action += func->getSpaces() + "endif\n";
 
 
 			std::string upvalues;
@@ -501,8 +502,11 @@ namespace mh {
 
 			FunctionPtr closure = getBlock(func, m_function, "nothing", upvalues, upactions);
 			func->addFunction(closure);
+			result += upactions[0]; //参数区
+			result += upvalues; //自动传参代码
+			result += action;
 
-			return upvalues + result;
+			return result;
 		}
 
 		virtual std::string getScript(TriggerFunction* func, const std::string& name, const std::vector<NodePtr>& params) {
