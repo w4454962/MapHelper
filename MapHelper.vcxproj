@@ -208,7 +208,7 @@
     <ClInclude Include="src\Nodes\ActionNode.hpp" />
     <ClInclude Include="src\Nodes\Node.h" />
     <ClCompile Include="src\Nodes\Node.cpp" />
-    <ClInclude Include="src\Nodes\Parameter.hpp" />
+    <ClInclude Include="src\Nodes\ParameterNode.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\TriggerEditor.h" />
     <ClInclude Include="src\utils\BinaryWriter.h" />

@@ -10,7 +10,7 @@
 #include "Node.h"
 #include "TriggerNode.hpp"
 #include "ActionNode.hpp"
-#include "Parameter.hpp"
+#include "ParameterNode.hpp"
 #include "EventNode.hpp"
 #include "ClosureNode.hpp"
 #include "Closures.hpp"

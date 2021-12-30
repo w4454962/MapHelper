@@ -117,7 +117,7 @@
     <ClInclude Include="src\Nodes\EventNode.hpp">
       <Filter>src\Nodes</Filter>
     </ClInclude>
-    <ClInclude Include="src\Nodes\Parameter.hpp">
+    <ClInclude Include="src\Nodes\ParameterNode.hpp">
       <Filter>src\Nodes</Filter>
     </ClInclude>
     <ClInclude Include="src\Nodes\TriggerNode.hpp">
