@@ -822,13 +822,16 @@ namespace mh {
 			bool in_block = false;
 
 			getValue([&](NodePtr ptr) {
-				if (ptr->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash) {
-					auto node = std::dynamic_pointer_cast<YDWEEnumUnitsInRangeMultiple>(ptr);
-					if (node->params_finish) {
-						in_block = true;
+				if (ptr->getType() == TYPE::CLOSURE) {
+					if (ptr->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash) {
+						auto node = std::dynamic_pointer_cast<YDWEEnumUnitsInRangeMultiple>(ptr);
+						if (node->params_finish) {
+							in_block = true;
+						}
 					}
 					return true;
 				}
+				
 				return false;
 			});
 

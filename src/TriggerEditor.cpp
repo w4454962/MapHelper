@@ -1678,6 +1678,11 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 		if (is_disable) {
 			mh::g_disableTriggerMap.emplace(trigger, true);
 		}
+		std::string name = trigger->name;
+		convert_name(name);
+		std::string init_func = "InitTrig_" + name;
+		m_initFuncTable[init_func] = true;
+
 	} else {
 		mh::NodePtr node = mh::NodeFromTrigger(trigger);
 		result += node->toString();
@@ -1778,12 +1783,11 @@ bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_dis
 	{
 		Action* action = trigger->actions[i];
 
-		if (action->table->getType(action) == Action::Type::event) {
+		if (action->enable && action->table->getType(action) == Action::Type::event) {
 			int hash = hash_(action->name);
 			if (hash == "YDWEDisableRegister"s_hash) {
 				*is_disable = true;
-			}
-			if (hash == "MapInitializationEvent"s_hash) {
+			}else if (hash == "MapInitializationEvent"s_hash) {
 				*is_init = true;
 			}
 		}
