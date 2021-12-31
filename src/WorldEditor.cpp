@@ -90,7 +90,7 @@ const char* WorldEditor::getCurrentMapPath()
 	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + count * 4);
 
 	print("当前地图路径%X\n", object);
-	return (const char*)object;
+	return (const char*)object; 
 }
 
 const char* WorldEditor::getTempSavePath()

@@ -1667,8 +1667,17 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 {
 	std::string result;
 
-	if (hasBlackAction(trigger) && g_make_editor_data == nullptr) {
+	bool is_init = 0;
+	bool is_disable = 0;
+
+	if (hasBlackAction(trigger, &is_init, &is_disable) && g_make_editor_data == nullptr) {
 		result += originConvertTrigger(trigger);
+		if (is_init) {
+			mh::g_initTriggerMap.emplace(trigger, true);
+		}
+		if (is_disable) {
+			mh::g_disableTriggerMap.emplace(trigger, true);
+		}
 	} else {
 		mh::NodePtr node = mh::NodeFromTrigger(trigger);
 		result += node->toString();
@@ -1720,7 +1729,7 @@ std::string TriggerEditor::getScriptName(Action* action)
 }
 
 
-bool TriggerEditor::hasBlackAction(Trigger* trigger) 
+bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable) 
 {
 	if (m_blacklist_map.empty())
 		return false;
@@ -1731,6 +1740,9 @@ bool TriggerEditor::hasBlackAction(Trigger* trigger)
 	std::map<std::string, bool> black_actions;
 
 	action_has_black = [&](Action* action) {
+		if (!action->enable)
+			return;
+
 		std::string name = action->name;
 		if (m_blacklist_map.find(name) != m_blacklist_map.end()) {
 			black_actions[name] = true;
@@ -1765,6 +1777,16 @@ bool TriggerEditor::hasBlackAction(Trigger* trigger)
 	for (size_t i = 0; i < trigger->line_count; i++)
 	{
 		Action* action = trigger->actions[i];
+
+		if (action->table->getType(action) == Action::Type::event) {
+			int hash = hash_(action->name);
+			if (hash == "YDWEDisableRegister"s_hash) {
+				*is_disable = true;
+			}
+			if (hash == "MapInitializationEvent"s_hash) {
+				*is_init = true;
+			}
+		}
 		action_has_black(action);
 	}
 
@@ -1774,7 +1796,14 @@ bool TriggerEditor::hasBlackAction(Trigger* trigger)
 		print("Warning: 触发器[%s]: 使用了黑名单动作, 该触发将不会进行加速，尽量减少使用。\n", base::u2a(trigger->name).c_str());
 
 		for (auto&& [name, v] : black_actions) {
-			std::string ui_name = base::u2a(world.getConfigData("TriggerActionStrings", name.c_str(), 0));
+			std::string ui_name = base::u2a(world.getConfigData("TriggerActionStrings", name, 0));
+			if (ui_name.length() == 0) {
+				ui_name = base::u2a(world.getConfigData("TriggerCallStrings", name, 0));
+			}
+			if (ui_name.length() == 0) {
+				ui_name = base::u2a(world.getConfigData("TriggerEventStrings", name, 0));
+			}
+
 			std::string action_name = base::u2a(name);
 			print("\t<%s> <%s>\n", ui_name.c_str(), action_name.c_str());
 		}

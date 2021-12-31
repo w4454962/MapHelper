@@ -29,7 +29,7 @@ public:
 	std::string getScriptName(Action* action);
 
 	
-	bool hasBlackAction(Trigger* trigger);
+	bool hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable);
 
 	
 	//weÔ­°æµÄt×ªj
