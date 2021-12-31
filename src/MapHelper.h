@@ -27,6 +27,10 @@ typedef std::map<std::string, ActionInfoList> ActionInfoMap;
 
 extern ActionInfoMap g_actionInfoTable;
 
+extern HMODULE g_hModule;
+
+extern fs::path g_module_path;
+
 class Helper
 {
 public:

@@ -243,7 +243,7 @@ namespace mh {
 		}
 	};
 
-
+	//ydwe的逆天计时器
 	class YDWETimerStartMultiple : public ClosureNode {
 	public:
 		REGISTER_FROM_CLOSUER(YDWETimerStartMultiple)
@@ -332,6 +332,7 @@ namespace mh {
 
 	};
 
+	//ydwe的逆天触发器
 	class YDWERegisterTriggerMultiple : public ClosureNode {
 	public:
 		REGISTER_FROM_CLOSUER(YDWERegisterTriggerMultiple)
@@ -428,6 +429,7 @@ namespace mh {
 	};
 
 
+	//网易编辑器的硬件异步事件
 	class DzTriggerRegisterMouseEventMultiple : public ClosureNode {
 	public:
 		REGISTER_FROM_CLOSUER(DzTriggerRegisterMouseEventMultiple)

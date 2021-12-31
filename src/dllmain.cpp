@@ -29,6 +29,9 @@ TriggerEditor g_trigger_editor;
 
 MakeEditorData* g_make_editor_data = nullptr;
 
+HMODULE g_hModule = nullptr;
+fs::path g_module_path;
+
 BOOL APIENTRY DllMain( HMODULE hModule,
 					   DWORD  ul_reason_for_call,
 					   LPVOID lpReserved
@@ -36,6 +39,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
 	auto& helper = get_helper();
 
+	g_hModule = hModule;
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
 		DisableThreadLibraryCalls(hModule);

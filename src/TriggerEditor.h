@@ -26,9 +26,14 @@ public:
 	TriggerType* getTypeData(const std::string& type);
 	std::string getBaseType(const std::string& type) const;
 	
-
 	std::string getScriptName(Action* action);
 
+	
+	bool hasBlackAction(Trigger* trigger);
+
+	
+	//we原版的t转j
+	std::string originConvertTrigger(Trigger* trigger);
 
 	//当触发编辑器转换单个触发为自定义脚本的时候
 	bool onConvertTrigger(Trigger* trigger);
@@ -54,9 +59,12 @@ protected:
 
 public:
 
-	std::map<std::string, Variable*> variableTable;
+	std::unordered_map<std::string, Variable*> variableTable;
 
 	std::unordered_map<std::string, bool> m_initFuncTable;
+
+	//ui黑名单 触发里有黑名单的ui 则使用原版转换
+	std::unordered_map<std::string, bool> m_blacklist_map;
 
 	std::string spaces[200];
 };

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <regex>
 #include "Nodes\Node.h"
+#include "utils/json.hpp"
 
 //所有物品类型的jass变量名
 std::string randomItemTypes[] = {
@@ -60,6 +61,44 @@ void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 	{
 		TriggerType* type_data = &data->array[i];
 		m_typesTable[type_data->type] = type_data;
+	}
+
+
+	using json::Json;
+	fs::path path = g_module_path / "MapHelper.json";
+	std::ifstream config(path, std::ios::binary);
+
+	if (config.is_open()) {
+		m_blacklist_map.clear();
+
+		std::stringstream ss;
+
+		ss << config.rdbuf();
+
+
+		std::string text = ss.str();
+		std::string error;
+
+		config.close();
+
+		Json json = Json::parse(text, error);
+
+		auto items = json.object_items();
+
+		if (!error.empty()) {
+			print("json error : %s\n", error.c_str());
+		}
+
+		if (!items.empty()) {
+			auto black = items["BlackList"].array_items();
+			if (!black.empty()) {
+				for (auto& name : black) {
+					if (name.is_string()) {
+						m_blacklist_map.emplace(name.string_value(), true);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -1626,9 +1665,16 @@ endfunction
 
 std::string TriggerEditor::convertTrigger(Trigger* trigger) 
 {
-	mh::NodePtr node = mh::NodeFromTrigger(trigger);
+	std::string result;
 
-	return node->toString();
+	if (hasBlackAction(trigger) && g_make_editor_data == nullptr) {
+		result += originConvertTrigger(trigger);
+	} else {
+		mh::NodePtr node = mh::NodeFromTrigger(trigger);
+		result += node->toString();
+	}
+	
+	return result;
 }
 
 
@@ -1673,6 +1719,106 @@ std::string TriggerEditor::getScriptName(Action* action)
 	return name;
 }
 
+
+bool TriggerEditor::hasBlackAction(Trigger* trigger) 
+{
+	if (m_blacklist_map.empty())
+		return false;
+
+	std::function<void(Action* action)> action_has_black;
+	std::function<void(Parameter** params, uint32_t count)> param_has_black;
+
+	std::map<std::string, bool> black_actions;
+
+	action_has_black = [&](Action* action) {
+		std::string name = action->name;
+		if (m_blacklist_map.find(name) != m_blacklist_map.end()) {
+			black_actions[name] = true;
+		}
+		param_has_black(action->parameters, action->param_count);
+
+		for (size_t i = 0; i < action->child_count; i++) {
+			Action* child = action->child_actions[i];
+			if ((int)child->group_id < fakeGetChildCount(action)) {
+				action_has_black(child);
+			}
+		}
+	};
+
+	param_has_black = [&](Parameter** params, uint32_t count) {
+		for (size_t i = 0; i < count; i++) {
+			Parameter* param = params[i];
+			switch (param->typeId)
+			{
+			case Parameter::Type::variable:
+				if (param->arrayParam) {
+					param_has_black(&param->arrayParam, 1);
+				}
+				break;
+			case Parameter::Type::function:
+				action_has_black(param->funcParam);
+				break;
+			}
+		}
+	};
+
+	for (size_t i = 0; i < trigger->line_count; i++)
+	{
+		Action* action = trigger->actions[i];
+		action_has_black(action);
+	}
+
+	if (!black_actions.empty()) {
+		auto& world = get_world_editor();
+
+		print("Warning: 触发器[%s]: 使用了黑名单动作, 该触发将不会进行加速，尽量减少使用。\n", base::u2a(trigger->name).c_str());
+
+		for (auto&& [name, v] : black_actions) {
+			std::string ui_name = base::u2a(world.getConfigData("TriggerActionStrings", name.c_str(), 0));
+			std::string action_name = base::u2a(name);
+			print("\t<%s> <%s>\n", ui_name.c_str(), action_name.c_str());
+		}
+		print("\n");
+	}
+
+	return !black_actions.empty();
+}
+
+std::string TriggerEditor::originConvertTrigger(Trigger* trigger)
+{
+	std::string result;
+
+	if (trigger->is_custom_srcipt || trigger->is_comment) 
+	{
+		return result;
+	}
+
+	auto& world = get_world_editor();
+
+	struct ConvertData
+	{
+		uintptr_t ptr = 0;
+		const char* script = nullptr;
+		uintptr_t unknow = 0;
+		size_t buffer_size = 0;
+		size_t script_len = 0;
+		uint32_t unknow2 = -1;
+	};
+
+	uintptr_t convert = world.getAddress(0x005CA4C0);
+	uintptr_t delete_buffer = world.getAddress(0x00425580);
+
+	ConvertData data;
+	data.ptr = world.getAddress(0x0075A3A8);
+	this_call<uint32_t>(convert, trigger, &data);
+
+	result = std::string(data.script, data.script_len);
+
+	data.ptr = world.getAddress(0x0075A3A8);
+	this_call<void>(delete_buffer, &data, &data.script, &data.unknow, &data.buffer_size);
+
+	return result;
+}
 
 bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 {

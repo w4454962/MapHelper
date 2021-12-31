@@ -47,10 +47,65 @@ namespace real
 }
 
 
+ActionInfoMap g_actionInfoTable = {
+	{"YDWETimerStartMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
 
+   {"YDWERegisterTriggerMultiple" , {
+		{ Action::Type::event , "WESTRING_EVENTS" },
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
 
+   {"YDWEEnumUnitsInRangeMultiple" , {
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
 
-ActionInfoMap g_actionInfoTable;
+   {"YDWEForLoopLocVarMultiple" , {
+		{ Action::Type::action , "WESTRING_TRIGSUBFUNC_FORLOOPACTIONS" }
+	},},
+
+   {"YDWERegionMultiple" , {
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+
+   {"YDWEExecuteTriggerMultiple" , {
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+
+   {"DzTriggerRegisterMouseEventMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+
+   {"DzTriggerRegisterKeyEventMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+   {"DzTriggerRegisterMouseMoveEventMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+   {"DzTriggerRegisterMouseWheelEventMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+   {"DzTriggerRegisterWindowResizeEventMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+   {"DzFrameSetUpdateCallbackMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+
+   {"DzFrameSetScriptMultiple" , {
+		{ Action::Type::action , "WESTRING_PARAMETERS" },
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+	},},
+};
 
 
 std::unordered_map<std::string, std::string> g_typenames;
@@ -342,6 +397,11 @@ void Helper::attach()
 
 	m_bAttach = true;
 
+	GetModuleFileNameA(g_hModule, buffer, MAX_PATH);
+
+	g_module_path = fs::path(buffer).remove_filename();
+
+
 
 	auto& editor = get_world_editor();
 
@@ -418,142 +478,6 @@ void Helper::attach()
 
 	editor.loadConfigData();
 
-	//std::ifstream file("D:\\war3\\test.json",std::ios::binary);
-	//
-	//if (!file.is_open())
-	//{
-	//	return;
-	//}
-	//
-	//
-	//std::stringstream stream;
-	std::string text;
-	std::string error;
-	//
-	//stream << file.rdbuf();
-	//
-	//text = stream.str();
-	//
-	//file.close();
-
-	text = R"(
-{
-    "YDWETimerStartMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-
-    "YDWERegisterTriggerMultiple" : [
-        { "Event" : "WESTRING_EVENTS" },
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-
-    "YDWEEnumUnitsInRangeMultiple" : [
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-
-    "YDWEForLoopLocVarMultiple" : [
-        { "Action" : "WESTRING_TRIGSUBFUNC_FORLOOPACTIONS" }
-    ],
-
-    "YDWERegionMultiple" : [
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-
-    "YDWEExecuteTriggerMultiple" : [
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-
-    "DzTriggerRegisterMouseEventMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-	],
-
-    "DzTriggerRegisterKeyEventMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-    "DzTriggerRegisterMouseMoveEventMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-    "DzTriggerRegisterMouseWheelEventMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-    "DzTriggerRegisterWindowResizeEventMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-    "DzFrameSetUpdateCallbackMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ],
-    "DzFrameSetScriptMultiple" : [
-        { "Action" : "WESTRING_PARAMETERS" },
-        { "Action" : "WESTRING_ACTIONS" }
-    ]
-}
-)";
-
-
-
-	using json::Json;
-
-	Json json = Json::parse(text, error);
-
-	auto items = json.object_items();
-
-	for (auto&[str, child] : items)
-	{
-
-		if (child.is_array())
-		{
-			if (g_actionInfoTable.find(str) == g_actionInfoTable.end())
-				g_actionInfoTable[str] = ActionInfoList();
-
-			auto& mul_list = g_actionInfoTable[str];
-
-			auto list = child.array_items();
-			for (int i = 0; i < list.size(); i++)
-			{
-				auto& item = list[i].object_items();
-
-				for (auto& [key, value] : item)
-				{
-					std::string s = key;
-					transform(s.begin(), s.end(), s.begin(), ::tolower);
-					int type_id = -1;
-					switch (hash_(s.c_str()))
-					{
-					case "event"s_hash:
-						type_id = Action::Type::event;
-						break;
-					case "condition"s_hash:
-						type_id = Action::Type::condition;
-						break;
-					case "action"s_hash:
-						type_id = Action::Type::action;
-						break;
-					}
-					if (type_id != -1)
-					{
-						mul_list.push_back(ActionInfo({ type_id,value.string_value() }));
-					}
-				}
-
-			}
-		}
-	}
-
-	for (auto& [name,list] : g_actionInfoTable)
-	{
-		for (auto& value : list)
-		{
-			//std::cout << name << "  :  " << value.type_id << "  " << value.name << "\n";
-		}
-	}
 }
 
 
@@ -670,7 +594,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.0W");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.0S");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
@@ -679,7 +603,8 @@ void Helper::enableConsole()
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
 			<< "						----2021/12/30\n"
 			<< "\n"
-			<< "version 2.0 update:\n"
+			<< "version 2.0s update:\n"
+			<< "新增了MapHelper.json配置文件 如果有修改ydtrigger.dll的特殊动作可以在里面配置黑名单\n"
 			<< "重构了大部分代码， 源码更清晰，缩进跟函数名更精确的版本。\n"
 			<< "\n"
 			<< "当前插件仍在测试中，推荐自己测试时使用新的保存模式提升速度，发布正式版时使用旧的保存模式保证稳定\n"

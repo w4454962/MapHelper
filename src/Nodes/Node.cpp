@@ -1024,6 +1024,7 @@ namespace mh {
 		}
 	};
 
+
 	//跨域 让触发器api 在计时器里也能访问到对象
 	class CrossDomain : public ActionNode {
 	public:
@@ -1160,6 +1161,8 @@ namespace mh {
 		{"YDWESetAnyTypeLocalVariable",				YDWESetAnyTypeLocalVariable::From},
 		{"YDWEGetAnyTypeLocalArray",				YDWEGetAnyTypeLocalArray::From},
 		{"YDWESetAnyTypeLocalArray",				YDWESetAnyTypeLocalArray::From},
+
+	
 
 		{"GetTriggeringTrigger",					CrossDomain::From},
 		{"GetTriggerEventId",						CrossDomain::From},

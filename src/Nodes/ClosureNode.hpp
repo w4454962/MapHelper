@@ -99,6 +99,11 @@ namespace mh {
 			}
 			
 			for (auto&& [n, v] : upvalue_map) {
+				//只有这2个逆天局部变量 会自动传参
+				if (v.uptype != Upvalue::TYPE::GET_LOCAL || v.uptype != Upvalue::TYPE::SET_LOCAL) {
+					continue;
+				}
+
 				//当前这层允许跨域 才生成逆天的自动传参代码。
 				if ((!v.is_func && isVariableCrossDomain()) || (v.is_func && isFunctionCrossDomain())) {
 
