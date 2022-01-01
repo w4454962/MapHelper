@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
-#include "utils\inline.h"
-#include "..\include\EditorData.h"
+#include <base\hook\inline.h>
+#include <include\EditorData.h>
 #include "WorldEditor.h"
 
 template<typename dst_type, typename src_type>
@@ -60,6 +60,8 @@ private:
 	//当自定义转换触发时
 	int onConvertTrigger(Trigger* trg);
 
+public:
+	fs::path ydwe_path;
 
 protected:
 	bool m_bAttach;

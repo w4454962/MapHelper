@@ -1,4 +1,6 @@
+﻿#pragma once
 #pragma once
+#include <functional>
 
 template <size_t N>
 class BinaryWriterT {
@@ -6,7 +8,7 @@ private:
 	struct Chunk {
 		uint8_t data[N];
 		size_t  size = 0;
-		Chunk*  next = nullptr;
+		Chunk* next = nullptr;
 	};
 	Chunk* head = nullptr;
 	Chunk* tail = nullptr;
@@ -20,8 +22,11 @@ private:
 	}
 
 public:
+	size_t buf_size;
+
 	BinaryWriterT() {
 		head = tail = new Chunk;
+		buf_size = 0;
 	}
 
 	~BinaryWriterT() {
@@ -31,6 +36,7 @@ public:
 	void clear() {
 		destory();
 		head = tail = new Chunk;
+		buf_size = 0;
 	}
 
 	void write(const uint8_t* buf, size_t len) {
@@ -48,6 +54,7 @@ public:
 		tail->next = new Chunk;
 		tail = tail->next;
 		write(buf, len);
+		buf_size += len;
 	}
 
 	template <typename T>
@@ -73,8 +80,8 @@ public:
 
 	// Do not use char array.
 	template <class T, size_t n>
-	void write_string(const T (&string)[n]) {
-		write((const uint8_t*)string, n-1);
+	void write_string(const T(&string)[n]) {
+		write((const uint8_t*)string, n - 1);
 	}
 
 	// Do not use string literals.
@@ -92,6 +99,20 @@ public:
 	void finish(T& out) {
 		for (Chunk* p = head; p; p = p->next) {
 			out.write((const char*)p->data, p->size);
+		}
+	}
+
+	size_t size() {
+		size_t s = 0;
+		for (Chunk* p = head; p; p = p->next) {
+			s += p->size;
+		}
+		return s;
+	}
+
+	void finish2(const std::function<void(const char*, size_t)>& callback) {
+		for (Chunk* p = head; p; p = p->next) {
+			callback((const char*)p->data, p->size);
 		}
 	}
 };

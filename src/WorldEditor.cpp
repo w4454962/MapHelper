@@ -3,7 +3,8 @@
 #include "TriggerEditor.h"
 
 #include "mapHelper.h"
-#include "..\include\Export.h"
+#include <include\Export.h>
+#include <YDPluginManager.h>
 
 extern MakeEditorData* g_make_editor_data;
 
@@ -172,6 +173,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 
 
+
 #if defined(EMBED_YDWE)
 	int ret = 6;
 #else
@@ -180,7 +182,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	const auto result = v_helper.getConfig();
 	if (result == -1)
 	{
-		ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
+		ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬大的加速器", MB_YESNO);
 
 		if (ret == 6)
 			print("自定义保存模式\n");
@@ -195,9 +197,17 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 	clock_t start = clock();
 		
+
+	auto& manager = get_ydplugin_manager();
+
+	manager.attach();
+
 	if (ret == 6)
 	{
-		
+
+		manager.m_enable = true;
+
+
 		//customSaveWts(getTempSavePath());//有bug 先不用了
 		saveWts();
 
@@ -228,6 +238,8 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	}
 	else
 	{
+		manager.m_enable = false;
+
 		saveWts();
 
 		saveW3i();

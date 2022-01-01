@@ -7,9 +7,10 @@
 
 
 #include <sstream>
-#include "utils\json.hpp"
-#include "..\include\Export.h"
+#include <base\util\json.hpp>
+#include <include\Export.h>
 #include "..\resource.h"
+#include "YDPluginManager.h"
 
 extern MakeEditorData* g_make_editor_data;
 
@@ -396,6 +397,8 @@ void Helper::attach()
 	
 	m_configPath = fs::path(buffer).remove_filename() / "EverConfig.cfg";
 
+	ydwe_path = m_configPath.parent_path().parent_path();
+
 	m_bAttach = true;
 
 	GetModuleFileNameA(g_hModule, buffer, MAX_PATH);
@@ -479,6 +482,13 @@ void Helper::attach()
 
 	editor.loadConfigData();
 
+
+
+	auto& manager = get_ydplugin_manager();
+
+	manager.extract();
+
+
 }
 
 
@@ -513,13 +523,15 @@ void Helper::detach()
 
 int Helper::onSelectConvartMode()
 {
+
+
 #if defined(EMBED_YDWE)
 	return 0;
 #else
 	int result = getConfig();
 	if (result == -1)
 	{
-		int ret = MessageBoxA(0, "是否用新的保存模式保存?", "问你", MB_YESNO);
+		int ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬大的加速器", MB_YESNO);
 
 		if (ret == 6)
 		{
@@ -597,16 +609,17 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.1a");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
 			<< "感谢7佬的最初版本\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
-			<< "						----2021/12/30\n"
+			<< "						----2022\1\2\n"
 			<< "\n"
-			<< "version 2.1a update:\n"
+			<< "version 2.2 update:\n"
+			<< "加强了预处理器#include 支持中文路径。 \n"
 			<< "新增了MapHelper.json配置文件 如果有修改ydtrigger.dll的特殊动作可以在里面配置黑名单\n"
 			<< "重构了大部分代码， 源码更清晰，缩进跟函数名更精确的版本。\n"
 			<< "\n"
@@ -619,7 +632,7 @@ void Helper::enableConsole()
 			<< "\n";
 
 
-		HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON1));
+		HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON2));
 		if (hIcon) {
 
 			SendMessage(v_hwnd_console, WM_SETICON, ICON_BIG, (LPARAM)hIcon);

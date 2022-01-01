@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "mapHelper.h"
-#include "..\include\EditorData.h"
+#include <include\EditorData.h>
 
 class TriggerEditor
 {

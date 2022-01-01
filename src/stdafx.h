@@ -34,10 +34,10 @@ namespace fs = std::experimental::filesystem;
 
 #endif
 
-#include "utils\fp_call.h"
-#include "utils\BinaryWriter.h"
-#include "utils\unicode.h"
-#include "..\include\Export.h"
+#include <base\util\fp_call.h>
+#include <base\util\BinaryWriter.h>
+#include <base\util\unicode.h>
+#include <include\Export.h>
 
 
 #pragma  warning( disable: 4307 4455 )
