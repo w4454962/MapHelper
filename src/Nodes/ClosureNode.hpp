@@ -100,7 +100,7 @@ namespace mh {
 			
 			for (auto&& [n, v] : upvalue_map) {
 				//只有这2个逆天局部变量 会自动传参
-				if (v.uptype != Upvalue::TYPE::GET_LOCAL || v.uptype != Upvalue::TYPE::SET_LOCAL) {
+				if (v.uptype != Upvalue::TYPE::GET_LOCAL && v.uptype != Upvalue::TYPE::SET_LOCAL) {
 					continue;
 				}
 
