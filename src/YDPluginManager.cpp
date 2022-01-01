@@ -8,7 +8,7 @@
 
 static clock_t g_last_start_time;
 static std::string g_last_exe_name;
-static DWORD g_thread_id;
+static DWORD g_thread_id = 0;
 
 // 目的 在ydwe调用插件时 将插件重导向 maphelper附带的插件。
 
