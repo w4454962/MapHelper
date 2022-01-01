@@ -35,7 +35,9 @@ protected:
 		std::string api_name;
 	};
 
-	std::vector<HookInfo> m_hookCreateProcessW;
+	std::vector<HookInfo> m_hook_list;
+
+	
 };
 
 
