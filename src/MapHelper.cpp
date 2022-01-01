@@ -9,6 +9,7 @@
 #include <sstream>
 #include "utils\json.hpp"
 #include "..\include\Export.h"
+#include "..\resource.h"
 
 extern MakeEditorData* g_make_editor_data;
 
@@ -585,6 +586,8 @@ void Helper::enableConsole()
 	v_hwnd_console = ::GetConsoleWindow();
 	if (v_hwnd_console)
 	{
+		
+
 		DWORD mode;
 		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
 		GetConsoleMode(hStdin, &mode);
@@ -594,7 +597,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.0z");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.1a");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
@@ -603,7 +606,7 @@ void Helper::enableConsole()
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
 			<< "						----2021/12/30\n"
 			<< "\n"
-			<< "version 2.0z update:\n"
+			<< "version 2.1a update:\n"
 			<< "新增了MapHelper.json配置文件 如果有修改ydtrigger.dll的特殊动作可以在里面配置黑名单\n"
 			<< "重构了大部分代码， 源码更清晰，缩进跟函数名更精确的版本。\n"
 			<< "\n"
@@ -615,7 +618,17 @@ void Helper::enableConsole()
 			<< "EnableYDTrigger = 1 默认开启加速保存\n"
 			<< "\n";
 
+
+		HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON1));
+		if (hIcon) {
+
+			SendMessage(v_hwnd_console, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+
+		}
+
 	}
+
+
 }
 
 int Helper::getConfig() const

@@ -820,14 +820,22 @@ namespace mh {
 			auto params = getParameterList();
 
 			bool in_block = false;
+			bool in_closure = false;
 
 			getValue([&](NodePtr ptr) {
+				if (ptr->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash) {
+					auto node = std::dynamic_pointer_cast<YDWEEnumUnitsInRangeMultiple>(ptr);
+					if (node->params_finish) {
+						in_block = true;
+					}
+					return true;
+				}
+
 				if (ptr->getType() == TYPE::CLOSURE) {
-					if (ptr->getNameId() == "YDWEEnumUnitsInRangeMultiple"s_hash) {
-						auto node = std::dynamic_pointer_cast<YDWEEnumUnitsInRangeMultiple>(ptr);
-						if (node->params_finish) {
-							in_block = true;
-						}
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					if (node->params_finish) {
+						in_closure = true;
+						return true;
 					}
 					return true;
 				}
@@ -836,7 +844,9 @@ namespace mh {
 			});
 
 			std::string result;
-			if (in_block) {
+
+
+			if (!in_closure && in_block) {
 				result += "ydl_unit";
 			} else {
 				result += m_name + "()";

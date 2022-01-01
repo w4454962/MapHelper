@@ -189,6 +189,7 @@
     <ClCompile Include="3rd\Detours\src\modules.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\MapHelper.cpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\Nodes\ClosureNode.hpp" />
     <ClInclude Include="src\Nodes\Closures.hpp" />
     <ClInclude Include="src\Nodes\Function.hpp" />
@@ -221,6 +222,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Export.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MapHelper.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
