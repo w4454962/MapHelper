@@ -727,6 +727,9 @@ namespace mh {
 				//将局部变量申明删掉
 				script = regex_replace(script, std::regex("^\\s*local\\s+\\w+\\s+\\w+\\s*"), "");	
 			}
+
+
+			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
 			return toLine(script, func);
 		}
 	};

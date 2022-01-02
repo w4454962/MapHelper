@@ -5,10 +5,18 @@
 #include <base\hook\iat.h>
 #include "shellapi.h"
 #include <regex>
+#include "YDJassHelperPatch.h"
+
+
+
+
 
 static clock_t g_last_start_time;
 static std::string g_last_exe_name;
 static DWORD g_thread_id = 0;
+
+static YDJassHelperPatch* g_vj_patch_insert = nullptr;
+
 
 // 目的 在ydwe调用插件时 将插件重导向 maphelper附带的插件。
 
@@ -24,6 +32,10 @@ BOOL WINAPI fakeCreateProcessW(
 	LPSTARTUPINFOW lpStartupInfo,
 	LPPROCESS_INFORMATION lpProcessInformation ) {
 
+
+	auto& manager = get_ydplugin_manager();
+
+
 	std::wstring cmd = lpCommandLine;
 
 	int argn = 0;
@@ -37,8 +49,7 @@ BOOL WINAPI fakeCreateProcessW(
 		g_last_start_time = clock();
 
 		print("插件 [%s] 开始运行\n", g_last_exe_name.c_str());
-		auto& manager = get_ydplugin_manager();
-
+	
 		if (manager.m_enable) {
 			auto it = manager.m_plugins_path.find(exe_name);
 			if (it != manager.m_plugins_path.end()) {
@@ -53,8 +64,10 @@ BOOL WINAPI fakeCreateProcessW(
 
 	}
 		//print("execute %s\n", base::w2a(cmd).c_str());
+		
+	
 
-	return CreateProcessW(
+	BOOL ret = CreateProcessW(
 		lpApplicationName,
 		(LPWSTR)cmd.c_str(),
 		lpProcessAttributes,
@@ -66,6 +79,16 @@ BOOL WINAPI fakeCreateProcessW(
 		lpStartupInfo,
 		lpProcessInformation
 	);
+
+
+	if (ret && manager.m_enable  && g_last_exe_name == "jasshelper.exe") {
+		//patch
+		g_vj_patch_insert = new YDJassHelperPatch(lpProcessInformation->hProcess);
+		g_vj_patch_insert->insert();
+
+	}
+
+	return ret;
 }
 
 
@@ -75,6 +98,11 @@ DWORD WINAPI fakeWaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
 	if (GetCurrentThreadId() == g_thread_id && !g_last_exe_name.empty()) {
 		print("插件 [%s] 运行结束 耗时: %f 秒\n", g_last_exe_name.c_str(), (double)(clock() - g_last_start_time) / CLOCKS_PER_SEC);
 		g_last_exe_name.clear();
+
+		if (g_vj_patch_insert) {
+			delete g_vj_patch_insert;
+			g_vj_patch_insert = nullptr;
+		}
 	}
 
 	return ret;
@@ -156,7 +184,7 @@ void YDPluginManager::extract() {
 	m_extract = true;
 
 	std::map<std::string, int> files = {
-		{"wave.exe", IDR_EXE1}
+		{"wave.exe", IDR_EXE1},
 	};
 	
 	fs::path path = fs::temp_directory_path() / "plugin";

@@ -11,10 +11,12 @@
 #include <include\Export.h>
 #include "..\resource.h"
 #include "YDPluginManager.h"
+#include "YDJassHelperPatch.h"
 
 extern MakeEditorData* g_make_editor_data;
 
 #pragma warning(disable:4996)
+extern YDJassHelperPatch* g_vj_patch;
 
 const char* g_path;
 static uintptr_t g_object{};
@@ -389,9 +391,20 @@ void Helper::attach()
 	GetModuleFileNameA(nullptr, buffer, MAX_PATH);
 
 	std::string name = fs::path(buffer).filename().string();
-	if (std::string::npos == name.find("worldedit")
-		&& std::string::npos == name.find("WorldEdit"))
+
+	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+	if (std::string::npos == name.find("worldedit")) {
+
+		if (name == "jasshelper.exe") { //如果是由vj加载这个dll的 
+			g_vj_patch = new YDJassHelperPatch();
+
+			g_vj_patch->attach();
+		}
+
 		return;
+	}
+		
+		
 	
 	GetModuleFileNameA(GetModuleHandleA("ydbase.dll"), buffer, MAX_PATH);
 	
@@ -403,7 +416,7 @@ void Helper::attach()
 
 	GetModuleFileNameA(g_hModule, buffer, MAX_PATH);
 
-	g_module_path = fs::path(buffer).remove_filename();
+	g_module_path = fs::path(buffer);
 
 
 
@@ -495,6 +508,12 @@ void Helper::attach()
 
 void Helper::detach()
 {
+	if (g_vj_patch) {
+		g_vj_patch->detach();
+		delete g_vj_patch;
+		g_vj_patch = nullptr;
+	}
+
 	if (!m_bAttach) return;
 	m_bAttach = false;
 

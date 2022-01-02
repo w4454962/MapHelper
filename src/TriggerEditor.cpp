@@ -65,7 +65,7 @@ void TriggerEditor::loadTriggerConfig(TriggerConfigData* data)
 
 
 	using json::Json;
-	fs::path path = g_module_path / "MapHelper.json";
+	fs::path path = g_module_path.parent_path() / "MapHelper.json";
 	std::ifstream config(path, std::ios::binary);
 
 	if (config.is_open()) {
@@ -1314,7 +1314,7 @@ endfunction
 				std::string_view view = std::string_view(trigger->custom_jass_script);
 				const std::string& script = std::string(view.begin(), view.end());
 				writer.write_string(script);
-
+				writer.write_string("\n");
 				auto begin = std::sregex_iterator(script.begin(), script.end(), reg);
 				for (; begin != words_end; ++begin)
 				{
@@ -1663,12 +1663,13 @@ endfunction
 }
 
 
-std::string TriggerEditor::convertTrigger(Trigger* trigger) 
+std::string TriggerEditor::convertTrigger(Trigger* trigger)
 {
 	std::string result;
 
 	bool is_init = 0;
 	bool is_disable = 0;
+	bool has_custorm_code = 0;
 
 	if (hasBlackAction(trigger, &is_init, &is_disable) && g_make_editor_data == nullptr) {
 		result += originConvertTrigger(trigger);
@@ -1682,10 +1683,11 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 		convert_name(name);
 		std::string init_func = "InitTrig_" + name;
 		m_initFuncTable[init_func] = true;
-
 	} else {
+		result += "//trigger begin\n";
 		mh::NodePtr node = mh::NodeFromTrigger(trigger);
 		result += node->toString();
+		result += "//trigger end\n";
 	}
 	
 	return result;
@@ -1734,7 +1736,7 @@ std::string TriggerEditor::getScriptName(Action* action)
 }
 
 
-bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable) 
+bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable)
 {
 	if (m_blacklist_map.empty())
 		return false;
@@ -1750,7 +1752,7 @@ bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_dis
 
 		std::string name = action->name;
 		if (m_blacklist_map.find(name) != m_blacklist_map.end()) {
-			black_actions[name] = true;
+			black_actions.emplace(name, true);
 		}
 		param_has_black(action->parameters, action->param_count);
 
