@@ -1684,10 +1684,10 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 		std::string init_func = "InitTrig_" + name;
 		m_initFuncTable[init_func] = true;
 	} else {
-		result += "//trigger begin\n";
+		//result += "//trigger begin\n";
 		mh::NodePtr node = mh::NodeFromTrigger(trigger);
 		result += node->toString();
-		result += "//trigger end\n";
+		//result += "//trigger end\n";
 	}
 	
 	return result;

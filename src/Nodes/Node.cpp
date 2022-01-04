@@ -836,18 +836,16 @@ namespace mh {
 
 				if (ptr->getType() == TYPE::CLOSURE) {
 					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
-					if (node->params_finish) {
+					if (node->params_finish && node->getCrossDomainIndex() != -1 && node->getCurrentGroupId() > node->getCrossDomainIndex() ) {
 						in_closure = true;
 						return true;
 					}
-					return true;
 				}
 				
 				return false;
 			});
 
 			std::string result;
-
 
 			if (!in_closure && in_block) {
 				result += "ydl_unit";

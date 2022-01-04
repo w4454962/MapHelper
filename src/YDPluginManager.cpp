@@ -83,8 +83,8 @@ BOOL WINAPI fakeCreateProcessW(
 
 	if (ret && manager.m_enable  && g_last_exe_name == "jasshelper.exe") {
 		//patch
-		g_vj_patch_insert = new YDJassHelperPatch(lpProcessInformation->hProcess);
-		g_vj_patch_insert->insert();
+		//g_vj_patch_insert = new YDJassHelperPatch(lpProcessInformation->hProcess);
+		//g_vj_patch_insert->insert();
 
 	}
 
@@ -99,10 +99,10 @@ DWORD WINAPI fakeWaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
 		print("插件 [%s] 运行结束 耗时: %f 秒\n", g_last_exe_name.c_str(), (double)(clock() - g_last_start_time) / CLOCKS_PER_SEC);
 		g_last_exe_name.clear();
 
-		if (g_vj_patch_insert) {
-			delete g_vj_patch_insert;
-			g_vj_patch_insert = nullptr;
-		}
+		//if (g_vj_patch_insert) {
+		//	delete g_vj_patch_insert;
+		//	g_vj_patch_insert = nullptr;
+		//}
 	}
 
 	return ret;
