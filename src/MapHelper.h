@@ -49,6 +49,8 @@ public:
 	void detach();//分离
 
 	int getConfig() const;
+
+	void setMenuEnable(bool is_enable);
 private:
 
 	//保存地图
@@ -84,6 +86,8 @@ protected:
 	hook::hook_t* m_hookParamTypeStrncmp2;
 	hook::hook_t* m_hookGetParamType;
 
+	//hook we的弹框 弹框的时候禁用所有菜单
+	uintptr_t m_hookMessageBoxA;
 
 	fs::path m_configPath;
 };

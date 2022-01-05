@@ -7,16 +7,19 @@
 
 
 #include <sstream>
+#include <base\hook\fp_call.h>
 #include <base\util\json.hpp>
 #include <include\Export.h>
 #include "..\resource.h"
 #include "YDPluginManager.h"
 #include "YDJassHelperPatch.h"
 
+#include <base\hook\iat.h>
+
 extern MakeEditorData* g_make_editor_data;
 
 #pragma warning(disable:4996)
-extern YDJassHelperPatch* g_vj_patch;
+//extern YDJassHelperPatch* g_vj_patch;
 
 const char* g_path;
 static uintptr_t g_object{};
@@ -48,6 +51,8 @@ namespace real
 	uintptr_t GetParamType;
 
 	uintptr_t ParamTypeId = 0;
+
+	uintptr_t MessageBoxA;
 }
 
 
@@ -373,6 +378,15 @@ static int __fastcall fakeGetParamType(
 }
 
 
+static int WINAPI fakeMessageBoxA(HWND hwnd, const char* message, const char* title, int flag)
+{
+	auto& helper = get_helper();
+
+	helper.setMenuEnable(false);
+	int ret = base::std_call<int>(real::MessageBoxA, hwnd, message, title, flag);
+	helper.setMenuEnable(true);
+	return ret;
+}
 
 uintptr_t Helper::onSaveMap()
 {
@@ -395,11 +409,11 @@ void Helper::attach()
 	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 	if (std::string::npos == name.find("worldedit")) {
 
-		if (name == "jasshelper.exe") { //如果是由vj加载这个dll的 
-			g_vj_patch = new YDJassHelperPatch();
-
-			g_vj_patch->attach();
-		}
+		//if (name == "jasshelper.exe") { //如果是由vj加载这个dll的 
+		//	g_vj_patch = new YDJassHelperPatch();
+		//
+		//	g_vj_patch->attach();
+		//}
 
 		return;
 	}
@@ -484,6 +498,9 @@ void Helper::attach()
 	real::GetParamType = editor.getAddress(0x00687650);
 	hook::install(&real::GetParamType, reinterpret_cast<uintptr_t>(&fakeGetParamType), m_hookGetParamType);
 
+
+	real::MessageBoxA = base::hook::iat(GetModuleHandleA(nullptr), "user32.dll", "MessageBoxA", (uintptr_t)&fakeMessageBoxA);
+
 	//-------------------end-----------------------------
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
@@ -508,11 +525,11 @@ void Helper::attach()
 
 void Helper::detach()
 {
-	if (g_vj_patch) {
-		g_vj_patch->detach();
-		delete g_vj_patch;
-		g_vj_patch = nullptr;
-	}
+	//if (g_vj_patch) {
+	//	g_vj_patch->detach();
+	//	delete g_vj_patch;
+	//	g_vj_patch = nullptr;
+	//}
 
 	if (!m_bAttach) return;
 	m_bAttach = false;
@@ -531,7 +548,8 @@ void Helper::detach()
 	hook::uninstall(m_hookParamTypeStrncmp2);
 	hook::uninstall(m_hookGetParamType);
 	
-
+	base::hook::iat(GetModuleHandleA(nullptr), "kernel32.dll", "MessageBoxA", real::MessageBoxA);
+	
 
 #if !defined(EMBED_YDWE)
 	//释放控制台避免崩溃
@@ -550,7 +568,12 @@ int Helper::onSelectConvartMode()
 	int result = getConfig();
 	if (result == -1)
 	{
-		int ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬大的加速器", MB_YESNO);
+
+		setMenuEnable(false);
+
+		int ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬的加速器", MB_SYSTEMMODAL | MB_YESNO);
+
+		setMenuEnable(true);
 
 		if (ret == 6)
 		{
@@ -666,4 +689,57 @@ void Helper::enableConsole()
 int Helper::getConfig() const
 {
 	return GetPrivateProfileIntA("ScriptCompiler", "EnableYDTrigger", -1, m_configPath.string().c_str());
+}
+
+
+
+
+
+
+static BOOL __stdcall enumWindowProc(HWND hwnd, LPARAM lparam) {
+	DWORD processId = 0;
+	if (GetWindowThreadProcessId(hwnd, &processId) && processId == GetCurrentProcessId()) {
+		auto list_ptr = (std::vector<HWND>*)lparam;
+		list_ptr->push_back(hwnd);
+	}
+	return true;
+}
+
+void Helper::setMenuEnable(bool is_enable) {
+	std::vector<HWND> list;
+
+	EnumWindows(enumWindowProc, (LPARAM)&list);
+	if (list.size() == 0)
+		return;
+
+	for (auto& hwnd : list) {
+		HMENU menu = GetMenu(hwnd);
+		
+		if (menu == NULL) {
+			continue;
+		}
+		int count = GetMenuItemCount(menu);
+		if (count == -1) {
+			continue;
+		}
+
+		char buffer[256] = { 0 };
+		MENUITEMINFO info = { 0 };
+		info.cbSize = sizeof(info);
+		info.fMask = MIIM_TYPE;
+		info.dwTypeData = buffer;
+
+		std::string name;
+		for (INT i = 0; i < count; i++) {
+			info.cch = _countof(buffer);	// GetMenuItemInfo 之后 cch 变化，必须重复对 cch 赋值，否则将导致 dwTypeData 被截断
+			if (GetMenuItemInfo(menu, i, TRUE, &info) == 0)
+				continue;
+			name = info.dwTypeData;
+			if (name.size() > 0) {
+				info.fMask = MIIM_STATE;
+				info.fState = is_enable ? MFS_ENABLED : MFS_GRAYED;
+				SetMenuItemInfo(menu, i, true, &info); //修改菜单状态
+			}
+		}
+	}
 }

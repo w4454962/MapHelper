@@ -15,7 +15,7 @@ static clock_t g_last_start_time;
 static std::string g_last_exe_name;
 static DWORD g_thread_id = 0;
 
-static YDJassHelperPatch* g_vj_patch_insert = nullptr;
+//static YDJassHelperPatch* g_vj_patch_insert = nullptr;
 
 
 // 目的 在ydwe调用插件时 将插件重导向 maphelper附带的插件。
@@ -90,6 +90,8 @@ BOOL WINAPI fakeCreateProcessW(
 
 	return ret;
 }
+
+
 
 
 DWORD WINAPI fakeWaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {

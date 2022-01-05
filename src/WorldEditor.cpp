@@ -7,6 +7,7 @@
 #include <YDPluginManager.h>
 
 extern MakeEditorData* g_make_editor_data;
+extern bool g_messagebox;
 
 std::map<std::string, std::string> g_config_map;
 
@@ -90,7 +91,6 @@ const char* WorldEditor::getCurrentMapPath()
 
 	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + count * 4);
 
-	print("当前地图路径%X\n", object);
 	return (const char*)object; 
 }
 
@@ -180,9 +180,19 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	int ret = 0;
 	auto& v_helper = get_helper();
 	const auto result = v_helper.getConfig();
+
+	
 	if (result == -1)
 	{
-		ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬大的加速器", MB_YESNO);
+
+		v_helper.setMenuEnable(false);
+
+		ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬的加速器", MB_SYSTEMMODAL | MB_YESNO);
+
+		v_helper.setMenuEnable(true);
+
+
+		g_messagebox = false;
 
 		if (ret == 6)
 			print("自定义保存模式\n");

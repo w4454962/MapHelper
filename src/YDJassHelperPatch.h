@@ -1,4 +1,6 @@
 #pragma once
+
+/*
 #include "stdafx.h"
 #include <base\hook\inline.h>
 class YDJassHelperPatch {
@@ -38,3 +40,5 @@ private:
 
 	std::unordered_map<std::string, bool> m_func_map;
 };
+
+*/
