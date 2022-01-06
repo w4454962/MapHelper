@@ -16,3 +16,7 @@
 ## 使用方式
 
 * 编译出的dll修改为.asi放入魔兽目录，启动编辑器自动加载
+
+
+![Image text](https://github.com/w4454962/MapHelper/tree/master/resource/qq.png)
+
