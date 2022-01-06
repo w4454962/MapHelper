@@ -13,7 +13,7 @@
 #include "..\resource.h"
 #include "YDPluginManager.h"
 #include "YDJassHelperPatch.h"
-
+#include <Commctrl.h>
 #include <base\hook\iat.h>
 
 extern MakeEditorData* g_make_editor_data;
@@ -739,6 +739,13 @@ void Helper::setMenuEnable(bool is_enable) {
 				info.fMask = MIIM_STATE;
 				info.fState = is_enable ? MFS_ENABLED : MFS_GRAYED;
 				SetMenuItemInfo(menu, i, true, &info); //修改菜单状态
+			}
+		}
+
+		HWND toolbar = FindWindowExA(hwnd, 0, "ToolbarWindow32", 0);
+		if (toolbar) {
+			for (int i = 0; i < 100; i++) {
+				::SendMessage(toolbar, TB_HIDEBUTTON, i, MAKELPARAM(is_enable? FALSE:TRUE, 0));
 			}
 		}
 	}
