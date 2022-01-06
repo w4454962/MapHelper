@@ -17,6 +17,8 @@
 
 * 编译出的dll修改为.asi放入魔兽目录，启动编辑器自动加载
 
-
+## QQ群
+* 群号 724829943 有问题的加群反馈 下载编译版本。
+ 
 ![Image text](https://github.com/w4454962/MapHelper/tree/master/resource/qq.png)
 
