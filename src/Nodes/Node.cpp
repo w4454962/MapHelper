@@ -839,6 +839,9 @@ namespace mh {
 					if (node->params_finish && node->getCrossDomainIndex() != -1 && node->getCurrentGroupId() > node->getCrossDomainIndex() ) {
 						in_closure = true;
 						return true;
+					} else if (node->getCrossDomainIndex() == -1) {
+						in_closure = true;
+						return true;
 					}
 				}
 				
