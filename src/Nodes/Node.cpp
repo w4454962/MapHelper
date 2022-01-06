@@ -332,12 +332,13 @@ namespace mh {
 				iftext += node->toString(func);
 			}
 			func->addSpace();
-			for (auto& node : nodes[1]) {
-				thentext += node->toString(func);
-			}
 			for (auto& node : nodes[2]) {
 				elsetext += node->toString(func);
 			}
+			for (auto& node : nodes[1]) {
+				thentext += node->toString(func);
+			}
+		
 			func->subSpace();
 			if (iftext.empty()) {
 				iftext = "true";
