@@ -32,7 +32,7 @@ namespace mh {
 			NodePtr param = getParamActionNode();
 
 			//创建一个闭包
-			SigleNodeClosurePtr closure = SigleNodeClosurePtr(new SigleNodeClosure(param, "boolean", node));
+			SingleNodeClosurePtr closure = SingleNodeClosurePtr(new SingleNodeClosure(param, "boolean", node));
 
 			return  "Condition(" + closure->toString(func) + ")";;
 		}
@@ -48,7 +48,7 @@ namespace mh {
 			NodePtr param = getParamActionNode();
 			param->setType(TYPE::CALL);
 			//创建一个闭包
-			SigleNodeClosurePtr closure = SigleNodeClosurePtr(new SigleNodeClosure(param, "nothing", node));
+			SingleNodeClosurePtr closure = SingleNodeClosurePtr(new SingleNodeClosure(param, "nothing", node));
 
 
 			return closure->toString(func);

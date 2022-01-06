@@ -4,14 +4,14 @@
 namespace mh {
 
 
-	typedef std::shared_ptr<class SigleNodeClosure> SigleNodeClosurePtr;
+	typedef std::shared_ptr<class SingleNodeClosure> SingleNodeClosurePtr;
 	//±Õ°ü
-	class SigleNodeClosure : public ClosureNode {
-		REGISTER_FROM_CLOSUER(SigleNodeClosure)
+	class SingleNodeClosure : public ClosureNode {
+		REGISTER_FROM_CLOSUER(SingleNodeClosure)
 	public:
 
-		SigleNodeClosure(NodePtr node, const std::string& return_type, NodePtr parent)
-			:SigleNodeClosure((Action*)node->getData(), 0, node)
+		SingleNodeClosure(NodePtr node, const std::string& return_type, NodePtr parent)
+			:SingleNodeClosure((Action*)node->getData(), 0, node)
 		{
 			m_node = node;
 			m_return_type = return_type;
