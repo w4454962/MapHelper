@@ -1439,7 +1439,7 @@ endfunction
 	writer.write_string("function InitCustomTeams takes nothing returns nothing\n");
 
 	for (size_t i = 0; i < worldData->steam_count; i++) {
-		SteamData* data = &worldData->steams[i];
+		TeamData* data = &worldData->teams[i];
 		std::string index = std::to_string(i);
 
 		uint32_t force_flags = data->force_flags;

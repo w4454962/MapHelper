@@ -394,7 +394,7 @@ struct PlayerData
 	uint32_t height_level;//0x80 高优先级  & 玩家id的2次幂 判断该玩家是否是高优先级
 }; //size 80
 
-struct SteamData
+struct TeamData
 {
 	uint32_t force_flags;//0x0 队伍标签 记录各项同盟设置
 	uint32_t player_masks;//0x4 玩家记录着 这个队伍里有哪些玩家
@@ -445,7 +445,7 @@ struct EditorData
 	PlayerData* players;//0x3888
 	char unknow11[0x8];//0x388c
 	uint32_t steam_count;//0x3894
-	SteamData* steams;//0x3898
+	TeamData* teams;//0x3898
 	char unknow12[0x28];//0x389c
 	uint32_t random_group_count;//0x38c4随机组数量
 	RandomGroupData* random_groups;//0x38c8//随机组
