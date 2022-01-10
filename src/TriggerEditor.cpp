@@ -1575,12 +1575,59 @@ endfunction
 	
 	const std::string tileset = std::string((char*)&worldData->tileset,1);
 	
-	const std::string terrain_lights = string_replaced(worldEditor.getConfigData("TerrainLights", tileset), "\\", "\\\\");
-	const std::string unit_lights = string_replaced(worldEditor.getConfigData("UnitLights",tileset), "\\", "\\\\");
+	std::string light = tileset;
+	//如果有自定义光照
+	if (worldData->light) {
+		light = std::string((char*)&worldData->light, 1);
+	}
+
+	const std::string terrain_lights = string_replaced(worldEditor.getConfigData("TerrainLights", light), "\\", "\\\\");
+	const std::string unit_lights = string_replaced(worldEditor.getConfigData("UnitLights", light), "\\", "\\\\");
 	
 	writer.write_string("\tcall SetDayNightModels(\"" + terrain_lights + "\", \"" + unit_lights + "\")\n");
 	
-	const std::string sound_environment = worldEditor.getConfigData("SoundEnvironment",tileset);
+
+	//如果有迷雾
+	if (worldData->mapset_flag & 0x2000) {
+		writer.write_string(std::format("\tcall SetTerrainFogEx({}, {}, {}, {}, {}, {}, {})\n",
+			worldData->fog_type,
+			worldData->fog_z_start,
+			worldData->fog_z_end,
+			worldData->fog_density,
+			(float)worldData->fog_color[2] / 255.f,
+			(float)worldData->fog_color[1] / 255.f,
+			(float)worldData->fog_color[0] / 255.f
+		));
+	}
+	//如果有设置水颜色
+	if (worldData->mapset_flag & 0x10000) {
+		writer.write_string(std::format("\tcall SetWaterBaseColor({}, {}, {}, {})\n",
+			worldData->water_color[2],
+			worldData->water_color[1],
+			worldData->water_color[0],
+			worldData->water_color[3]
+		));
+	}
+
+	//如果有全局天气
+	if (worldData->climate_id) {
+		writer.write_string(std::format("\tcall EnableWeatherEffect(AddWeatherEffect(Rect({}, {}, {}, {}), '{}'), true)\n",
+			worldData->terrain->map_rect_minx,
+			worldData->terrain->map_rect_miny,
+			worldData->terrain->map_rect_maxx,
+			worldData->terrain->map_rect_maxy,
+			std::string((const char*)&worldData->climate_id, 4)
+		));
+	}
+
+	std::string sound_environment;
+	//环境音效
+	if (worldData->custorm_sound && strlen(worldData->custorm_sound) > 0) {
+		sound_environment = worldData->custorm_sound;
+	} else {
+		sound_environment = worldEditor.getConfigData("SoundEnvironment", tileset);
+	}
+
 	writer.write_string("\tcall NewSoundEnvironment(\"" + sound_environment + "\")\n");
 	
 	const std::string ambient_day = worldEditor.getConfigData("DayAmbience", tileset);

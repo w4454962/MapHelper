@@ -419,6 +419,15 @@ struct TriggerStringData
 	TriggerString* array;//0x8
 };
 
+struct TerrainData
+{
+	char unknow[0xc4];
+	float map_rect_minx;
+	float map_rect_miny;
+	float map_rect_maxx;
+	float map_rect_maxy;
+};
+
 struct EditorData
 {
 	uint32_t map_version;//0x0 地图版本
@@ -439,9 +448,20 @@ struct EditorData
 	float camera_right_bottom_x;//0x438
 	float camera_right_bottom_y;//0x43c
 
-	uint32_t unknow14;//0x440
+	uint32_t mapset_flag;//0x440
+
 	uint8_t tileset;//0x444 
-	char unknow1[0x343f];// 0x445
+	char unknow1[0x33fb];// 0x445
+	uint32_t fog_type; //0x3840 迷雾样式
+	float fog_z_start;//0x3844 
+	float fog_z_end; //0x3848 
+	float fog_density; //0x384c 密度
+	uint8_t fog_color[4]; //0x3850 颜色
+	uint32_t climate_id; //3854 全局天气id
+	char custorm_sound[0x20]; //0x3858 环境音效
+	uint8_t light;//0x3878 自定义光照 如果没有则为0
+	uint8_t water_color[4]; //0x3879 水颜色
+	char unknow15[0x7];//0x387d
 	uint32_t player_count;//0x3884
 	PlayerData* players;//0x3888
 	char unknow11[0x8];//0x388c
@@ -454,7 +474,7 @@ struct EditorData
 	uint32_t item_table_count;//0x38d4 物品列表数量
 	ItemTable* item_table;//0x38d8		物品表
 	char unknow3[0x4];//0x38dc
-	void* terrain;//0x38e0
+	TerrainData* terrain;//0x38e0
 	UnitData* doodas;//0x38e4
 	UnitData* units;//0x38e8
 	RegionData* regions;//0x38ec
@@ -465,5 +485,5 @@ struct EditorData
 	TriggerStringData* strings;//0x3900
 
 	char unknow4[0x128];//0x3904
-	uint32_t is_test;//0x3a2c 当前是否是测试保存模式
+	uint32_t is_test;	//0x3a2c 当前是否是测试保存模式
 };

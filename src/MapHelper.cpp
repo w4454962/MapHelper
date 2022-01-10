@@ -641,7 +641,7 @@ void Helper::enableConsole()
 	if (v_hwnd_console)
 	{
 		
-
+		  
 		DWORD mode;
 		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
 		GetConsoleMode(hStdin, &mode);
@@ -651,16 +651,17 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2d");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2e");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
 			<< "感谢7佬的最初版本\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
-			<< "						----2022\1\2\n"
+			<< "						----2022/1/10\n"
 			<< "\n"
-			<< "version 2.2d update:\n"
+			<< "version 2.2e update:\n"
+			<< "修复了 迷雾、天气、光照、环境音效、金矿失效的问题。\n"
 			<< "加强了预处理器#include 支持中文路径。 \n"
 			<< "新增了MapHelper.json配置文件 如果有修改ydtrigger.dll的特殊动作可以在里面配置黑名单\n"
 			<< "重构了大部分代码， 源码更清晰，缩进跟函数名更精确的版本。\n"
