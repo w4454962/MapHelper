@@ -1053,11 +1053,8 @@ endfunction
 		if (unit->type != 0 || strncmp(unit->name,"sloc",4) == 0)
 			continue;
 
-		std::string unit_reference = "u";
-
-
 		sprintf(buffer, "Player(%i),'%.4s',%.1f,%.1f,%.1f", unit->player_id, unit->name, unit->x, unit->y, unit->angle * 180.f / 3.141592f);
-		writer.write_string("\tset " + unit_reference + " = CreateUnit(" + std::string(buffer) + ")\n");
+		writer.write_string("\tset u = CreateUnit(" + std::string(buffer) + ")\n");
 
 		sprintf(buffer, "gg_unit_%.04s_%04d", unit->name, unit->index);
 		std::string name = buffer;
@@ -1068,39 +1065,46 @@ endfunction
 
 		if (unit->health != -1) 
 		{
-			writer.write_string("\tset life = GetUnitState(" + unit_reference + ", UNIT_STATE_LIFE)\n");
-			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_LIFE, " + std::to_string(unit->health / 100.f) + "* life)\n");
+			writer.write_string("\tset life = GetUnitState(u, UNIT_STATE_LIFE)\n");
+			writer.write_string("\tcall SetUnitState(u, UNIT_STATE_LIFE, " + std::to_string(unit->health / 100.f) + "* life)\n");
 		}
 
 		if (unit->mana != -1) 
-			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_MANA, " + std::to_string(unit->mana) + ")\n");
+			writer.write_string("\tcall SetUnitState(u, UNIT_STATE_MANA, " + std::to_string(unit->mana) + ")\n");
 		
 		if (unit->level != 1) 
-			writer.write_string("\tcall SetHeroLevel(" + unit_reference + ", " + std::to_string(unit->level) + ", false)\n");
+			writer.write_string("\tcall SetHeroLevel(u, " + std::to_string(unit->level) + ", false)\n");
 		
 
 		if (unit->state_str != 0) 
-			writer.write_string("\tcall SetHeroStr(" + unit_reference + ", " + std::to_string(unit->state_str) + ", true)\n");
+			writer.write_string("\tcall SetHeroStr(u, " + std::to_string(unit->state_str) + ", true)\n");
 		
 
 		if (unit->state_agi != 0) 
-			writer.write_string("\tcall SetHeroAgi(" + unit_reference + ", " + std::to_string(unit->state_agi) + ", true)\n");
+			writer.write_string("\tcall SetHeroAgi(u, " + std::to_string(unit->state_agi) + ", true)\n");
 		
 
 		if (unit->state_int != 0) 
-			writer.write_string("\tcall SetHeroInt(" + unit_reference + ", " + std::to_string(unit->state_int) + ", true)\n");
+			writer.write_string("\tcall SetHeroInt(u, " + std::to_string(unit->state_int) + ", true)\n");
 		
 		
 		if (unit->passive_color_index != -1 && unit->passive_color_index < 16) 
-			writer.write_string("\tcall SetUnitColor(" + unit_reference + ", ConvertPlayerColor(" + std::to_string(unit->passive_color_index) + "))\n");
+			writer.write_string("\tcall SetUnitColor(u, ConvertPlayerColor(" + std::to_string(unit->passive_color_index) + "))\n");
 
 		if (unit->pass_door_rect_index != -1 && unit->pass_door_rect_index < worldData->regions->region_count) {
 			auto region = worldData->regions->array[unit->pass_door_rect_index];
 
 			std::string region_name = std::string("gg_rct_") + region->name;
 			convert_name(region_name);
-			writer.write_string("\tcall WaygateSetDestination(" + unit_reference + ", GetRectCenterX(" + region_name + "), GetRectCenterY(" + region_name + "))\n");
-			writer.write_string("\tcall WaygateActivate(" + unit_reference + ", true)\n");
+			writer.write_string("\tcall WaygateSetDestination(u, GetRectCenterX(" + region_name + "), GetRectCenterY(" + region_name + "))\n");
+			writer.write_string("\tcall WaygateActivate(u, true)\n");
+		}
+
+
+		//如果有金矿技能 
+		uint32_t id = *(uint32_t*)unit->name;
+		if (worldEditor.hasSkillByUnit(id, 'Agld') || worldEditor.hasSkillByUnit(id, 'Abgm') || worldEditor.hasSkillByUnit(id, 'Aegm')) {
+			writer.write_string("\tcall SetResourceAmount(u, " + std::to_string(unit->gold_count) + ")\n");
 		}
 
 		float range;
@@ -1114,7 +1118,7 @@ endfunction
 			 {
 				range = unit->warning_range;
 			 }
-			writer.write_string("\tcall SetUnitAcquireRange(" + unit_reference + ", " + std::to_string(range) + ")\n");
+			writer.write_string("\tcall SetUnitAcquireRange(u, " + std::to_string(range) + ")\n");
 		}
 
 		for (size_t a = 0; a < unit->skill_count; a++)
@@ -1123,7 +1127,7 @@ endfunction
 			std::string skillId = std::string(skill->name, skill->name + 0x4);
 			for (uint32_t b = 0; b < skill->level; b++) 
 			{
-				writer.write_string("\tcall SelectHeroSkill(" + unit_reference + ", \'" + std::string(skillId) + "\')\n");
+				writer.write_string("\tcall SelectHeroSkill(u, \'" + std::string(skillId) + "\')\n");
 			}
 		
 			std::string objectValue;
@@ -1134,20 +1138,20 @@ endfunction
 				worldEditor.getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderon", objectValue);
 				if (objectValue.empty()) 
 					worldEditor.getSkillObjectData(*(uint32_t*)(skill->name), 0, "Order", objectValue);
-				writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + objectValue + "\")\n");
+				writer.write_string("\tcall IssueImmediateOrder(u, \"" + objectValue + "\")\n");
 			} 
 			else 
 			{
 				worldEditor.getSkillObjectData(*(uint32_t*)(skill->name), 0, "Orderoff", objectValue);
 				if (!objectValue.empty()) 
-					writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + objectValue + "\")\n");
+					writer.write_string("\tcall IssueImmediateOrder(u, \"" + objectValue + "\")\n");
 			}
 		}
 		
 		for (size_t a = 0; a < unit->item_count; a++)
 		{
 			UnitItem* item = &unit->items[a];
-			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", '" + std::string(item->name,item->name + 0x4) + "', " + std::to_string(item->slot_id) + ")\n");
+			writer.write_string("\tcall UnitAddItemToSlotById(u, '" + std::string(item->name,item->name + 0x4) + "', " + std::to_string(item->slot_id) + ")\n");
 		}
 
 		std::string dropName;
@@ -1173,8 +1177,8 @@ endfunction
 		{
 			
 			writer.write_string("\tset t = CreateTrigger()\n");
-			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_DEATH)\n");
-			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_CHANGE_OWNER)\n");
+			writer.write_string("\tcall TriggerRegisterUnitEvent(t, u, EVENT_UNIT_DEATH)\n");
+			writer.write_string("\tcall TriggerRegisterUnitEvent(t, u, EVENT_UNIT_CHANGE_OWNER)\n");
 			writer.write_string("\tcall TriggerAddAction(t, function " + dropName + ")\n");
 		}
 	}

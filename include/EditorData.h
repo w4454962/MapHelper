@@ -231,7 +231,8 @@ struct Unit
 	uint32_t item_setting_count;//0xe0
 	uint32_t item_setting_count2;//0xe4
 	ItemTableSetting* item_setting;//0xe8
-	char unknow4[0x8];//0xec
+	char unknow4[0x4];//0xec
+	int gold_count; //0xf0 金矿数量 需要判断金矿技能才能生效
 	float warning_range;//0xf4 警戒范围 -1 是普通 -2 是营地
 	uint32_t item_count;//0xf8
 	uint32_t item_count2;//0xfc

@@ -27,6 +27,9 @@ public:
 	//获取技能物编数据 技能id 等级 字段 返回值
 	bool getSkillObjectData(uint32_t id, uint32_t level, std::string text, std::string& value);
 
+	//单位是否包含技能 包括以该技能为模板扩展出来的子技能
+	bool hasSkillByUnit(uint32_t unit_id, uint32_t skill_id);
+
 	int getSoundDuration(const char* path);
 
 	void saveMap(const char* outPath);

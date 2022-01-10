@@ -152,6 +152,17 @@ bool WorldEditor::getSkillObjectData(uint32_t id,uint32_t level,std::string text
 	return ret;
 }
 
+
+bool WorldEditor::hasSkillByUnit(uint32_t unit_id, uint32_t skill_id)
+{
+	if (g_make_editor_data) {
+		return g_make_editor_data->has_skill_by_unit(unit_id, skill_id);
+	}
+
+	uintptr_t data = c_call<uintptr_t>(getAddress(0x004D4CA0));
+	return this_call<bool>(getAddress(0x00501020), data, unit_id, skill_id, 0);
+}
+
 void WorldEditor::onSaveMap(const char* tempPath)
 {
 	//m_tmp_path = fs::path(tempPath);
@@ -211,6 +222,7 @@ void WorldEditor::onSaveMap(const char* tempPath)
 	auto& manager = get_ydplugin_manager();
 
 	manager.attach();
+
 
 	if (ret == 6)
 	{

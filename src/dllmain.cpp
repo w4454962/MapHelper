@@ -73,8 +73,6 @@ Action::Type get_action_type(Action* action)
 
 void ConverJassScript(MakeEditorData* data, const char* ouput_path)
 {
-	//MessageBoxA(0, "A", "", MB_OK);
-
 	g_make_editor_data = data;
 
 	auto& triggerEditor = get_trigger_editor();
