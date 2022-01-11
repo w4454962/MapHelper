@@ -42,7 +42,7 @@ namespace mh {
 			std::string result;
 
 			//将动作编译到函数里 返回函数名
-			result = "function " + func_name;
+			result =  func_name;
 
 			std::string upvalues;
 			std::vector<std::string> actions;

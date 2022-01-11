@@ -6,6 +6,7 @@
 #include "TriggerEditor.h"
 #include "..\include\Export.h"
 
+//#define ENABLE_OFFLINE
 #ifdef  ENABLE_OFFLINE
 #include <libnyquist/Decoders.h>
 

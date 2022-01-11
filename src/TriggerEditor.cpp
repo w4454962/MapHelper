@@ -1589,7 +1589,7 @@ endfunction
 
 	//如果有迷雾
 	if (worldData->mapset_flag & 0x2000) {
-		writer.write_string(std::format("\tcall SetTerrainFogEx({}, {}, {}, {}, {}, {}, {})\n",
+		writer.write_string(std::format("\tcall SetTerrainFogEx({}, {:.2f}, {:.2f}, {:.3f}, {:.3f}, {:.3f}, {:.3f})\n",
 			worldData->fog_type,
 			worldData->fog_z_start,
 			worldData->fog_z_end,

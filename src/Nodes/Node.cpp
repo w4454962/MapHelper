@@ -34,7 +34,7 @@ namespace mh {
 			//创建一个闭包
 			SingleNodeClosurePtr closure = SingleNodeClosurePtr(new SingleNodeClosure(param, "boolean", node));
 
-			return  "Condition(" + closure->toString(func) + ")";;
+			return  "Condition(function " + closure->toString(func) + ")";;
 		}
 	};
 
@@ -51,7 +51,7 @@ namespace mh {
 			SingleNodeClosurePtr closure = SingleNodeClosurePtr(new SingleNodeClosure(param, "nothing", node));
 
 
-			return closure->toString(func);
+			return "function " + closure->toString(func);
 		}
 	};
 
@@ -240,9 +240,17 @@ namespace mh {
 		virtual std::string toString(TriggerFunction* func) override {
 			auto params = getParameterList();
 
+			auto node = std::dynamic_pointer_cast<ParameterNode>(params[0]);
+
+			auto child = node->getParamActionNode();
+
+			//创建一个闭包
+			SingleNodeClosurePtr closure = SingleNodeClosurePtr(new SingleNodeClosure(child, "boolean", node));
+
+
 			std::string result;
 			result += func->getSpaces( ) + "loop\n";
-			result += func->getSpaces(1) + "exitwhen (" + params[0]->toString(func) + ")\n";
+			result += func->getSpaces(1) + "exitwhen (" + closure->toString(func) + "())\n";
 			result += func->getSpaces(1) + "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + params[1]->toString(func) + "))\n";
 			result += func->getSpaces( ) + "endloop\n";
 
