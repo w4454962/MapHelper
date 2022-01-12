@@ -651,7 +651,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2g");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2h");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
@@ -660,7 +660,8 @@ void Helper::enableConsole()
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
 			<< "						----2022/1/10\n"
 			<< "\n"
-			<< "version 2.2g update:\n"
+			<< "version 2.2h update:\n"
+			<< "2.2h: 修复实数变量变化事件缺少双引号的bug\n"
 			<< "修复了 迷雾、天气、光照、环境音效、金矿失效的问题。\n"
 			<< "加强了预处理器#include 支持中文路径。 \n"
 			<< "新增了MapHelper.json配置文件 如果有修改ydtrigger.dll的特殊动作可以在里面配置黑名单\n"

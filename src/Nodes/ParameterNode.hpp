@@ -99,6 +99,8 @@ namespace mh {
 			{
 				auto result = value;
 
+				auto type{ std::string(m_parameter->type_name) };
+
 				if (!result._Starts_with("gg_")) {
 					result = "udg_" + result;
 				}
@@ -109,7 +111,10 @@ namespace mh {
 				if (m_parameter->arrayParam) {
 					NodePtr array_node = NodeFramParameter(m_parameter->arrayParam, 0, node);
 					result += "[" + array_node->toString(func) + "]";
+				} else if(type == "VarAsString_Real") {
+					result = "\"" + result + "\"";
 				}
+				
 				return result;
 			}
 
@@ -143,8 +148,6 @@ namespace mh {
 				default:
 				{
 					
-
-
 					uint32_t is_import_path = 0;
 					auto* type_data = editor.getTypeData(type);
 					if (type_data) {
@@ -153,8 +156,6 @@ namespace mh {
 					if (type == "HotKey" && value == "HotKeyNull") {
 						return "0";
 					}
-
-
 
 					if (is_import_path || editor.getBaseType(type) == "string") {
 						value = string_replaced(value, "\\", "\\\\");
