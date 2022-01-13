@@ -39,9 +39,6 @@ public:
 	
 	//static Helper* getInstance();
 
-
-	static bool IsEixt();
-
 	void enableConsole();
 
 	void attach();//¸½¼Ó
@@ -52,6 +49,7 @@ public:
 
 	void setMenuEnable(bool is_enable);
 private:
+
 
 	//±£´æµØÍ¼
 	static uintptr_t onSaveMap();

@@ -34,7 +34,7 @@ public:
 
 	void saveMap(const char* outPath);
 
-	void onSaveMap(const char* tempPath);
+	void onSaveMap(const char* tempPath, EditorData* data);
 
 	void loadConfigData();
 private:
@@ -63,7 +63,7 @@ private:
 	void updateSaveFlags();
 protected: 
 
-	EditorData* editData;
+	EditorData* m_currentData;
 
 
 	uintptr_t m_editorObject;

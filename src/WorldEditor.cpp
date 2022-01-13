@@ -13,6 +13,7 @@ std::map<std::string, std::string> g_config_map;
 
 WorldEditor::WorldEditor()
 {
+	m_currentData = nullptr;
 	m_tempPath = nullptr;
 }
 
@@ -58,13 +59,15 @@ EditorData* WorldEditor::getEditorData()
 		return g_make_editor_data->editor_data;
 	}
 
-	uintptr_t addr = *(uintptr_t*)getAddress(0x803cb0);
-	uintptr_t count = 0;
-	if(!Helper::IsEixt())
+	if (m_currentData) //如果当前有数据 则使用当前的数据
 	{
-		count = *(uintptr_t*)(addr + 0x1b0);
+		return m_currentData;
 	}
-	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + count * 4);
+
+	uintptr_t addr = *(uintptr_t*)getAddress(0x803cb0);
+	uintptr_t index = *(uintptr_t*)(addr + 0x1b0); //当前地图索引
+
+	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + index * 4);
 
 	if (*(uintptr_t*)(object + 0x114))
 	{
@@ -85,13 +88,9 @@ void WorldEditor::saveMap(const char* outPath)
 
 const char* WorldEditor::getCurrentMapPath()
 {
-	uintptr_t addr = *(uintptr_t*)getAddress(0x803cb0);
+	auto data = getEditorData();
 
-	uintptr_t count = *(uintptr_t*)(addr + 0x1b0);
-
-	uintptr_t object = *(uintptr_t*)(*(uintptr_t*)(addr + 0x1a8) + count * 4);
-
-	return (const char*)object; 
+	return data->mappath;
 }
 
 const char* WorldEditor::getTempSavePath()
@@ -163,12 +162,10 @@ bool WorldEditor::hasSkillByUnit(uint32_t unit_id, uint32_t skill_id)
 	return this_call<bool>(getAddress(0x00501020), data, unit_id, skill_id, 0);
 }
 
-void WorldEditor::onSaveMap(const char* tempPath)
+void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
 {
-	//m_tmp_path = fs::path(tempPath);
 	m_tempPath = tempPath;
-	//print("m_tmp_path%s\n", m_tmp_path.string().c_str());
-	//memcpy(&m_tempPath, m_tmp_path.string().c_str(), m_tmp_path.string().size());
+	m_currentData = data;
 
 	print("当前地图路径%s\n", getCurrentMapPath());
 	print("保存地图路径 %s\n", getTempSavePath());
@@ -176,13 +173,9 @@ void WorldEditor::onSaveMap(const char* tempPath)
 
 	auto& triggerEditor = get_trigger_editor();
 
-	
-
 	TriggerData* triggerData = getEditorData()->triggers;
 
 	triggerEditor.loadTriggers(triggerData);
-
-
 
 
 #if defined(EMBED_YDWE)
@@ -289,7 +282,8 @@ void WorldEditor::onSaveMap(const char* tempPath)
 		
 	print("地图所有数据保存完成 总耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
-	m_tempPath = NULL;
+	m_tempPath = nullptr;
+	m_currentData = nullptr;
 }
 
 int WorldEditor::saveWts()

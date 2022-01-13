@@ -486,4 +486,6 @@ struct EditorData
 
 	char unknow4[0x128];//0x3904
 	uint32_t is_test;	//0x3a2c 当前是否是测试保存模式
+	char unknow5[0x28];//0x3a30
+	const char* mappath; //0x3a58 当前地图路径指针
 };

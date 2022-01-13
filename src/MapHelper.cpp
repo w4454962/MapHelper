@@ -22,10 +22,8 @@ extern MakeEditorData* g_make_editor_data;
 //extern YDJassHelperPatch* g_vj_patch;
 
 const char* g_path;
-static uintptr_t g_object{};
+static uintptr_t g_object = 0;
 static uintptr_t g_addr;
-//保存地图函数调用返回地址
-static uintptr_t call_addr;
 
 namespace real
 {
@@ -53,6 +51,8 @@ namespace real
 	uintptr_t ParamTypeId = 0;
 
 	uintptr_t MessageBoxA;
+
+	uintptr_t SaveMapState;
 }
 
 
@@ -134,26 +134,11 @@ Helper::~Helper()
 //}
 
 
-bool Helper::IsEixt()
-{
-	
-	if (call_addr == WorldEditor::getAddress(0x004E79A7))
-	{
-		return true;
-	}
-	return false;
-}
-
 static void __declspec(naked) insertSaveMapData()
 {
 	
 	__asm
 	{
-		mov eax, [ebp]
-		mov eax, [eax]
-		mov eax, [eax]
-		mov eax, [eax + 0x4]
-		mov call_addr, eax
 		mov g_object, esi
 		lea eax, dword ptr ss : [ebp - 0x10c];
 		mov g_path, eax
@@ -201,6 +186,7 @@ static void __declspec(naked) insertConvertTrigger()
 	
 
 }
+
 
 
 //修改特定UI的子动作数量
@@ -388,10 +374,12 @@ static int WINAPI fakeMessageBoxA(HWND hwnd, const char* message, const char* ti
 	return ret;
 }
 
+
 uintptr_t Helper::onSaveMap()
 {
 	auto& editor = get_world_editor();
-	editor.onSaveMap(g_path);
+
+	editor.onSaveMap(g_path, (EditorData*)g_object);
 	return editor.getAddress(0x0055D175);
 }
 
@@ -439,10 +427,10 @@ void Helper::attach()
 
 	//------------------自定义脚本生成器的操作----------------
 
+
 	//当保存或测试地图时保存生成数据
 	uintptr_t addr = editor.getAddress(0x0055CDE6);
 	hook::install(&addr, reinterpret_cast<uintptr_t>(&insertSaveMapData),m_hookSaveMap);
-
 
 	//当t转j时 生成脚本
 	real::SetParamType = editor.getAddress(0x005D7C00);
@@ -651,7 +639,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2h");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2i");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
@@ -660,7 +648,8 @@ void Helper::enableConsole()
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
 			<< "						----2022/1/10\n"
 			<< "\n"
-			<< "version 2.2h update:\n"
+			<< "version 2.2i update:\n"
+			<< "2.2i:修复多开关闭地图提示保存,关闭编辑器提示保存会导致地图错乱的bug\n"
 			<< "2.2h: 修复实数变量变化事件缺少双引号的bug\n"
 			<< "修复了 迷雾、天气、光照、环境音效、金矿失效的问题。\n"
 			<< "加强了预处理器#include 支持中文路径。 \n"
