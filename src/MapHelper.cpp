@@ -236,11 +236,6 @@ static void setParamerType(Action* action, int flag, int type_param_index, int t
 	if (!param || strncmp(param->value,"typename_",8) != 0)
 		return;
 	const char* type = param->value + 11; //typename_01_integer  + 11 = integer
-	auto it = g_typenames.find(type);
-	if (it == g_typenames.end())
-	{
-		g_typenames.emplace(type, param->value);
-	}
 
 	//print("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
 	this_call<int>(real::SetParamType, action, target_param_index, type, flag);
@@ -375,6 +370,52 @@ static int WINAPI fakeMessageBoxA(HWND hwnd, const char* message, const char* ti
 }
 
 
+
+static void WINAPI earchConfigData(const char* table_name, const char* key, uint32_t object)
+{
+	if (!object) return;
+
+	uintptr_t parent = *(uintptr_t*)(object + 0x1C);
+	if (!parent) return;
+
+	const char* parent_name = *(const char**)(parent + 0x18);
+
+	if (!parent_name || strcmp(parent_name, "typename") != 0 || strlen(key) < 11)
+		return;
+
+	const char* type = key + 11; //typename_01_integer  + 11 = integer
+
+	g_typenames.emplace(type, key);
+
+	//printf("[%s][%s] =%s\n", table_name, key, parent_name);
+}
+
+static void __declspec(naked) fakeEarchConfigData()
+{
+	__asm
+	{
+		mov eax, [esp + 4]
+		push edi 
+		push ecx 
+		push eax 
+		call earchConfigData
+		ret 0x4
+	}
+	
+}
+//迭代器 遍历TriggerParams 
+static void initTypeName() {
+
+	uintptr_t earch_config_table = WorldEditor::getAddress(0x004D1F40);
+	const char* table_name = "TriggerParams";
+	fast_call<uintptr_t>(earch_config_table, table_name, &fakeEarchConfigData, table_name);
+}
+
+
+
+
+
+
 uintptr_t Helper::onSaveMap()
 {
 	auto& editor = get_world_editor();
@@ -499,8 +540,8 @@ void Helper::attach()
 
 
 	editor.loadConfigData();
-
-
+	
+	initTypeName();
 
 	auto& manager = get_ydplugin_manager();
 
