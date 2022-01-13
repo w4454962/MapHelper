@@ -233,9 +233,17 @@ static int __fastcall fakeGetActionType(Action* action, uint32_t edx, int index)
 static void setParamerType(Action* action, int flag, int type_param_index, int target_param_index)
 {
 	Parameter* param = action->parameters[type_param_index];
-	if (!param || strncmp(param->value,"typename_",8) != 0)
+
+
+	if (!param || !param->value) {
 		return;
-	const char* type = param->value + 11; //typename_01_integer  + 11 = integer
+	}
+		
+	const char* pos = strchr(param->value, '_');
+	if (!pos) {
+		return;
+	}
+	const char* type = pos + 1;
 
 	//print("将 %s 第%i个参数类型修改为 %s\n",action->name, target_param_index, type);
 	this_call<int>(real::SetParamType, action, target_param_index, type, flag);
@@ -380,14 +388,21 @@ static void WINAPI earchConfigData(const char* table_name, const char* key, uint
 
 	const char* parent_name = *(const char**)(parent + 0x18);
 
-	if (!parent_name || strcmp(parent_name, "typename") != 0 || strlen(key) < 11)
+	if (!parent_name)
 		return;
+	const char* pos = strchr(key, '_');
+	if (!pos) {
+		return;
+	}
+	const char* type = pos + 1;
 
-	const char* type = key + 11; //typename_01_integer  + 11 = integer
+	auto& editor = get_trigger_editor();
 
-	g_typenames.emplace(type, key);
-
-	//printf("[%s][%s] =%s\n", table_name, key, parent_name);
+	if (editor.getTypeData(type)) {
+		g_typenames.emplace(type, key);
+		//printf("[%s][%s] = %s\n", table_name, key, parent_name);
+	}
+	
 }
 
 static void __declspec(naked) fakeEarchConfigData()
