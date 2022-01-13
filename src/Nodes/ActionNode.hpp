@@ -153,6 +153,10 @@ namespace mh {
 			return "";
 		}
 
+		virtual std::string getHandleName() override {
+			return getParentNode()->getHandleName();
+		}
+
 		virtual const std::string& getTriggerVariableName() override {
 			return getParentNode()->getTriggerVariableName();
 		}

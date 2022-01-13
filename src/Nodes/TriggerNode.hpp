@@ -160,6 +160,10 @@ namespace mh {
 			return m_funcName;
 		}
 
+		virtual std::string getHandleName() override {
+			return "GetTriggeringTrigger()";
+		}
+
 		virtual const std::string& getTriggerVariableName() override {
 			return m_trigger_variable_name;
 		}

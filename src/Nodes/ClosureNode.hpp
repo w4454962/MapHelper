@@ -25,6 +25,10 @@ namespace mh {
 
 		virtual TYPE getType() override {  return TYPE::CLOSURE; }
 
+		virtual std::string getHandleName() override {
+			return getParentNode()->getHandleName();
+		}
+
 		virtual std::string toString(TriggerFunction* func) override { 
 			return std::string();
 		}
