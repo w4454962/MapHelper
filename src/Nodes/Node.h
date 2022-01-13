@@ -57,9 +57,6 @@ namespace mh {
 		//生成函数名 
 		virtual std::string getFuncName() = 0;
 
-		//当前节点使用的handle
-		virtual std::string getHandleName() = 0;
-
 		//触发变量名
 		virtual const std::string& getTriggerVariableName() = 0;
 

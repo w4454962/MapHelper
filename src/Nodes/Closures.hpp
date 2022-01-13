@@ -192,14 +192,6 @@ namespace mh {
 	public:
 		REGISTER_FROM_CLOSUER(YDWEExecuteTriggerMultiple)
 
-		virtual std::string getHandleName() override {
-
-			if (!params_finish) {
-				return getParentNode()->getHandleName();
-			}
-			return "ydl_trigger";
-		}
-
 		virtual std::string toString(TriggerFunction* func) override {
 
 			auto params = getParameterList();
@@ -259,16 +251,12 @@ namespace mh {
 		virtual int getCrossDomainIndex() override { return 0; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
-		virtual bool isVariableCrossDomain() override { return true; }
+		virtual bool isVariableCrossDomain() { return true; }
 
 		//是否自动传递 获取触发单位 获取触发玩家 这些函数值
-		virtual bool isFunctionCrossDomain() override  { return true; }
+		virtual bool isFunctionCrossDomain() { return true; }
 
-		std::string getHandleName() override {
-			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
-				return getParentNode()->getHandleName();
-			}
-
+		std::string getHandleName() {
 			if (getCurrentGroupId() <= getCrossDomainIndex()) {
 				return "ydl_timer";
 			}
@@ -352,15 +340,12 @@ namespace mh {
 		virtual int getCrossDomainIndex() override { return 1; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
-		virtual bool isVariableCrossDomain() override { return true; }
+		virtual bool isVariableCrossDomain() { return true; }
 
 		//是否自动传递 获取触发单位 获取触发玩家 这些函数值
-		virtual bool isFunctionCrossDomain() override { return false; }
+		virtual bool isFunctionCrossDomain() { return false; }
 
-		std::string getHandleName() override {
-			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
-				return getParentNode()->getHandleName();
-			}
+		std::string getHandleName() {
 			if (getCurrentGroupId() <= getCrossDomainIndex()) {
 				return "ydl_trigger";
 			}
@@ -452,17 +437,10 @@ namespace mh {
 		virtual int getCrossDomainIndex() override { return 0; }
 
 		//是否自动传递逆天局部变量  类似闭包里跨域引用
-		virtual bool isVariableCrossDomain() override { return true; }
+		virtual bool isVariableCrossDomain() { return true; }
 
 		//是否自动传递 获取触发单位 获取触发玩家 这些函数值
-		virtual bool isFunctionCrossDomain() override { return false; }
-
-		virtual std::string getHandleName() override {
-			if (!params_finish) { //如果是参数里的动作 就让他们访问上一级
-				return getParentNode()->getHandleName();
-			}
-			return getFuncName();
-		}
+		virtual bool isFunctionCrossDomain() { return false; }
 
 		virtual std::string getUpvalue(const Upvalue& info) override {
 			std::string result;
