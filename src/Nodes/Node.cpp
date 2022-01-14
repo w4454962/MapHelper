@@ -589,9 +589,13 @@ namespace mh {
 			bool in_block = false;
 
 			getValue([&](NodePtr ptr) {
-				if (ptr.get() != this && ptr->getType() == TYPE::CLOSURE) {
-					if (ptr->getNameId() == "YDWETimerStartMultiple"s_hash) {
-						in_block = true;
+				if (ptr->getType() == TYPE::CLOSURE) {
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					if (node->getCrossDomainIndex() != -1) {
+						if (ptr->getNameId() == "YDWETimerStartMultiple"s_hash) {
+							in_block = true;
+						}
+						return true;
 					}
 				}
 				return false;
@@ -618,9 +622,13 @@ namespace mh {
 			bool in_block = false;
 
 			getValue([&](NodePtr ptr) {
-				if (ptr.get() != this && ptr->getType() == TYPE::CLOSURE) {
-					if (ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash) {
-						in_block = true;
+				if (ptr->getType() == TYPE::CLOSURE) {
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					if (node->getCrossDomainIndex() != -1) {
+						if (ptr->getNameId() == "YDWERegisterTriggerMultiple"s_hash) {
+							in_block = true;
+						}
+						return true;
 					}
 				}
 				return false;
