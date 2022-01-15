@@ -5,7 +5,7 @@
 #include "mapHelper.h"
 #include <include\Export.h>
 #include <YDPluginManager.h>
-
+#include <HashTable.hpp>
 extern MakeEditorData* g_make_editor_data;
 
 std::map<std::string, std::string> g_config_map;
@@ -126,13 +126,21 @@ std::string WorldEditor::getConfigData(const std::string& parentKey, const std::
 		}
 		return it->second;
 	}
-	char buffer[0x100];
-	bool result = fast_call<uint32_t>(getAddress(0x004D1EC0), parentKey.c_str(), childKey.c_str(),buffer, 0x100, index);
-	if (result)
+
+	auto config = mh::get_config_table();
+
+	const char* value = config->get_value(parentKey.c_str(), childKey.c_str(), index);
+	
+	if (!value)
 	{
-		return buffer;
+		return std::string();
 	}
-	return std::string();
+
+	auto real_value = config->get_value("WorldEditStrings", value, 0);
+	if (real_value) {
+		return std::string(real_value);
+	}
+	return std::string(value);
 }
 
 

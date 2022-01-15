@@ -396,7 +396,7 @@ static void initTypeName() {
 	//遍历 TriggerParams 里面 关于 typename objecttype 的动态类型
 	for (auto& subnode : *trigger_params) {
 		
-		if (!subnode.parent) {
+		if (!subnode.data) {
 			continue;
 		}
 
@@ -410,7 +410,7 @@ static void initTypeName() {
 			continue;
 		}
 		g_typenames.emplace(type, subnode.key);
-		//printf("[%s] = %s\n", subnode.key, subnode.parent->key);
+		//printf("[%s] = %s\n", subnode.key, subnode.data->value);
 	}
 }
 

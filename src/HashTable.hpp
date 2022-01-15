@@ -293,20 +293,32 @@ namespace mh {
 	};
 
 
-	struct config_subnode_parent_head
+	struct config_subnode_data
 	{
-		uint32_t unknow;
-	};
-
-	struct config_subnode_parent : public config_subnode_parent_head, public node
-	{
-		
+		uint32_t unknow[6];
+		const char* value;
+		struct config_subnode_data* next;
 	};
 
 	struct config_subnode : public node
 	{
-		uint32_t data;
-		config_subnode_parent* parent;
+		const char* value;
+		config_subnode_data* data;
+
+		const char* get_value(int index) {
+			auto ptr = data;
+			if (!ptr) {
+				return value;
+			}
+			for (int i = 1; i < index; i++) {
+				ptr = ptr->next;
+				if (!data) {
+					return nullptr;
+				}
+			}
+			return ptr->value;
+
+		}
 	};
 
 	struct config_table_node : public node
@@ -323,6 +335,11 @@ namespace mh {
 		iterator end()
 		{
 			return iterator();
+		}
+
+		config_subnode* find(const char* sub_key)
+		{
+			return subtable.find(sub_key);
 		}
 	};
 
@@ -346,17 +363,43 @@ namespace mh {
 			return iterator();
 		}
 
-		config_table_node* find(const char* str)
+		config_table_node* find(const char* key)
 		{
-			return table_.find(str);
+			return table_.find(key);
+		}
+
+		config_subnode* find(const char* key, const char* sub_key) {
+			auto node = find(key);
+			if (!node) {
+				return nullptr;
+			}
+			return node->find(sub_key);
+		}
+
+		const char* get_value(const char* key, const char* sub_key, int index) {
+			auto node = find(key, sub_key);
+			if (!node) {
+				return nullptr;
+			}
+			return node->get_value(index);
 		}
 	};
 
-
-	
 	inline config_table* get_config_table() {
 		return *(mh::config_table**)(WorldEditor::getAddress(0x820004));
 	}
 
+
+	/*
+	
+	
+	push 0
+	push 1
+	push value
+	push sub_key
+	mov edx, key
+	mov ecx, [0x820004]
+	call 0040A210
+	*/
 
 }
