@@ -57,7 +57,7 @@ namespace mh {
 				Action* action = (Action*)node->getData();
 				m_current_group_id = action->group_id;
 	
-				if (m_current_group_id >= 0 && getCrossDomainIndex() >= 0 && upactions.size() > m_current_group_id) {
+				if (m_current_group_id >= 0 && getCrossDomainIndex() >= 0 && (int)upactions.size() > m_current_group_id) {
 					upactions[m_current_group_id] += node->toString(func);
 				}
 			}

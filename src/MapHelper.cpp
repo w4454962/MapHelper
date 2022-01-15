@@ -11,8 +11,8 @@
 #include <base\util\json.hpp>
 #include <include\Export.h>
 #include "..\resource.h"
-#include "YDPluginManager.h"
-#include "YDJassHelperPatch.h"
+#include <YDPluginManager.h>
+#include <HashTable.hpp>
 #include <Commctrl.h>
 #include <base\hook\iat.h>
 
@@ -378,52 +378,40 @@ static int WINAPI fakeMessageBoxA(HWND hwnd, const char* message, const char* ti
 }
 
 
-
-static void WINAPI earchConfigData(const char* table_name, const char* key, uint32_t object)
-{
-	if (!object) return;
-
-	uintptr_t parent = *(uintptr_t*)(object + 0x1C);
-	if (!parent) return;
-
-	const char* parent_name = *(const char**)(parent + 0x18);
-
-	if (!parent_name)
-		return;
-	const char* pos = strchr(key, '_');
-	if (!pos) {
-		return;
-	}
-	const char* type = pos + 1;
-
-	auto& editor = get_trigger_editor();
-
-	if (editor.getTypeData(type)) {
-		g_typenames.emplace(type, key);
-		//printf("[%s][%s] = %s\n", table_name, key, parent_name);
-	}
-	
-}
-
-static void __declspec(naked) fakeEarchConfigData()
-{
-	__asm
-	{
-		mov eax, [esp + 4]
-		push edi 
-		push ecx 
-		push eax 
-		call earchConfigData
-		ret 0x4
-	}
-	
-}
 //迭代器 遍历TriggerParams 
 static void initTypeName() {
 
-	uintptr_t earch_config_table = WorldEditor::getAddress(0x004D1F40);
-	const char* table_name = "TriggerParams";
-	fast_call<uintptr_t>(earch_config_table, table_name, &fakeEarchConfigData, table_name);
+	auto config = mh::get_config_table();
+	//遍历所有配置数据
+	//for (auto& node : *config) {
+	//	for (auto& subnode : node.subtable) {
+	//		printf("[%s][%s]\n", node.key, subnode.key);
+	//	}
+	//}
+
+	auto trigger_params = config->find("TriggerParams");
+	
+	auto& editor = get_trigger_editor();
+
+	//遍历 TriggerParams 里面 关于 typename objecttype 的动态类型
+	for (auto& subnode : *trigger_params) {
+		
+		if (!subnode.parent) {
+			continue;
+		}
+
+		const char* pos = strchr(subnode.key, '_');
+		if (!pos) {
+			continue;
+		}
+		const char* type = pos + 1;
+
+		if (!editor.getTypeData(type)) {
+			continue;
+		}
+		g_typenames.emplace(type, subnode.key);
+		//printf("[%s] = %s\n", subnode.key, subnode.parent->key);
+	}
 }
 
 
@@ -452,12 +440,6 @@ void Helper::attach()
 
 	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 	if (std::string::npos == name.find("worldedit")) {
-
-		//if (name == "jasshelper.exe") { //如果是由vj加载这个dll的 
-		//	g_vj_patch = new YDJassHelperPatch();
-		//
-		//	g_vj_patch->attach();
-		//}
 
 		return;
 	}
@@ -569,11 +551,6 @@ void Helper::attach()
 
 void Helper::detach()
 {
-	//if (g_vj_patch) {
-	//	g_vj_patch->detach();
-	//	delete g_vj_patch;
-	//	g_vj_patch = nullptr;
-	//}
 
 	if (!m_bAttach) return;
 	m_bAttach = false;

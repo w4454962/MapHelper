@@ -33,8 +33,6 @@ MakeEditorData* g_make_editor_data = nullptr;
 HMODULE g_hModule = nullptr;
 fs::path g_module_path;
 
-bool g_messagebox = false;
-
 
 BOOL APIENTRY DllMain( HMODULE hModule,
 					   DWORD  ul_reason_for_call,

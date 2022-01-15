@@ -204,10 +204,10 @@
     <ClCompile Include="src\base\udis86\syn.c" />
     <ClCompile Include="src\base\udis86\udis86.c" />
     <ClCompile Include="src\base\util\json.cpp" />
+    <ClCompile Include="src\base\util\string_hash.cpp" />
     <ClCompile Include="src\base\util\unicode.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\MapHelper.cpp" />
-    <ClCompile Include="src\YDJassHelperPatch.cpp" />
     <ClCompile Include="src\YDPluginManager.cpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\base\hook\detail\import_address_table.h" />
@@ -232,8 +232,10 @@
     <ClInclude Include="src\base\util\fp_call.h" />
     <ClInclude Include="src\base\util\json.hpp" />
     <ClInclude Include="src\base\util\singleton.h" />
+    <ClInclude Include="src\base\util\string_hash.h" />
     <ClInclude Include="src\base\util\unicode.h" />
     <ClInclude Include="src\base\util\xorstr.hpp" />
+    <ClInclude Include="src\HashTable.hpp" />
     <ClInclude Include="src\Nodes\ClosureNode.hpp" />
     <ClInclude Include="src\Nodes\Closures.hpp" />
     <ClInclude Include="src\Nodes\Function.hpp" />
@@ -242,7 +244,6 @@
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\TriggerEditor.cpp" />
     <ClCompile Include="src\WorldEditor.cpp" />
-    <ClInclude Include="src\YDJassHelperPatch.h" />
     <ClInclude Include="src\YDPluginManager.h" />
   </ItemGroup>
   <ItemGroup>
