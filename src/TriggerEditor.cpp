@@ -6,7 +6,7 @@
 #include <iostream>
 #include <regex>
 #include "Nodes\Node.h"
-#include <base\util\json.hpp>"
+#include <base\util\json.hpp>
 
 //所有物品类型的jass变量名
 std::string randomItemTypes[] = {
@@ -1755,7 +1755,7 @@ TriggerType* TriggerEditor::getTypeData(const std::string& type)
 	return nullptr;
 }
 
-std::string TriggerEditor::getBaseType(const std::string& type) const
+std::string TriggerEditor::getBaseType(const std::string& type)
 {
 	auto it = m_typesTable.find(type);
 	if (it != m_typesTable.end())

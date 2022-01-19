@@ -130,8 +130,8 @@
     <ClCompile Include="src\YDPluginManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\YDJassHelperPatch.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\base\util\string_hash.cpp">
+      <Filter>src\base\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -253,8 +253,11 @@
     <ClInclude Include="src\YDPluginManager.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\YDJassHelperPatch.h">
+    <ClInclude Include="src\HashTable.hpp">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\string_hash.h">
+      <Filter>src\base\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

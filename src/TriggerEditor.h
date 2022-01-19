@@ -19,22 +19,14 @@ public:
 	void saveScriptTriggers(const char* path);//生成 wct
 	void saveSctipt(const char* path); //生成j
 
-	std::string WriteRandomDisItem(const char* id); //处理物编掉落关于随机物品 随机组 四字id
-	
+	//单个trigger转jass  
 	std::string convertTrigger(Trigger* trigger);
 
 	TriggerType* getTypeData(const std::string& type);
-	std::string getBaseType(const std::string& type) const;
-	
+	std::string getBaseType(const std::string& type);
 	std::string getScriptName(Action* action);
 
 	
-	bool hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable);
-
-	
-	//we原版的t转j
-	std::string originConvertTrigger(Trigger* trigger);
-
 	//当触发编辑器转换单个触发为自定义脚本的时候
 	bool onConvertTrigger(Trigger* trigger);
 
@@ -45,6 +37,16 @@ private:
 	void writeTrigger(BinaryWriter& writer,Trigger* trigger);
 	void writeAction(BinaryWriter& writer, Action* action);
 	void writeParameter(BinaryWriter& writer, Parameter* param);
+
+
+	//触发里是否带有黑名单动作
+	bool hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable);
+
+	//we原版的t转j
+	std::string originConvertTrigger(Trigger* trigger);
+
+	//处理物编掉落关于随机物品 随机组 四字id
+	std::string WriteRandomDisItem(const char* id); 
 
 protected:
 	TriggerConfigData* m_configData;
