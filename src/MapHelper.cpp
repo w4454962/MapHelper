@@ -672,16 +672,17 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2k");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2L");
 		std::cout
 			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
 			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
 			<< "感谢7佬的最初版本\n"
 			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
 			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
-			<< "						----2022/1/10\n"
+			<< "						----2022/1/26 新年好哇\n"
 			<< "\n"
-			<< "version 2.2k update:\n"
+			<< "version 2.2L update:\n"
+			<< "2.2l: 修复个别条件表达式报错的bug\n"
 			<< "2.2k: 修复读取物体数据japi的bug 加强清除计时器 触发器的警报检测，可以在删除ydtrigger.dll的情况下正常显示编译逆天UI。\n"
 			<< "2.2j: 修复设置逆天局部变量 里读局部变量ui不显示的问题\n"
 			<< "2.2i: 修复多开关闭地图提示保存,关闭编辑器提示保存会导致地图错乱的bug\n"

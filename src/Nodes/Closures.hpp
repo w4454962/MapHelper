@@ -29,6 +29,9 @@ namespace mh {
 			//为当前闭包添加一条动作
 			NodePtr fake = NodeFromAction(m_action, 0, node);
 
+			if (m_return_type != "nothing") {
+				fake->setType(TYPE::GET);
+			}
 			list.push_back(fake);
 			return list;
 		}
