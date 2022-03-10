@@ -937,7 +937,7 @@ endfunction
 		if (id == "d" && unit->item_setting_count <= 0 && unit->item_table_index == -1)
 			continue;
 		
-		sprintf(buffer, "'%.4s',%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle * 180 / 3.14, unit->scale_x, unit->variation);
+		sprintf(buffer, "'%.4s',%.1f,%.1f,%.1f,%.1f,%d", unit->name, unit->x, unit->y, unit->angle * 180.f / 3.1415926f, unit->scale_x, unit->variation);
 		writer.write_string("\tset " + id + " = CreateDestructable(" + std::string(buffer) + ")\n");
 
 		if (unit->doodas_life != 100) {
@@ -1053,7 +1053,7 @@ endfunction
 		if (unit->type != 0 || strncmp(unit->name,"sloc",4) == 0)
 			continue;
 
-		sprintf(buffer, "Player(%i),'%.4s',%.1f,%.1f,%.1f", unit->player_id, unit->name, unit->x, unit->y, unit->angle * 180.f / 3.141592f);
+		sprintf(buffer, "Player(%i),'%.4s',%.1f,%.1f,%.1f", unit->player_id, unit->name, unit->x, unit->y, unit->angle * 180.f / 3.1415926f);
 		writer.write_string("\tset u = CreateUnit(" + std::string(buffer) + ")\n");
 
 		sprintf(buffer, "gg_unit_%.04s_%04d", unit->name, unit->index);
