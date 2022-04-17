@@ -153,17 +153,14 @@ namespace mh {
 					if (map.size() > 1) {
 						auto label = "loc_" + name;
 
-						auto warning = std::format("<yellow>Warning: 触发器[<red>{}</red>]: 逆天局部变量[<red>loc_{}</red>] 有多个类型，请尽快修复:\n</yellow>", base::u2a(m_name), base::u2a(name));
+						auto warning = std::format("<yellow>Warning: 触发器[<red>{}</red>]: 逆天局部变量[<red>loc_{}</red>] 有多个类型，请尽快修复:</yellow>", base::u2a(m_name), base::u2a(name));
 						console_color_output(warning);
 						for (auto&& [type, info] : map) {
 							auto type_name = world.getConfigData("TriggerTypes", type, 3);
 							auto msg = std::format("<yellow>-----------[{}]-----------</yellow>",base::u2a(type_name));
 							console_color_output(msg);
-							std::cout << std::endl;
-
 							editor.action_to_text_key = name;
 							console_color_output(std::format("<while>{}</while>", base::u2a(editor.originConvertActionText(info.action))));
-							std::cout << std::endl;
 						}
 						std::cout << std::endl;
 					}

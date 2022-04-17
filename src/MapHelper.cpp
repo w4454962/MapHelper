@@ -54,7 +54,7 @@ namespace real
 
 	uintptr_t SaveMapState;
 
-	uintptr_t ParamToTextAppend;
+	uintptr_t ActionToTextAppend;
 }
 
 
@@ -381,7 +381,7 @@ static int WINAPI fakeMessageBoxA(HWND hwnd, const char* message, const char* ti
 
 
 static int buffer_size = 0x104;
-void SetParamToTextBufferSize(int size) {
+void SetActionToTextBufferSize(int size) {
 	auto addr_list = {
 		0x005D7105,
 		0x005D71DE,
@@ -416,7 +416,7 @@ void SetParamToTextBufferSize(int size) {
 	buffer_size = size;
 }
 
-static char* WINAPI BlzStrncat(char* dest, char* src, int size) {
+static char* WINAPI BlzStrncat(char* dest, const char* src, size_t size) {
 	size_t dest_len = strlen(dest);
 	size_t append_len = strlen(src);
 	if (dest_len + append_len > size) {
@@ -426,7 +426,7 @@ static char* WINAPI BlzStrncat(char* dest, char* src, int size) {
 }
 
 
-static int WINAPI fakeParamToTextAppend(Action* action, char* buffer, char* str, int size) {
+static int WINAPI fakeActionToTextAppend(Action* action, char* buffer, const char* str, size_t size) {
 	
 	auto& editor = get_trigger_editor();
 	auto& world = get_world_editor();
@@ -436,7 +436,13 @@ static int WINAPI fakeParamToTextAppend(Action* action, char* buffer, char* str,
 		return 1;
 	}
 	std::string head = buffer;
-	 
+	std::string append = str;
+
+	if (append.find("</") == append.npos) {
+		append = string_replaced(append, "<", "(");
+		append = string_replaced(append, ">", ")");
+	}
+
 	if (head == "loc_") {
 		auto it = editor.m_param_action_parent_map.find(action);
 		if (it != editor.m_param_action_parent_map.end()) {
@@ -444,10 +450,10 @@ static int WINAPI fakeParamToTextAppend(Action* action, char* buffer, char* str,
 			auto type = parent_parameter->type_name;
 			auto base = editor.getBaseType(type);
 			auto type_name = world.getConfigData("TriggerTypes", type, 3);
-			if (editor.action_to_text_key != str) {
-				return snprintf(buffer, size, "<cyan>[%s]%s%s</cyan>", type_name.c_str(), head.c_str(), str);
+			if (editor.action_to_text_key != append) {
+				return snprintf(buffer, size, "<cyan>[%s]%s%s</cyan>", type_name.c_str(), head.c_str(), append.c_str());
 			}
-			return snprintf(buffer, size, "<red bd='blue'>[%s]</red><red>%s%s</red>", type_name.c_str(), head.c_str(), str);
+			return snprintf(buffer, size, "<red bd='blue'>[%s]</red><red>%s%s</red>", type_name.c_str(), head.c_str(), append.c_str());
 		} 
 	} else if (head.length() > 4 && head.substr(head.length() - 4, 4) == "loc_") {
 		switch (hash_(action->name)) {
@@ -461,27 +467,27 @@ static int WINAPI fakeParamToTextAppend(Action* action, char* buffer, char* str,
 			size = size - head.length() - 4;
 			head = "loc_";
 			if (editor.action_to_text_key != str) {
-				return snprintf(buffer, size, "<cyan>[%s]%s%s</cyan>", type_name.c_str(), head.c_str(), str);
+				return snprintf(buffer, size, "<cyan>[%s]%s%s</cyan>", type_name.c_str(), head.c_str(), append.c_str());
 			}
-			return snprintf(buffer, size, "<red bd='blue'>[%s]</red><red>%s%s</red>", type_name.c_str(), head.c_str(), str);
+			return snprintf(buffer, size, "<red bd='blue'>[%s]</red><red>%s%s</red>", type_name.c_str(), head.c_str(), append.c_str());
 		}
 		default:
 			break;
 		}
 	}
 	
-	BlzStrncat(buffer, str, size);
+	BlzStrncat(buffer, append.c_str(), size);
 	return 1;
 }
 
-static void __declspec(naked) insertParamToTextAppend() {
+static void __declspec(naked) insertActionToTextAppend() {
 	__asm
 	{
 		mov eax, dword ptr ss : [ebp - 0xC]
 		push eax 
-		call fakeParamToTextAppend
+		call fakeActionToTextAppend
 
-		jmp real::ParamToTextAppend
+		jmp real::ActionToTextAppend
 	
 	}
 }
@@ -635,9 +641,9 @@ void Helper::attach()
 
 	real::MessageBoxA = base::hook::iat(GetModuleHandleA(nullptr), "user32.dll", "MessageBoxA", (uintptr_t)&fakeMessageBoxA);
 
-	real::ParamToTextAppend = editor.getAddress(0x005d7200);
-	hook::install(&real::ParamToTextAppend, reinterpret_cast<uintptr_t>(&insertParamToTextAppend), m_hookInsertParamToText);
-	real::ParamToTextAppend = editor.getAddress(0x005d7205);
+	real::ActionToTextAppend = editor.getAddress(0x005d7200);
+	hook::install(&real::ActionToTextAppend, reinterpret_cast<uintptr_t>(&insertActionToTextAppend), m_hookInsertActionToText);
+	real::ActionToTextAppend = editor.getAddress(0x005d7205);
 	//-------------------end-----------------------------
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
@@ -682,7 +688,7 @@ void Helper::detach()
 	
 	base::hook::iat(GetModuleHandleA(nullptr), "kernel32.dll", "MessageBoxA", real::MessageBoxA);
 	
-	hook::uninstall(m_hookInsertParamToText);
+	hook::uninstall(m_hookInsertActionToText);
 
 #if !defined(EMBED_YDWE)
 	//释放控制台避免崩溃
@@ -784,7 +790,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2m");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2n");
 
 		
 		std::string text = R"(
@@ -795,10 +801,10 @@ void Helper::enableConsole()
 排名不分先后，为魔兽地图社区的贡献表示感谢。
 bug反馈：魔兽地图编辑器吧 -> @<yellow>w4454962</yellow> 加速器bug反馈群 -> <green>724829943</green>   lua技术交流群 -> <blue>1019770872</blue>。
 						----2022/1/26 新年好哇
-version 2.2m update:
-
-<green>2.2m: 更精准的中文逆天类型错误提示</green>
+version 2.2n update:
 <grey>
+<green>2.2n: 修复提示的颜色代码错误</green>
+2.2m: 更精准的中文逆天类型错误提示
 2.2l: 修复个别条件表达式报错的bug
 2.2k: 修复读取物体数据japi的bug 加强清除计时器 触发器的警报检测，可以在删除ydtrigger.dll的情况下正常显示编译逆天UI。
 2.2j: 修复设置逆天局部变量 里读局部变量ui不显示的问题

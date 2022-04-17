@@ -23,7 +23,7 @@ struct ActionInfo
 };
 
 
-void SetParamToTextBufferSize(int size);
+void SetActionToTextBufferSize(int size);
 
 
 typedef std::vector<ActionInfo> ActionInfoList;
@@ -91,7 +91,7 @@ protected:
 	//hook we的弹框 弹框的时候禁用所有菜单
 	uintptr_t m_hookMessageBoxA;
 
-	hook::hook_t* m_hookInsertParamToText;
+	hook::hook_t* m_hookInsertActionToText;
 
 	fs::path m_configPath;
 };

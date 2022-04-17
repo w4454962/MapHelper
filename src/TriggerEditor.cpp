@@ -1737,14 +1737,14 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 		m_initFuncTable[init_func] = true;
 	} else {
 		
-		SetParamToTextBufferSize(0x808);
+		SetActionToTextBufferSize(0x808);
 		mh::NodePtr node = mh::NodeFromTrigger(trigger);
 		result += node->toString();
 		
 		m_param_action_parent_map.clear();
 
 
-		SetParamToTextBufferSize(0x104);
+		SetActionToTextBufferSize(0x104);
 	}
 	is_convert = false;
 
