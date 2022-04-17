@@ -147,6 +147,6 @@ void console_color_output(const std::string& xml) {
         std::cout << "error:" << result.description() << std::endl;;
         std::cout << xml << std::endl;
     }
-
+    std::cout << clr::reset;
 
 }
