@@ -15,7 +15,7 @@
 #include <HashTable.hpp>
 #include <Commctrl.h>
 #include <base\hook\iat.h>
-
+#include <base/util/colored_cout.h>
 extern MakeEditorData* g_make_editor_data;
 
 #pragma warning(disable:4996)
@@ -53,6 +53,8 @@ namespace real
 	uintptr_t MessageBoxA;
 
 	uintptr_t SaveMapState;
+
+	uintptr_t ParamToTextAppend;
 }
 
 
@@ -378,6 +380,112 @@ static int WINAPI fakeMessageBoxA(HWND hwnd, const char* message, const char* ti
 }
 
 
+static int buffer_size = 0x104;
+void SetParamToTextBufferSize(int size) {
+	auto addr_list = {
+		0x005D7105,
+		0x005D71DE,
+		0x005D71E4,
+		0x0065AC85,
+		0x0065ACCF,
+		0x0065ACD5,
+		0x0065ACE1,
+		0x0065AE26,
+		0x0065AE2C,
+		0x0065AE3B,
+		0x0065AE41,
+		0x0065AE57,
+		0x005d71fa,
+	};
+
+	for (auto addr : addr_list) {
+		auto ptr = WorldEditor::getAddress(addr);
+		DWORD null;
+		DWORD old_value;
+
+		VirtualProtect((void*)addr, 4, PAGE_EXECUTE_READWRITE, (DWORD*)&old_value);
+
+		int& num = *(int*)ptr;
+		if (num < 0) {
+			num = num + buffer_size - size;
+		} else {
+			num = num - buffer_size + size;
+		}
+		VirtualProtect((void*)addr, 4, old_value, (DWORD*)&null);
+	}
+	buffer_size = size;
+}
+
+static char* WINAPI BlzStrncat(char* dest, char* src, int size) {
+	size_t dest_len = strlen(dest);
+	size_t append_len = strlen(src);
+	if (dest_len + append_len > size) {
+		append_len = size - dest_len;
+	}
+	return strncat(dest, src, append_len);
+}
+
+
+static int WINAPI fakeParamToTextAppend(Action* action, char* buffer, char* str, int size) {
+	
+	auto& editor = get_trigger_editor();
+	auto& world = get_world_editor();
+	
+	if (!editor.is_convert) {
+		BlzStrncat(buffer, str, size);
+		return 1;
+	}
+	std::string head = buffer;
+	 
+	if (head == "loc_") {
+		auto it = editor.m_param_action_parent_map.find(action);
+		if (it != editor.m_param_action_parent_map.end()) {
+			auto parent_parameter = it->second;
+			auto type = parent_parameter->type_name;
+			auto base = editor.getBaseType(type);
+			auto type_name = world.getConfigData("TriggerTypes", type, 3);
+			if (editor.action_to_text_key != str) {
+				return snprintf(buffer, size, "<cyan>[%s]%s%s</cyan>", type_name.c_str(), head.c_str(), str);
+			}
+			return snprintf(buffer, size, "<red bd='blue'>[%s]</red><red>%s%s</red>", type_name.c_str(), head.c_str(), str);
+		} 
+	} else if (head.length() > 4 && head.substr(head.length() - 4, 4) == "loc_") {
+		switch (hash_(action->name)) {
+		case "YDWESetAnyTypeLocalVariable"s_hash:
+		case "YDWESetAnyTypeLocalArray"s_hash:
+		{
+			auto type = action->parameters[0]->value + 11;
+			auto base = editor.getBaseType(type);
+			auto type_name = world.getConfigData("TriggerTypes", type, 3);
+			buffer = buffer + head.length() - 4;
+			size = size - head.length() - 4;
+			head = "loc_";
+			if (editor.action_to_text_key != str) {
+				return snprintf(buffer, size, "<cyan>[%s]%s%s</cyan>", type_name.c_str(), head.c_str(), str);
+			}
+			return snprintf(buffer, size, "<red bd='blue'>[%s]</red><red>%s%s</red>", type_name.c_str(), head.c_str(), str);
+		}
+		default:
+			break;
+		}
+	}
+	
+	BlzStrncat(buffer, str, size);
+	return 1;
+}
+
+static void __declspec(naked) insertParamToTextAppend() {
+	__asm
+	{
+		mov eax, dword ptr ss : [ebp - 0xC]
+		push eax 
+		call fakeParamToTextAppend
+
+		jmp real::ParamToTextAppend
+	
+	}
+}
+
 //迭代器 遍历TriggerParams 
 static void initTypeName() {
 
@@ -527,6 +635,9 @@ void Helper::attach()
 
 	real::MessageBoxA = base::hook::iat(GetModuleHandleA(nullptr), "user32.dll", "MessageBoxA", (uintptr_t)&fakeMessageBoxA);
 
+	real::ParamToTextAppend = editor.getAddress(0x005d7200);
+	hook::install(&real::ParamToTextAppend, reinterpret_cast<uintptr_t>(&insertParamToTextAppend), m_hookInsertParamToText);
+	real::ParamToTextAppend = editor.getAddress(0x005d7205);
 	//-------------------end-----------------------------
 #if !defined(EMBED_YDWE)
 	if (getConfig() == -1)
@@ -544,7 +655,7 @@ void Helper::attach()
 
 	manager.extract();
 
-
+	
 }
 
 
@@ -571,6 +682,7 @@ void Helper::detach()
 	
 	base::hook::iat(GetModuleHandleA(nullptr), "kernel32.dll", "MessageBoxA", real::MessageBoxA);
 	
+	hook::uninstall(m_hookInsertParamToText);
 
 #if !defined(EMBED_YDWE)
 	//释放控制台避免崩溃
@@ -672,33 +784,44 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2L");
-		std::cout
-			<< "用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化\n"
-			<< "参与开发者 ：w4454962、 神话、 actboy168、月升朝霞、白喵、裂魂\n"
-			<< "感谢7佬的最初版本\n"
-			<< "排名不分先后，为魔兽地图社区的贡献表示感谢。\n"
-			<< "bug反馈：魔兽地图编辑器吧 -> @w4454962 加速器bug反馈群 -> 724829943   lua技术交流群 -> 1019770872。\n"
-			<< "						----2022/1/26 新年好哇\n"
-			<< "\n"
-			<< "version 2.2L update:\n"
-			<< "2.2l: 修复个别条件表达式报错的bug\n"
-			<< "2.2k: 修复读取物体数据japi的bug 加强清除计时器 触发器的警报检测，可以在删除ydtrigger.dll的情况下正常显示编译逆天UI。\n"
-			<< "2.2j: 修复设置逆天局部变量 里读局部变量ui不显示的问题\n"
-			<< "2.2i: 修复多开关闭地图提示保存,关闭编辑器提示保存会导致地图错乱的bug\n"
-			<< "2.2h: 修复实数变量变化事件缺少双引号的bug\n"
-			<< "修复了 迷雾、天气、光照、环境音效、金矿失效的问题。\n"
-			<< "加强了预处理器#include 支持中文路径。 \n"
-			<< "新增了MapHelper.json配置文件 如果有修改ydtrigger.dll的特殊动作可以在里面配置黑名单\n"
-			<< "重构了大部分代码， 源码更清晰，缩进跟函数名更精确的版本。\n"
-			<< "\n"
-			<< "当前插件仍在测试中，推荐自己测试时使用新的保存模式提升速度，发布正式版时使用旧的保存模式保证稳定\n"
-			<< "\n"
-			<< "如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1\n"
-			<< "EnableYDTrigger = -1 为默认开启控制台与对话框\n"
-			<< "EnableYDTrigger = 0 为使用原本的保存方式\n"
-			<< "EnableYDTrigger = 1 默认开启加速保存\n"
-			<< "\n";
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2m");
+
+		
+		std::string text = R"(
+<while>
+用来加速ydwe保存地图的插件，对地形装饰物，触发编辑器极速优化
+参与开发者 ：<yellow>w4454962</yellow>、 神话、 actboy168、月升朝霞、白喵、裂魂
+感谢7佬的最初版本
+排名不分先后，为魔兽地图社区的贡献表示感谢。
+bug反馈：魔兽地图编辑器吧 -> @<yellow>w4454962</yellow> 加速器bug反馈群 -> <green>724829943</green>   lua技术交流群 -> <blue>1019770872</blue>。
+						----2022/1/26 新年好哇
+version 2.2m update:
+
+<green>2.2m: 更精准的中文逆天类型错误提示</green>
+<grey>
+2.2l: 修复个别条件表达式报错的bug
+2.2k: 修复读取物体数据japi的bug 加强清除计时器 触发器的警报检测，可以在删除ydtrigger.dll的情况下正常显示编译逆天UI。
+2.2j: 修复设置逆天局部变量 里读局部变量ui不显示的问题
+2.2i: 修复多开关闭地图提示保存,关闭编辑器提示保存会导致地图错乱的bug
+2.2h: 修复实数变量变化事件缺少双引号的bug
+修复了 迷雾、天气、光照、环境音效、金矿失效的问题。
+加强了预处理器#include 支持中文路径。 
+新增了MapHelper.json配置文件 如果有修改ydtrigger.dll的特殊动作可以在里面配置黑名单
+重构了大部分代码， 源码更清晰，缩进跟函数名更精确的版本。
+
+当前插件仍在测试中，推荐自己测试时使用新的保存模式提升速度，发布正式版时使用旧的保存模式保证稳定
+
+如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1
+EnableYDTrigger = -1 为默认开启控制台与对话框
+EnableYDTrigger = 0 为使用原本的保存方式
+EnableYDTrigger = 1 默认开启加速保存
+</grey>
+</while>
+)";
+	
+		
+		console_color_output(text);
+
 
 
 		HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON2));

@@ -27,6 +27,14 @@ public:
 	std::string getScriptName(Action* action);
 
 	
+
+	//we原版的t转j
+	std::string originConvertTrigger(Trigger* trigger);
+
+	//we原版的t转文本
+	std::string originConvertActionText(Action* action);
+
+
 	//当触发编辑器转换单个触发为自定义脚本的时候
 	bool onConvertTrigger(Trigger* trigger);
 
@@ -42,8 +50,7 @@ private:
 	//触发里是否带有黑名单动作
 	bool hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable);
 
-	//we原版的t转j
-	std::string originConvertTrigger(Trigger* trigger);
+
 
 	//处理物编掉落关于随机物品 随机组 四字id
 	std::string WriteRandomDisItem(const char* id); 
@@ -67,6 +74,11 @@ public:
 
 	//ui黑名单 触发里有黑名单的ui 则使用原版转换
 	std::unordered_map<std::string, bool> m_blacklist_map;
+
+	std::unordered_map<Action*, Parameter*> m_param_action_parent_map;
+	
+	std::string action_to_text_key;
+	bool is_convert = false;
 
 	std::string spaces[200];
 };

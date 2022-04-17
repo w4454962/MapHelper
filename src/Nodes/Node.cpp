@@ -927,8 +927,19 @@ namespace mh {
 			auto& map = root->all_upvalue_map[upvalue.name];
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
+
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					Action* action = (Action*)getData();
+					NodePtr ptr = shared_from_this();
+					while (ptr->getType() != TYPE::CALL && ptr->getType() != TYPE::CLOSURE) {
+						ptr = ptr->getParentNode();
+						action = (Action*)ptr->getData();
+					}
+					map.emplace(base, TriggerNode::WarningInfo{ std::string(), action });
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
 
 			return result;
@@ -972,7 +983,11 @@ namespace mh {
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					map.emplace(base, TriggerNode::WarningInfo{std::string(), (Action*)getData()});
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
 
 			return func->getSpaces() + result + "\n";
@@ -1019,7 +1034,17 @@ namespace mh {
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					Action* action = (Action*)getData();
+					NodePtr ptr = shared_from_this();
+					while (ptr->getType() != TYPE::CALL && ptr->getType() != TYPE::CLOSURE) {
+						ptr = ptr->getParentNode();
+						action = (Action*)ptr->getData();
+					}
+					map.emplace(base, TriggerNode::WarningInfo{ std::string(), action });
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
 
 			return result;
@@ -1050,9 +1075,12 @@ namespace mh {
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					map.emplace(base, TriggerNode::WarningInfo{ std::string(), (Action*)getData() });
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
-
 
 			return func->getSpaces() + result + "\n";
 		}

@@ -1722,6 +1722,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	bool is_disable = 0;
 	bool has_custorm_code = 0;
 
+	is_convert = true;
 	if (hasBlackAction(trigger, &is_init, &is_disable) && g_make_editor_data == nullptr) {
 		result += originConvertTrigger(trigger);
 		if (is_init) {
@@ -1735,12 +1736,18 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 		std::string init_func = "InitTrig_" + name;
 		m_initFuncTable[init_func] = true;
 	} else {
-		//result += "//trigger begin\n";
+		
+		SetParamToTextBufferSize(0x808);
 		mh::NodePtr node = mh::NodeFromTrigger(trigger);
 		result += node->toString();
-		//result += "//trigger end\n";
+		
+		m_param_action_parent_map.clear();
+
+
+		SetParamToTextBufferSize(0x104);
 	}
-	
+	is_convert = false;
+
 	return result;
 }
 
@@ -1789,8 +1796,10 @@ std::string TriggerEditor::getScriptName(Action* action)
 
 bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_disable)
 {
-	if (m_blacklist_map.empty())
-		return false;
+	//if (m_blacklist_map.empty())
+	//	return false;
+
+	m_param_action_parent_map.clear();
 
 	std::function<void(Action* action)> action_has_black;
 	std::function<void(Parameter** params, uint32_t count)> param_has_black;
@@ -1826,6 +1835,9 @@ bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_dis
 				}
 				break;
 			case Parameter::Type::function:
+				if (param->funcParam) {
+					m_param_action_parent_map[param->funcParam] = param;
+				}
 				action_has_black(param->funcParam);
 				break;
 			}
@@ -1835,6 +1847,7 @@ bool TriggerEditor::hasBlackAction(Trigger* trigger, bool* is_init, bool* is_dis
 	for (size_t i = 0; i < trigger->line_count; i++)
 	{
 		Action* action = trigger->actions[i];
+
 
 		if (action->enable && action->table->getType(action) == Action::Type::event) {
 			int hash = hash_(action->name);
@@ -1902,6 +1915,37 @@ std::string TriggerEditor::originConvertTrigger(Trigger* trigger)
 
 	data.ptr = world.getAddress(0x0075A3A8);
 	this_call<void>(delete_buffer, &data, &data.script, &data.unknow, &data.buffer_size);
+
+	return result;
+}
+
+
+std::string TriggerEditor::originConvertActionText(Action* action) {
+	std::string result;
+
+
+	auto& world = get_world_editor();
+
+	struct ConvertData {
+		uintptr_t ptr = 0;
+		const char* text = nullptr;
+		uintptr_t unknow = 0;
+		size_t buffer_size = 0;
+		size_t text_len = 0;
+		uint32_t unknow2 = -1;
+	};
+
+	uintptr_t convert = world.getAddress(0x005DBC40);
+	uintptr_t delete_buffer = world.getAddress(0x00425580);
+
+	ConvertData data;
+	data.ptr = world.getAddress(0x0075A3A8);
+	this_call<uint32_t>(convert, action, &data);
+
+	result = std::string(data.text, data.text_len);
+
+	data.ptr = world.getAddress(0x0075A3A8);
+	this_call<void>(delete_buffer, &data, &data.text, &data.unknow, &data.buffer_size);
 
 	return result;
 }

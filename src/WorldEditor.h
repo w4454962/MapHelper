@@ -63,13 +63,15 @@ private:
 	void updateSaveFlags();
 protected: 
 
-	EditorData* m_currentData;
+	
 
 
 	uintptr_t m_editorObject;
 	//fs::path m_tmp_path{};
 	const char* m_tempPath;
 	bool m_bInit;
+public:
+	EditorData* m_currentData;
 
 };
 extern WorldEditor g_c_world_editor;

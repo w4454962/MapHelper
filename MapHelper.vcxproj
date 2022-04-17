@@ -203,7 +203,9 @@
     <ClCompile Include="src\base\udis86\syn-intel.c" />
     <ClCompile Include="src\base\udis86\syn.c" />
     <ClCompile Include="src\base\udis86\udis86.c" />
+    <ClCompile Include="src\base\util\colored_cout.cpp" />
     <ClCompile Include="src\base\util\json.cpp" />
+    <ClCompile Include="src\base\util\pugixml.cpp" />
     <ClCompile Include="src\base\util\string_hash.cpp" />
     <ClCompile Include="src\base\util\unicode.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
@@ -228,9 +230,12 @@
     <ClInclude Include="src\base\udis86\udis86.h" />
     <ClInclude Include="src\base\util\BinaryReader.h" />
     <ClInclude Include="src\base\util\BinaryWriter.h" />
+    <ClInclude Include="src\base\util\colored_cout.h" />
     <ClInclude Include="src\base\util\dynarray.h" />
     <ClInclude Include="src\base\util\fp_call.h" />
     <ClInclude Include="src\base\util\json.hpp" />
+    <ClInclude Include="src\base\util\pugiconfig.hpp" />
+    <ClInclude Include="src\base\util\pugixml.hpp" />
     <ClInclude Include="src\base\util\singleton.h" />
     <ClInclude Include="src\base\util\string_hash.h" />
     <ClInclude Include="src\base\util\unicode.h" />
