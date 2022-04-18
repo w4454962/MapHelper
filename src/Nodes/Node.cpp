@@ -934,6 +934,9 @@ namespace mh {
 					NodePtr ptr = shared_from_this();
 					while (ptr->getType() != TYPE::CALL && ptr->getType() != TYPE::CLOSURE) {
 						ptr = ptr->getParentNode();
+						if (!ptr || ptr->getType() == TYPE::ROOT) {
+							break;
+						}
 						action = (Action*)ptr->getData();
 					}
 					map.emplace(base, TriggerNode::WarningInfo{ std::string(), action });
@@ -1039,6 +1042,9 @@ namespace mh {
 					NodePtr ptr = shared_from_this();
 					while (ptr->getType() != TYPE::CALL && ptr->getType() != TYPE::CLOSURE) {
 						ptr = ptr->getParentNode();
+						if (!ptr || ptr->getType() == TYPE::ROOT) {
+							break;
+						}
 						action = (Action*)ptr->getData();
 					}
 					map.emplace(base, TriggerNode::WarningInfo{ std::string(), action });
