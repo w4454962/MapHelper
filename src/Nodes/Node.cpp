@@ -371,18 +371,23 @@ namespace mh {
 
 			virtual std::string toString(TriggerFunction* func) override {
 
-			std::string oper = m_name == "AndMultiple" ? " and " : " or ";
+			std::string op, iftext, default_text;
 
-			std::string iftext;
-
+			if (m_nameId == "AndMultiple"s_hash) {
+				op = " and ";
+				default_text = "true";
+			} else {
+				op = " or ";
+				default_text = "false";
+			}
 			for (auto& node : getChildList()) {
 				if (!iftext.empty()) {
-					iftext += oper;
+					iftext += op;
 				}
 				iftext +=  node->toString(func);
 			}
 			if (iftext.empty()) {
-				iftext = "true";
+				iftext = default_text;
 			}
 			return "(" + iftext + ")";
 		}

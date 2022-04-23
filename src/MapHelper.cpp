@@ -790,7 +790,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2o");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2p");
 
 		
 		std::string text = R"(
@@ -801,9 +801,10 @@ void Helper::enableConsole()
 排名不分先后，为魔兽地图社区的贡献表示感谢。
 bug反馈：魔兽地图编辑器吧 -> @<yellow>w4454962</yellow> 加速器bug反馈群 -> <green>724829943</green>   lua技术交流群 -> <blue>1019770872</blue>。
 						----2022/1/26 新年好哇
-version 2.2o update:
+version 2.2p update:
 <grey>
-<green>2.2o: 修复上个版本的一个崩溃bug</green>
+<green>2.2p: 修复 “Or，多项条件” 空条件时默认值错误的bug</green>
+2.2o: 修复上个版本的一个崩溃bug
 2.2n: 修复提示的颜色代码错误
 2.2m: 更精准的中文逆天类型错误提示
 2.2l: 修复个别条件表达式报错的bug
