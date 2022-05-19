@@ -382,6 +382,10 @@ static int WINAPI fakeMessageBoxA(HWND hwnd, const char* message, const char* ti
 
 static int buffer_size = 0x104;
 void SetActionToTextBufferSize(int size) {
+	if (g_make_editor_data) {
+		return;
+	}
+
 	auto addr_list = {
 		0x005D7105,
 		0x005D71DE,

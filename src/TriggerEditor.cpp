@@ -1723,7 +1723,7 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 	bool has_custorm_code = 0;
 
 	is_convert = true;
-	if (hasBlackAction(trigger, &is_init, &is_disable) && g_make_editor_data == nullptr) {
+	if (g_make_editor_data == nullptr && hasBlackAction(trigger, &is_init, &is_disable)) {
 		result += originConvertTrigger(trigger);
 		if (is_init) {
 			mh::g_initTriggerMap.emplace(trigger, true);
@@ -1736,7 +1736,6 @@ std::string TriggerEditor::convertTrigger(Trigger* trigger)
 		std::string init_func = "InitTrig_" + name;
 		m_initFuncTable[init_func] = true;
 	} else {
-		
 		SetActionToTextBufferSize(0x808);
 		mh::NodePtr node = mh::NodeFromTrigger(trigger);
 		result += node->toString();
