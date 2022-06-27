@@ -133,6 +133,12 @@
     <ClCompile Include="src\base\util\string_hash.cpp">
       <Filter>src\base\util</Filter>
     </ClCompile>
+    <ClCompile Include="src\base\util\colored_cout.cpp">
+      <Filter>src\base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\util\pugixml.cpp">
+      <Filter>src\base\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\MapHelper.h">
@@ -257,6 +263,15 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\base\util\string_hash.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\colored_cout.h">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\pugiconfig.hpp">
+      <Filter>src\base\util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\util\pugixml.hpp">
       <Filter>src\base\util</Filter>
     </ClInclude>
   </ItemGroup>

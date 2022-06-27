@@ -3,6 +3,7 @@
 #include "Node.h"
 #include "Function.hpp"
 #include <set>
+#include <base/util/colored_cout.h>
 
 namespace mh {
 	//触发器节点
@@ -133,22 +134,41 @@ namespace mh {
 			} 
 
 			auto& world = get_world_editor();
-			
+			auto& editor = get_trigger_editor();
 			//检查逆天变量类型 发出警告
-			for (auto&& [name, map] : all_upvalue_map) {
-				if (map.size() > 1) {
-					std::string warning = std::format("Warning: 触发器[{}]: 逆天局部变量[loc_{}] 有多个类型，请尽快修复:\n", base::u2a(m_name), base::u2a(name));
-					print(warning.c_str());
-					for (auto&& [type, code] : map) {
-						std::string type_name = world.getConfigData("TriggerTypes", type, 3);
-						print("[%s] %s\n", base::u2a(type_name).c_str(), base::u2a(code).c_str());
+			if (g_make_editor_data) {
+				for (auto&& [name, map] : all_upvalue_map) {
+					if (map.size() > 1) {
+						std::string warning = std::format("Warning: 触发器[{}]: 逆天局部变量[loc_{}] 有多个类型，请尽快修复:\n", base::u2a(m_name), base::u2a(name));
+						print(warning.c_str());
+						for (auto&& [type, info] : map) {
+							std::string type_name = world.getConfigData("TriggerTypes", type, 3);
+							print("[%s] %s\n", base::u2a(type_name).c_str(), base::u2a(info.code).c_str());
+						}
+						print("\n");
 					}
-					print("\n");
+				}
+			} else {
+				for (auto&& [name, map] : all_upvalue_map) {
+					if (map.size() > 1) {
+						auto label = "loc_" + name;
+
+						auto warning = std::format("<yellow>Warning: 触发器[<red>{}</red>]: 逆天局部变量[<red>loc_{}</red>] 有多个类型，请尽快修复:</yellow>", base::u2a(m_name), base::u2a(name));
+						console_color_output(warning);
+						for (auto&& [type, info] : map) {
+							auto type_name = world.getConfigData("TriggerTypes", type, 3);
+							auto msg = std::format("<yellow>-----------[{}]-----------</yellow>",base::u2a(type_name));
+							console_color_output(msg);
+							editor.action_to_text_key = name;
+							console_color_output(std::format("<while>{}</while>", base::u2a(editor.originConvertActionText(info.action))));
+						}
+						std::cout << std::endl;
+					}
 				}
 			}
-
-
-			auto& editor = get_trigger_editor();
+			
+			
+			
 
 			editor.m_initFuncTable[func->event->getName()] = true;
 
@@ -215,7 +235,11 @@ namespace mh {
 		bool hasUpvalue = false;
 
 		// all_upvalue_map[name] = {type, action}
-		std::map<std::string, std::map<std::string, std::string>> all_upvalue_map;
+		struct WarningInfo {
+			std::string code;
+			Action* action = nullptr;
+		};
+		std::map<std::string, std::map<std::string, WarningInfo>> all_upvalue_map;
 
 		Action::Type current_progress;
 

@@ -372,18 +372,23 @@ namespace mh {
 
 			virtual std::string toString(TriggerFunction* func) override {
 
-			std::string oper = m_name == "AndMultiple" ? " and " : " or ";
+			std::string op, iftext, default_text;
 
-			std::string iftext;
-
+			if (m_nameId == "AndMultiple"s_hash) {
+				op = " and ";
+				default_text = "true";
+			} else {
+				op = " or ";
+				default_text = "false";
+			}
 			for (auto& node : getChildList()) {
 				if (!iftext.empty()) {
-					iftext += oper;
+					iftext += op;
 				}
 				iftext +=  node->toString(func);
 			}
 			if (iftext.empty()) {
-				iftext = "true";
+				iftext = default_text;
 			}
 			return "(" + iftext + ")";
 		}
@@ -928,8 +933,22 @@ namespace mh {
 			auto& map = root->all_upvalue_map[upvalue.name];
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
+
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					Action* action = (Action*)getData();
+					NodePtr ptr = shared_from_this();
+					while (ptr->getType() != TYPE::CALL && ptr->getType() != TYPE::CLOSURE) {
+						ptr = ptr->getParentNode();
+						if (!ptr || ptr->getType() == TYPE::ROOT) {
+							break;
+						}
+						action = (Action*)ptr->getData();
+					}
+					map.emplace(base, TriggerNode::WarningInfo{ std::string(), action });
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
 
 			return result;
@@ -973,7 +992,11 @@ namespace mh {
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					map.emplace(base, TriggerNode::WarningInfo{std::string(), (Action*)getData()});
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
 
 			return func->getSpaces() + result + "\n";
@@ -1020,7 +1043,20 @@ namespace mh {
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					Action* action = (Action*)getData();
+					NodePtr ptr = shared_from_this();
+					while (ptr->getType() != TYPE::CALL && ptr->getType() != TYPE::CLOSURE) {
+						ptr = ptr->getParentNode();
+						if (!ptr || ptr->getType() == TYPE::ROOT) {
+							break;
+						}
+						action = (Action*)ptr->getData();
+					}
+					map.emplace(base, TriggerNode::WarningInfo{ std::string(), action });
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
 
 			return result;
@@ -1051,9 +1087,12 @@ namespace mh {
 			auto& editor = get_trigger_editor();
 			auto base = editor.getBaseType(upvalue.type);
 			if (map.find(base) == map.end()) {
-				map.emplace(base, result);
+				if (!g_make_editor_data) {
+					map.emplace(base, TriggerNode::WarningInfo{ std::string(), (Action*)getData() });
+				} else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
 			}
-
 
 			return func->getSpaces() + result + "\n";
 		}
