@@ -145,7 +145,8 @@ namespace mh {
 
 		
 		virtual std::string getFuncName() override {
-			if (m_type == TYPE::GET) { //如果是参数节点里的动作 则使用参数的规则
+			auto ParentPtr = getParentNode();
+			if (ParentPtr && ParentPtr->getType() == TYPE::PARAM) { //如果是参数节点里的动作 则使用参数的规则
 				return getParentNode()->getFuncName();
 			} else { //如果是动作
 				return std::format("{}Func{:03d}", getParentNode()->getFuncName(), m_index + 1);

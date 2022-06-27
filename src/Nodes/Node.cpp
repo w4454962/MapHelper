@@ -53,6 +53,7 @@ namespace mh {
 
 			return "function " + closure->toString(func);
 		}
+
 	};
 
 	class CommentString : public ActionNode {
