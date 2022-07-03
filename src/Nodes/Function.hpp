@@ -153,7 +153,7 @@ namespace mh {
 		{
 			m_comment = seperator;
 			m_comment += "// Trigger: " + trigger_name + "\n";
-			m_comment += base::a2u("//自定义jass生成器 作者：007 \n//有bug到魔兽地图编辑器吧 @w4454962 \n//bug反馈群：724829943   lua 技术交流群：1019770872\n");
+			m_comment += base::a2u("//自定义jass生成器 作者：007 \n//有bug到魔兽地图编辑器吧 @w4454962 \n//bug反馈群：724829943   lua 技术交流3群：710331384\n");
 			m_comment += seperator;
 		}
 
