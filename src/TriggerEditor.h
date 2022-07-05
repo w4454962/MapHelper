@@ -32,7 +32,9 @@ public:
 	std::string originConvertTrigger(Trigger* trigger);
 
 	//we原版的t转文本
+	std::string originConvertTriggerText(Trigger* trigger);
 	std::string originConvertActionText(Action* action);
+	
 
 
 	//当触发编辑器转换单个触发为自定义脚本的时候

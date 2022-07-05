@@ -1919,6 +1919,36 @@ std::string TriggerEditor::originConvertTrigger(Trigger* trigger)
 }
 
 
+
+std::string TriggerEditor::originConvertTriggerText(Trigger* trigger) {
+	std::string result;
+
+	auto& world = get_world_editor();
+
+	struct ConvertData {
+		uintptr_t ptr = 0;
+		const char* text = nullptr;
+		uintptr_t unknow = 0;
+		size_t buffer_size = 0;
+		size_t text_len = 0;
+		uint32_t unknow2 = -1;
+	};
+
+	uintptr_t convert = world.getAddress(0x005CBDC0);
+	uintptr_t delete_buffer = world.getAddress(0x00425580);
+
+	ConvertData data;
+	data.ptr = world.getAddress(0x0075A3A8);
+	this_call<uint32_t>(convert, trigger, &data);
+
+	result = std::string(data.text, data.text_len);
+
+	data.ptr = world.getAddress(0x0075A3A8);
+	this_call<void>(delete_buffer, &data, &data.text, &data.unknow, &data.buffer_size);
+
+	return result;
+}
+
 std::string TriggerEditor::originConvertActionText(Action* action) {
 	std::string result;
 
@@ -1955,7 +1985,6 @@ bool TriggerEditor::onConvertTrigger(Trigger* trigger)
 		return false;
 
 	std::string pre_actions;
-
 
 	auto& world = get_world_editor();
 

@@ -482,6 +482,14 @@ namespace mh {
 		REGISTER_FROM_ACTION(YDWEEnumUnitsInRangeMultiple)
 
 		virtual std::string toString(TriggerFunction* func) override {
+			std::string result;
+
+			if (in_block) { //不允许嵌套使用 
+				result += func->getSpaces() + base::a2u("//YDTrigger Error:不要嵌套使用<逆天--选取单位>\n");
+				print("Warning: 触发器[%s] 嵌套使用<逆天--选取单位>, 请尽快修复\n\n", base::u2a(getRootNode()->getName()).c_str());
+
+				return result;
+			}
 
 			auto params = getParameterList();
 
@@ -491,8 +499,6 @@ namespace mh {
 			func->current()->addLocal("ydl_group", "group", std::string(), false);
 			func->current()->addLocal("ydl_unit", "unit", std::string(), false);
 
-			std::string result;
-			
 			result += func->getSpaces() + "set ydl_group = CreateGroup()\n";
 			result += func->getSpaces() + "call GroupEnumUnitsInRange(ydl_group, " \
 				+ params[0]->toString(func) + ", " \
@@ -500,7 +506,7 @@ namespace mh {
 				+ params[2]->toString(func) + ", null)\n";
 
 			params_finish = true;
-
+			in_block = true;
 			result += func->getSpaces() + "loop\n";
 			func->addSpace();
 			result += func->getSpaces() + "set ydl_unit = FirstOfGroup(ydl_group)\n";
@@ -513,14 +519,18 @@ namespace mh {
 			func->subSpace();
 			result += func->getSpaces() + "endloop\n";
 			result += func->getSpaces() + "call DestroyGroup(ydl_group)\n";
-
+			in_block = false;
 
 			return result;
 		}
 
 	public:
 		bool params_finish = false;
+
+		static bool in_block;
 	};
+	bool YDWEEnumUnitsInRangeMultiple::in_block = false;
+
 
 
 	class YDWESaveAnyTypeDataByUserData : public ActionNode {
@@ -612,7 +622,7 @@ namespace mh {
 				result += func->getSpaces() + "call YDLocal3Release()\n";
 				result += func->getSpaces() + "call DestroyTimer(GetExpiredTimer())\n";
 			} else {
-				//result += "不要在逆天计时器的动作外使用<清除逆天计时器>";
+				result += func->getSpaces() + base::a2u("//YDTrigger Error: 不要在逆天计时器的动作外使用<清除逆天计时器>\n");
 				print("Warning: 触发器[%s] 在逆天计时器的动作外使用<清除逆天计时器>, 请尽快修复\n\n", base::u2a(getRootNode()->getName()).c_str());
 			}
 			
@@ -645,7 +655,7 @@ namespace mh {
 				result += func->getSpaces() + "call YDLocal4Release()\n";
 				result += func->getSpaces() + "call DestroyTrigger(GetTriggeringTrigger())\n";
 			} else {
-				//result += "不要在逆天触发器的动作外使用<清除逆天触发器>";
+				result += func->getSpaces() + base::a2u("//YDTrigger Error: 不要在逆天触发器的动作外使用<清除逆天触发器>\n");
 				print("Warning: 触发器[%s] 在逆天触发器的动作外使用<清除逆天触发器>, 请尽快修复\n\n", base::u2a(getRootNode()->getName()).c_str());
 			}
 			
@@ -674,7 +684,7 @@ namespace mh {
 
 			std::string result;
 			if (in_block) {
-				//result += "不要在逆天计时器/逆天触发器内使用等待";
+				result += func->getSpaces() + base::a2u("//YDTrigger Error: 不要在逆天计时器/逆天触发器内使用等待\n");
 				print("Warning: 触发器[%s] 在逆天计时器/逆天触发器内使用等待, 请尽快修复\n\n", base::u2a(getRootNode()->getName()).c_str());
 			} else {
 				result = ActionNode::toString(func);
