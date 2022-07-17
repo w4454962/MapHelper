@@ -4,17 +4,6 @@
 #include <include\EditorData.h>
 #include "WorldEditor.h"
 
-template<typename dst_type, typename src_type>
-dst_type union_cast(src_type src)
-{
-	union {
-		src_type s;
-		dst_type d;
-	}u;
-	u.s = src;
-	return u.d;
-}
-
 
 struct ActionInfo
 {
@@ -35,6 +24,9 @@ extern HMODULE g_hModule;
 
 extern fs::path g_module_path;
 
+extern std::vector<HWND> g_editor_windows;
+
+
 class Helper
 {
 public:
@@ -43,13 +35,33 @@ public:
 	
 	//static Helper* getInstance();
 
+	enum CONFIG :uint32_t {
+
+		ENABLE_PLUGIN = 1 << 1,
+
+		//加速保存
+		SUPPER_SPEED_SAVE = 1 << 2,
+
+		//增量资源
+		INCRE_RESOURCE = 1 << 3,
+
+		//显示控制台
+		SHOW_CONSOLE = 1 << 4,
+	};
+
+	uint32_t getConfig();
+
+	void setConfig(uint32_t config);
+
+	void updateState();
+
 	void enableConsole();
+
 
 	void attach();//附加
 
 	void detach();//分离
 
-	int getConfig() const;
 
 	void setMenuEnable(bool is_enable);
 private:
@@ -64,6 +76,9 @@ private:
 	//当自定义转换触发时
 	int onConvertTrigger(Trigger* trg);
 
+
+
+	uint32_t m_config = 0;
 public:
 	fs::path ydwe_path;
 
@@ -92,6 +107,7 @@ protected:
 	uintptr_t m_hookMessageBoxA;
 
 	hook::hook_t* m_hookInsertActionToText;
+	hook::hook_t* m_hookInitWindows;
 
 	fs::path m_configPath;
 };

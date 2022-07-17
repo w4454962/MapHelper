@@ -38,7 +38,7 @@ namespace fs = std::experimental::filesystem;
 #include <base\util\BinaryWriter.h>
 #include <base\util\unicode.h>
 #include <include\Export.h>
-
+#include "MPQ.h"
 
 #pragma  warning( disable: 4307 4455 )
 //控制台流

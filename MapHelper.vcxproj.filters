@@ -38,6 +38,12 @@
     <Filter Include="resource">
       <UniqueIdentifier>{c6fbacfe-88d4-4bb0-9266-cd1da0666285}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\base\win">
+      <UniqueIdentifier>{8bbe3c26-edbc-4272-9346-1988491077b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base\win\registry">
+      <UniqueIdentifier>{f85c6379-bb1a-46cc-bc17-a45073473494}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd\Detours\src\creatwth.cpp">
@@ -138,6 +144,12 @@
     </ClCompile>
     <ClCompile Include="src\base\util\pugixml.cpp">
       <Filter>src\base\util</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\lua\lua.cpp">
+      <Filter>3rd</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MPQ.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -274,6 +286,27 @@
     <ClInclude Include="src\base\util\pugixml.hpp">
       <Filter>src\base\util</Filter>
     </ClInclude>
+    <ClInclude Include="src\base\win\registry\exception.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\getRegistry.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\key.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\predefined_keys.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\traits.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\win\registry\value.h">
+      <Filter>src\base\win\registry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MPQ.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Export.def">
@@ -290,5 +323,6 @@
     <Image Include="resource\Icon.ico">
       <Filter>resource</Filter>
     </Image>
+    <Image Include="resource\qq.png" />
   </ItemGroup>
 </Project>

@@ -10,6 +10,8 @@ extern MakeEditorData* g_make_editor_data;
 
 std::map<std::string, std::string> g_config_map;
 
+#define RELEASE(ptr) if (ptr) { delete ptr; ptr = nullptr;}
+
 WorldEditor::WorldEditor()
 {
 	m_currentData = nullptr;
@@ -190,27 +192,28 @@ void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
 #else
 	int ret = 0;
 	auto& v_helper = get_helper();
-	const auto result = v_helper.getConfig();
 
-	
-	if (result == -1)
-	{
-
-		v_helper.setMenuEnable(false);
-
-		ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬的加速器", MB_SYSTEMMODAL | MB_YESNO);
-
-		v_helper.setMenuEnable(true);
-
-		if (ret == 6)
-			print("自定义保存模式\n");
-		else
-			print("原始保存模式\n");
-	}
-	else if (result == 1)
-	{
+	if (v_helper.getConfig() & Helper::CONFIG::SUPPER_SPEED_SAVE) {
 		ret = 6;
 	}
+	//if (result == -1)
+	//{
+	//
+	//	v_helper.setMenuEnable(false);
+	//
+	//	ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬的加速器", MB_SYSTEMMODAL | MB_YESNO);
+	//
+	//	v_helper.setMenuEnable(true);
+	//
+	//	if (ret == 6)
+	//		print("自定义保存模式\n");
+	//	else
+	//		print("原始保存模式\n");
+	//}
+	//else if (result == 1)
+	//{
+	//	ret = 6;
+	//}
 #endif
 
 	clock_t start = clock();
@@ -218,7 +221,6 @@ void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
 
 	auto& manager = get_ydplugin_manager();
 
-	manager.attach();
 
 
 	if (ret == 6)
@@ -281,9 +283,17 @@ void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
 		saveScript();
 	}
 
-	saveArchive();
 
-		
+	if (v_helper.getConfig() & Helper::INCRE_RESOURCE) 
+	{
+		customSaveArchive();
+	} 
+	else 
+	{
+		saveArchive();
+	}
+	
+
 	print("地图所有数据保存完成 总耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	m_tempPath = nullptr;
@@ -326,6 +336,51 @@ int WorldEditor::saveImp()
 	this_call<int>(getAddress(0x0051CEB0), object, getTempSavePath());
 	int ret = this_call<int>(getAddress(0x0055DFD0), getEditorData(), getTempSavePath());
 
+	//uint32_t size = *(uint32_t*)(object + 0x20c);
+	//uint32_t ptr = *(uint32_t*)(object + 0x210);
+	//
+	//printf("size %i  ptr %x\n", size, ptr);
+	//
+	//for (int i = 0; i < size; i++) {
+	//	uintptr_t p = ptr + i * 0x209;
+	//	const char* name = (const char*)(p + 1);
+	//	const char* archive_path = (const char*)(p + 0x105);
+	//
+	//	uint8_t byte = *(uint8_t*)(p);
+	//	
+	//	printf("%i %x <%s> <%s>\n", i, byte, name, archive_path);
+	//
+	//}
+	
+	//HWND hwnd = g_editor_windows[6];
+	//if (hwnd) {
+	//	printf("hwnd %p\n", hwnd);
+	//	HANDLE handle = GetPropA(hwnd, "OsGuiPointer");
+	//	if (handle) {
+	//		uintptr_t ptr = *(uintptr_t*)((uintptr_t)handle + 0x10);
+	//		printf("ptr1  %p\n", ptr);
+	//		if (ptr) {
+	//			ptr = *(uintptr_t*)(ptr + 0x8c);
+	//			printf("ptr2  %p\n", ptr);
+	//			if (ptr) {
+	//				uint32_t size = *(uint32_t*)(ptr + 0x48);
+	//				ptr = *(uintptr_t*)(ptr + 0x4c);
+	//
+	//				printf("size %i  ptr3 %p\n", size, ptr);
+	//
+	//				if (ptr && size > 0) {
+	//					for (int i = 0; i < size; i++) {
+	//						const char* name = (const char*)(ptr + 0x190 * i + 0x8);
+	//						const char* path = (const char*)(ptr + 0x190 * i + 0x88);
+	//						printf("%i {%s} {%s}\n", i, name, path);
+	//					}
+	//				}
+	//			}
+	//		}
+	//		printf("handle %p\n", handle);
+	//
+	//	}
+	//}
 	print("imp 保存完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	return ret;
@@ -521,7 +576,6 @@ int WorldEditor::saveScript()
 int WorldEditor::saveArchive()
 {
 
-
 	fs::path path = fs::path(getTempSavePath());
 	path.remove_filename();
 
@@ -529,8 +583,6 @@ int WorldEditor::saveArchive()
 		path = fs::path(path.string().substr(0, path.string().size() - 1));
 
 	std::string name = path.filename().string();
-	//if (name.length() < 4)
-	//	return 0;
 
 	name = name.substr(0,name.length() - 4);
 
@@ -541,7 +593,6 @@ int WorldEditor::saveArchive()
 	print("路径 %s\n", path.string().c_str());
 
 	clock_t start = clock();
-
 
 	int ret = this_call<int>(getAddress(0x0055D720), getEditorData(), pathTemp.string().c_str(), 1);
 
@@ -564,7 +615,163 @@ int WorldEditor::saveArchive()
 	return 0;
 }
 
+int WorldEditor::customSaveArchive() 	
+{
+	fs::path path = fs::path(getTempSavePath());
+	path.remove_filename();
 
+	if (path.string().substr(path.string().size() - 1) == "\\")
+		path = fs::path(path.string().substr(0, path.string().size() - 1));
+
+	std::string name = path.filename().string();
+
+	name = name.substr(0, name.length() - 4);
+
+	fs::path tempMapPath = path / name;
+
+	fs::path sourceMapPath = path.parent_path() / name;
+
+	auto data = getEditorData();
+
+	print("增量更新地图文件资源\n");
+
+	print("路径 %s\n", path.string().c_str());
+
+	clock_t start = clock();
+
+	if (fs::copy_file(sourceMapPath, tempMapPath)) {
+
+		//关闭源图的mpq占用
+		this_call<void>(getAddress(0x005261D0), data->mappath);
+
+		auto& ydplugin = get_ydplugin_manager();
+
+		mpq::MPQ mpq(tempMapPath);
+		
+		auto file_list = new std::map<fs::path, bool>();
+
+		//替换文件列表
+		for (const auto i : fs::recursive_directory_iterator(path)) {
+			if (i.is_regular_file() && i.path().filename() != name) {
+				auto source = i.path();
+				auto target = fs::relative(source, path);
+				mpq.file_add(source, target);
+				file_list->emplace(target, true);
+			}
+		}
+
+		//如果打开过 输入管理器 处理mpq文件 进行增量更新
+		if (g_editor_windows[6] != nullptr) {
+			//统计一下 
+			{
+				uintptr_t object = *(uintptr_t*)((uintptr_t)data + 0x3904);
+				uint32_t size = *(uint32_t*)(object + 0x20c);
+				uint32_t ptr = *(uint32_t*)(object + 0x210);
+
+				const char* import_base_path = (const char*)(object);
+
+				//遍历文件列表
+				for (int i = 0; i < size; i++) {
+					uintptr_t p = ptr + i * 0x209;
+					const char* import_path = (const char*)(p + 1);
+					const char* archive_path = (const char*)(p + 0x105);
+					uint8_t byte = *(uint8_t*)(p);
+
+					// 导入文件后 才会生成该路径
+					if (import_base_path && *import_base_path) {
+						fs::path file_path = fs::path(import_base_path) / import_path;
+
+						if (!fs::exists(file_path)) {
+							file_path = fs::path(import_base_path) / "war3mapImported" / import_path;
+						}
+
+						//如果本地有该文件， 则视为添加文件
+						if (fs::exists(file_path)) {
+							fs::path target = fs::path("war3mapImported") / file_path.filename();
+
+							if (*archive_path) { //如果有修改过路径 则添加到指定路径里
+								target = archive_path;
+							}
+							printf("导入文件 <%s>\n", target.string().c_str());
+							mpq.file_add(file_path, target);
+							file_list->emplace(target, true);
+
+							//非测试模式下 保存后要将临时文件删除 避免重复导入
+							if (!data->is_test) {
+								fs::remove(file_path);
+							}
+							continue;
+						}
+					}
+
+					//如果2个名字同时存在 并且不一致  则视为 修改名字
+					if (*import_path && *archive_path && strcmp(import_path, archive_path) != 0) {
+						if (mpq.file_exists(import_path)) {
+							printf("文件重命名 <%s> = <%s>\n", import_path, archive_path);
+							mpq.file_rename(import_path, archive_path);
+							file_list->emplace(archive_path, true);
+							file_list->erase(import_path);
+						}
+						continue;
+					}
+					//	printf("%i %x <%s> %i <%s>\n", i, byte, import_path, 0, archive_path);
+				}
+			}
+
+			//读取输入管理器窗口里的完整路径列表
+			{
+				HWND hwnd = g_editor_windows[6];
+				HANDLE handle = GetPropA(hwnd, "OsGuiPointer");
+				if (handle) {
+					uintptr_t ptr = *(uintptr_t*)((uintptr_t)handle + 0x10);
+					if (ptr) {
+						ptr = *(uintptr_t*)(ptr + 0x8c);
+						if (ptr) {
+							uint32_t size = *(uint32_t*)(ptr + 0x48);
+							ptr = *(uintptr_t*)(ptr + 0x4c);
+	
+							if (ptr && size > 0) {
+								for (int i = 0; i < size; i++) {
+									//const char* name = (const char*)(ptr + 0x190 * i + 0x8);
+									const char* path = (const char*)(ptr + 0x190 * i + 0x88);
+									if (path && *path) {
+										file_list->emplace(fs::path(path), true);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			//处理删除文件
+			mpq.earch_delete_files("*", [&](const fs::path& filename) {
+				if (file_list->find(filename) == file_list->end()) {
+					printf("删除文件 <%s>\n", filename.string().c_str());
+					return true;
+				}
+				return false;
+			});
+		}
+
+	
+		mpq.compact();
+		mpq.close();
+
+	
+		//执行ydwe的编译流程
+		ydplugin.on_save_event(base::a2u(tempMapPath.string()), data->is_test);
+
+		//移动文件目录
+		int ret = fast_call<int>(getAddress(0x004D0F60), tempMapPath.string().c_str(), sourceMapPath.string().c_str(), 1, 0);
+	
+		print("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+		RELEASE(file_list);
+	}
+
+	return 1;
+}
 
 int WorldEditor::customSaveWts(const char* path)
 {

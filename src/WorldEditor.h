@@ -57,6 +57,7 @@ private:
 	int saveScript();
 	int saveArchive();
 
+	int customSaveArchive();
 	int customSaveWts(const char* path);
 	int customSaveDoodas(const char* path);
 

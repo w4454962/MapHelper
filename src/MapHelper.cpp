@@ -15,7 +15,9 @@
 #include <HashTable.hpp>
 #include <Commctrl.h>
 #include <base\hook\iat.h>
-#include <base/util/colored_cout.h>
+#include <base\util\colored_cout.h>
+#include <base\win\registry\key.h>
+
 extern MakeEditorData* g_make_editor_data;
 
 #pragma warning(disable:4996)
@@ -55,6 +57,8 @@ namespace real
 	uintptr_t SaveMapState;
 
 	uintptr_t ActionToTextAppend;
+
+	uintptr_t InitWindows;
 }
 
 
@@ -496,6 +500,106 @@ static void __declspec(naked) insertActionToTextAppend() {
 	}
 }
 
+
+static WNDPROC old_win_proc;
+
+static HWND enable_super_speed_btn = 0;
+static HWND show_console_btn = 0;
+static HWND enable_incre_resource_btn = 0;
+
+std::vector<HWND> g_editor_windows(8, 0);
+
+LRESULT CALLBACK windowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+
+	switch (message) {
+	case WM_COMMAND:
+	{
+
+		auto& helper = get_helper();
+
+		bool is_active = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+		uint32_t config = helper.getConfig();
+
+		if ((HWND)lParam == enable_super_speed_btn) {
+			if (is_active) {
+				config |= Helper::CONFIG::SUPPER_SPEED_SAVE;
+			} else {
+				config &= ~Helper::CONFIG::SUPPER_SPEED_SAVE;
+			}
+		} else if ((HWND)lParam == enable_incre_resource_btn) {
+			if (is_active) {
+				config |= Helper::CONFIG::INCRE_RESOURCE;
+			} else {
+				config &= ~Helper::CONFIG::INCRE_RESOURCE;
+			}
+		} else if ((HWND)lParam == show_console_btn) {
+			if (is_active) {
+				config |= Helper::CONFIG::SHOW_CONSOLE;
+			} else {
+				config &= ~Helper::CONFIG::SHOW_CONSOLE;
+			}
+		}
+		helper.setConfig(config);
+		helper.updateState();
+		break;
+	}
+	default:
+		break;
+	}
+
+	return CallWindowProc(old_win_proc, hWnd, message, wParam, lParam);
+}
+
+static HWND create_button(HWND parent, const char* name, int x, int y, int width, int height, bool is_active) {
+	HWND btn = CreateWindowA(TEXT("button"), name, WS_GROUP | WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX , x, y, width, height, parent, (HMENU)1, g_hModule, NULL);
+	SendMessage(btn, WM_SETFONT, (LPARAM)GetStockObject(DEFAULT_GUI_FONT), true);
+	if (is_active) {
+		SendMessage((HWND)btn, BM_SETCHECK, 1, 0);
+	}
+	return btn;
+}
+
+static void __fastcall fakeInitWindows(uint32_t id, HWND hwnd) {
+
+	HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON2));
+	if (hIcon) {
+		SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+	}
+	g_editor_windows[id] = hwnd;
+
+	switch (id) {
+	case 0: //地形编辑器窗口
+		break;
+	case 1: //触发编辑器窗口
+	{
+		enable_super_speed_btn = create_button(hwnd, "开启加速保存模式(7佬yyds)", 600, 28, 180, 16, true);
+		enable_incre_resource_btn = create_button(hwnd, "资源增量更新", 800, 28, 120, 16, true);
+		show_console_btn = create_button(hwnd, "显示控制台", 930, 28, 100, 16, true);
+		old_win_proc = (WNDPROC)SetWindowLong(hwnd, GWL_WNDPROC, (LONG)windowProc);
+
+		auto& helper = get_helper();
+		helper.updateState();
+	}
+		break;
+	case 2: //声音编辑器窗口
+		break;
+	case 3: //物体编辑器窗口
+		break;
+	case 4: //战役编辑器窗口
+		break;
+	case 5: //物体管理器窗口
+		break;
+	case 6: //输入管理器窗口
+		break;
+	case 7: // ai编辑器窗口
+		break;
+	default:
+		break;
+	}
+	base::fast_call<void>(real::InitWindows, id, hwnd);
+}
+
 //迭代器 遍历TriggerParams 
 static void initTypeName() {
 
@@ -648,12 +752,18 @@ void Helper::attach()
 	real::ActionToTextAppend = editor.getAddress(0x005d7200);
 	hook::install(&real::ActionToTextAppend, reinterpret_cast<uintptr_t>(&insertActionToTextAppend), m_hookInsertActionToText);
 	real::ActionToTextAppend = editor.getAddress(0x005d7205);
+
+	real::InitWindows = editor.getAddress(0x0052EAA0);
+	hook::install(&real::InitWindows, reinterpret_cast<uintptr_t>(&fakeInitWindows), m_hookInitWindows);
 	//-------------------end-----------------------------
 #if !defined(EMBED_YDWE)
-	if (getConfig() == -1)
-	{
-		enableConsole();
-	}
+
+
+
+	enableConsole();
+
+
+	updateState();
 #endif
 
 
@@ -665,6 +775,7 @@ void Helper::attach()
 
 	manager.extract();
 
+	manager.attach();
 	
 }
 
@@ -693,7 +804,8 @@ void Helper::detach()
 	base::hook::iat(GetModuleHandleA(nullptr), "kernel32.dll", "MessageBoxA", real::MessageBoxA);
 	
 	hook::uninstall(m_hookInsertActionToText);
-
+	hook::uninstall(m_hookInitWindows);
+	
 #if !defined(EMBED_YDWE)
 	//释放控制台避免崩溃
 	FreeConsole();
@@ -708,32 +820,10 @@ int Helper::onSelectConvartMode()
 #if defined(EMBED_YDWE)
 	return 0;
 #else
-	int result = getConfig();
-	if (result == -1)
-	{
-
-		setMenuEnable(false);
-
-		int ret = MessageBoxA(0, "是否用新的保存模式保存?", "七佬的加速器", MB_SYSTEMMODAL | MB_YESNO);
-
-		setMenuEnable(true);
-
-		if (ret == 6)
-		{
-			print("自定义保存模式\n");
-			return 0;
-		}
-		print("原始保存模式\n");
-		return 1;
+	if (getConfig() & CONFIG::SUPPER_SPEED_SAVE) {
+		return 0;
 	}
-	else
-	{
-		if (result == 1)
-		{
-			return 0;
-		}
-		return 1;
-	}
+	return 1;
 #endif
 }
 
@@ -794,7 +884,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.2R");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.3a");
 
 		
 		std::string text = R"(
@@ -805,9 +895,12 @@ void Helper::enableConsole()
 排名不分先后，为魔兽地图社区的贡献表示感谢。
 bug反馈：魔兽地图编辑器吧 -> @<yellow>w4454962</yellow> 加速器bug反馈群 -> <green>724829943</green>   lua技术交流3群 -> <blue>710331384</blue>。
 						----2022/7/03 
-version 2.2R update:
+version 2.3a update:
 <grey>
-<green>2.2r: 修复逆天局部跟逆天数组同名时， 逆天局部自动传参失效的bug</green>
+<green>2.3a:
+	1. 在触发编辑器里新增几个开关，不再使用弹框
+	2. 新增增量保存模式， 极速提升保存的时间 </green>
+2.2r: 修复逆天局部跟逆天数组同名时， 逆天局部自动传参失效的bug
 2.2q: 修复部分函数名生成重复的bug
 2.2p: 修复 “Or，多项条件” 空条件时默认值错误的bug
 2.2o: 修复上个版本的一个崩溃bug
@@ -824,20 +917,18 @@ version 2.2R update:
 重构了大部分代码， 源码更清晰，缩进跟函数名更精确的版本。
 
 当前插件仍在测试中，推荐自己测试时使用新的保存模式提升速度，发布正式版时使用旧的保存模式保证稳定
-
-如需关闭控制台，请在ydwe目录下的 bin\\EverConfig.cfg 中修改[ScriptCompiler]项下加入EnableYDTrigger = 1
-EnableYDTrigger = -1 为默认开启控制台与对话框
-EnableYDTrigger = 0 为使用原本的保存方式
-EnableYDTrigger = 1 默认开启加速保存
 </grey>
+
+<green>
+默认显示控制台、默认开启加速保存模式、触发编辑器右上角的按钮可以关闭
+
+</green>
+
 
 </while>
 )";
 	
-		
 		console_color_output(text);
-
-
 
 		HICON hIcon = LoadIcon(g_hModule, MAKEINTRESOURCE(IDI_ICON2));
 		if (hIcon) {
@@ -846,38 +937,90 @@ EnableYDTrigger = 1 默认开启加速保存
 
 		}
 
+
 	}
 
 
 }
 
-int Helper::getConfig() const
+
+
+uint32_t Helper::getConfig()
 {
-	return GetPrivateProfileIntA("ScriptCompiler", "EnableYDTrigger", -1, m_configPath.string().c_str());
+	uint32_t config = m_config;
+	
+	//try {
+	//	auto table = base::registry::key_w(HKEY_CURRENT_USER, L"", L"Software\\Blizzard Entertainment\\WorldEdit");
+	//	config = table[L"MapHelper"].get_uint32_t();
+	//}
+	//catch (...) {
+	//}
+
+	if (config == 0) {
+		config = ENABLE_PLUGIN |
+				SUPPER_SPEED_SAVE |
+				INCRE_RESOURCE |
+				SHOW_CONSOLE;
+
+		setConfig(config);
+	}
+	return config;
+	
 }
 
+void Helper::setConfig(uint32_t config) {
+	//写入注册表
+	//try {
+	//	auto table = base::registry::key_w(HKEY_CURRENT_USER, L"", L"Software\\Blizzard Entertainment\\WorldEdit");
+	//
+	//	table[L"MapHelper"].set_uint32_t(config);
+	//}
+	//catch (...){
+	//
+	//}
 
+	m_config = config;
+}
 
+void Helper::updateState() {
 
+	HWND v_hwnd_console = ::GetConsoleWindow();
 
+	
+	uint32_t config = getConfig();
 
-static BOOL __stdcall enumWindowProc(HWND hwnd, LPARAM lparam) {
-	DWORD processId = 0;
-	if (GetWindowThreadProcessId(hwnd, &processId) && processId == GetCurrentProcessId()) {
-		auto list_ptr = (std::vector<HWND>*)lparam;
-		list_ptr->push_back(hwnd);
+	bool state = 0;
+
+	state = (config & Helper::SHOW_CONSOLE) != 0;
+	if (state) {
+		::ShowWindow(v_hwnd_console, SW_SHOW);
+	} else {
+		::ShowWindow(v_hwnd_console, SW_HIDE);
 	}
-	return true;
+	if (SendMessage(show_console_btn, BM_GETCHECK, 0, 0) != state)
+		SendMessage(show_console_btn, BM_SETCHECK, state, 0);
+
+	state = (config & Helper::SUPPER_SPEED_SAVE) != 0;
+	if (SendMessage(enable_super_speed_btn, BM_GETCHECK, 0, 0) != state)
+		SendMessage(enable_super_speed_btn, BM_SETCHECK, state, 0);
+
+
+	state = (config & Helper::INCRE_RESOURCE) != 0;
+
+	if (SendMessage(enable_incre_resource_btn, BM_GETCHECK, 0, 0) != state)
+		SendMessage(enable_incre_resource_btn, BM_SETCHECK, state, 0);
+
 }
 
 void Helper::setMenuEnable(bool is_enable) {
-	std::vector<HWND> list;
 
-	EnumWindows(enumWindowProc, (LPARAM)&list);
-	if (list.size() == 0)
+	if (g_editor_windows.size() == 0)
 		return;
 
-	for (auto& hwnd : list) {
+	for (auto& hwnd : g_editor_windows) {
+		if (hwnd == NULL)
+			continue;
+
 		HMENU menu = GetMenu(hwnd);
 		
 		if (menu == NULL) {

@@ -5,16 +5,17 @@
 #include <base\hook\iat.h>
 #include "shellapi.h"
 #include <regex>
-
+#include <lua.hpp>
 
 static clock_t g_last_start_time;
 static std::string g_last_exe_name;
 static DWORD g_thread_id = 0;
 
+lua_State* g_lua_state = nullptr;
 
 // 目的 在ydwe调用插件时 将插件重导向 maphelper附带的插件。
 
-BOOL WINAPI fakeCreateProcessW(
+static BOOL WINAPI fakeCreateProcessW(
 	LPCWSTR lpApplicationName,
 	LPWSTR lpCommandLine,
 	LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -80,7 +81,7 @@ BOOL WINAPI fakeCreateProcessW(
 
 
 
-DWORD WINAPI fakeWaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+static DWORD WINAPI fakeWaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
 	DWORD ret = WaitForSingleObject(hHandle, dwMilliseconds);
 
 	if (GetCurrentThreadId() == g_thread_id && !g_last_exe_name.empty()) {
@@ -90,6 +91,63 @@ DWORD WINAPI fakeWaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
 	}
 
 	return ret;
+}
+
+static int lua_console_write(lua_State* L) {
+	if (!lua_isstring(L, 1)) {
+		return 0;
+	}
+
+	size_t size;
+	const char* str = lua_tolstring(L, 1, &size);
+	std::string msg = std::string(str, size);
+	printf("%s\n", base::u2a(msg).c_str());
+	return 0;
+}
+
+
+static void init_script(lua_State* L) {
+	const char script[] = R"(
+
+	log.debug("--------------maphelper--------------------")
+
+	function print(...)
+		local args = {...}
+		local count = select('#', ...)
+		local s = {}
+	
+		for i = 1, count do 
+			local v = args[i]
+			s[#s + 1] = tostring(v)
+		end 
+
+		console_write(table.concat(s, '\t'))
+	end 
+
+)";
+
+	lua_register(L, "console_write", lua_console_write);
+
+	if (LUA_OK != luaL_loadstring(L, script)) {
+		printf("%s\n", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return;
+	}
+	lua_call(L, 0, 0);
+}
+
+static const char* fake_lua_pushstring(lua_State* L, const char* s) {
+	if (g_lua_state == nullptr) {
+		if (strcmp(s, "main_window_handle") == 0) {
+			g_lua_state = L;
+			HWND hwnd = *(HWND*)((uint32_t)GetModuleHandleA(NULL) + 0x403C9C);
+			SetTimer(hwnd, 10086, 100, [](HWND hwnd, UINT, UINT_PTR, DWORD) {
+				init_script(g_lua_state);
+				::KillTimer(hwnd, 10086);
+			});
+		}
+	}
+	return lua_pushstring(L, s);
 }
 
 
@@ -112,13 +170,13 @@ void YDPluginManager::attach() {
 		return;
 	}
 
+	g_thread_id = ::GetCurrentThreadId();
+
 	std::vector<std::string> modules = {
 		"sys.dll",
 		"process.dll",
 		"ydbase.dll"
 	};
-
-	g_thread_id = ::GetCurrentThreadId();
 
 	for (auto& name : modules) {
 		auto handle = GetModuleHandleA(name.c_str());
@@ -136,10 +194,25 @@ void YDPluginManager::attach() {
 			info2.api_name = "WaitForSingleObject";
 			info2.real = base::hook::iat(info2.module, info2.dll_name.c_str(), info2.api_name.c_str(), (uintptr_t)&fakeWaitForSingleObject);
 			m_hook_list.push_back(info2);
-
-
 		}
 	}
+	modules = {
+		"luacore.dll",
+		"lua53.dll",
+	};
+	for (auto& name : modules) {
+		auto handle = GetModuleHandleA("event.dll");
+		if (handle && GetModuleHandleA(name.c_str())) {
+			HookInfo info;
+			info.module = handle;
+			info.dll_name = name.c_str();
+			info.api_name = "lua_pushstring";
+			info.real = base::hook::iat(info.module, info.dll_name.c_str(), info.api_name.c_str(), (uintptr_t)&fake_lua_pushstring);
+			m_hook_list.push_back(info);
+		}
+	}
+
+
 	if (m_hook_list.empty()) {
 		return;
 	}
@@ -205,6 +278,50 @@ void YDPluginManager::extract() {
 	}
 }
 
+void YDPluginManager::on_save_event(const std::string& map_path, bool is_test) {
+	if (g_lua_state == nullptr) {
+		return;
+	}
+
+	lua_State* L = g_lua_state;
+
+	const char script[] = R"(
+local map_path, is_test = ...
+
+log.info("on_save_event map_path", map_path)
+log.info("on_save_event is_test", is_test)
+
+	--草 acb的孤儿写法 拿不到event里的函数 操他妈的 写个破工具还怕被人调用
+	--local func = event.EVENT_SAVE_MAP or event.EVENT_NEW_SAVE_MAP
+
+	local func
+	for k, v in pairs(debug.getregistry()) do
+		if type(v) == 'function' then 
+			local info = debug.getinfo(v, "S")
+			if info.short_src and info.short_src:find("ydwe_on_save") and info.linedefined and info.linedefined < 188 then 
+				func = v
+				log.info("file", info.short_src, info.linedefined)
+				break
+			end 
+		end 
+	end
+	if func then 
+		func({ map_path = map_path, test = is_test})
+	end 
+)";
+
+	if (LUA_OK != luaL_loadstring(L, script)) {
+		printf("%s\n", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return;
+	}
+	lua_pushlstring(L, map_path.c_str(), map_path.size());
+	lua_pushboolean(L, is_test);
+	if (LUA_OK != lua_pcall(L, 2, 0, 0)) {
+		printf("%s\n", lua_tostring(L, -1));
+		lua_pop(L, 1);
+	}
+}
 
 YDPluginManager& get_ydplugin_manager() {
 	static YDPluginManager instance;

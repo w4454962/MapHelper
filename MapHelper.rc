@@ -57,10 +57,10 @@ IDI_ICON2               ICON                    "resource\\Icon.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// exe
+// EXE
 //
 
-IDR_EXE1                exe                     "resource\\wave.exe"
+IDR_EXE1                EXE                     "resource\\wave.exe"
 
 #endif    // 中文(简体，中国) resources
 /////////////////////////////////////////////////////////////////////////////
