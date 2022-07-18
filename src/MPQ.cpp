@@ -9,6 +9,7 @@
 namespace fs = std::filesystem;
 
 #include <StormLib.h>
+#include <base/util/unicode.h>
 
 namespace mpq {
 	File::~File() {
@@ -201,17 +202,17 @@ namespace mpq {
 
 		HANDLE find_handle = SFileFindFirstFile(handle, mark.c_str(), &file_data, nullptr);
 
-		std::vector<fs::path> delete_list;
+		std::vector<std::string> delete_list;
 
 		while (SFileFindNextFile(find_handle, &file_data)) {
-			if (strlen(file_data.cFileName) > 0 && callback(file_data.cFileName)) {
+			if (strlen(file_data.cFileName) > 0 && callback(base::u2a(file_data.cFileName))) {
 				delete_list.push_back(file_data.cFileName);
 			}
 		}
 		SFileFindClose(find_handle);
 
 		for (auto& name : delete_list) {
-			file_remove(name);
+			SFileRemoveFile(handle, name.c_str(), 0);
 		}
 	}
 

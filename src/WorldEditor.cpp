@@ -649,7 +649,7 @@ int WorldEditor::customSaveArchive() {
 		newmap.close();
 	}
 
-	if (!fs::exists(sourceMapPath) || !fs::copy_file(sourceMapPath, tempMapPath)) {
+	if (!fs::exists(sourceMapPath) || !CopyFileA(sourceMapPath.string().c_str(), tempMapPath.string().c_str(), 0)) {
 		return 0;
 	}
 
