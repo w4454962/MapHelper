@@ -156,10 +156,10 @@ namespace mpq {
 
 	void MPQ::file_add(const fs::path& path, const fs::path& new_path) const {
 		
-		auto max = max_size();
-		if (size() > max - 10) {
+		auto max = size();
+		if (max - number() < 512) {
 			max *= 2;
-			reset_max(max);
+			reset(max);
 		}
 		bool success = SFileAddFileEx(handle, path.string().c_str(), new_path.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
 	
@@ -217,19 +217,19 @@ namespace mpq {
 	}
 
 
-	size_t MPQ::size() const {
+	size_t MPQ::number() const {
 		size_t num = 0;
 
 		SFileGetFileInfo(handle, SFileMpqNumberOfFiles, &num, 4, nullptr);
 		return num;
 	}
 
-	size_t MPQ::max_size() const {
+	size_t MPQ::size() const {
 		return SFileGetMaxFileCount(handle);
 	}
 
 	
-	void MPQ::reset_max(size_t& size) const {
+	void MPQ::reset(size_t& size) const {
 
 		SFileSetMaxFileCount(handle, size);
 	}

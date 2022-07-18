@@ -65,9 +65,9 @@ namespace mpq {
 		bool compact();
 		bool unpack(const fs::path& path);
 
-		size_t size() const;
-		size_t max_size() const; 
-		void reset_max(size_t& size) const;
+		size_t number() const;
+		size_t size() const; 
+		void reset(size_t& size) const;
 
 
 		File file_open(const fs::path& path) const;
