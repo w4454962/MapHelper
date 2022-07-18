@@ -74,6 +74,28 @@ namespace mpq {
 		close();
 	}
 
+
+	bool MPQ::create(const fs::path& path, size_t file_count, bool encrypt) {
+		SFILE_CREATE_MPQ info;
+		ZeroMemory(&info, sizeof(info));
+
+		info.cbSize = sizeof(SFILE_CREATE_MPQ);
+		
+		if (!encrypt) {
+			info.dwFileFlags1 = MPQ_FILE_EXISTS;
+			info.dwFileFlags2 = MPQ_FILE_EXISTS;
+			info.dwFileFlags3 = MPQ_FILE_EXISTS;
+		}
+		info.dwAttrFlags = MPQ_ATTRIBUTE_CRC32 | MPQ_ATTRIBUTE_FILETIME | MPQ_ATTRIBUTE_MD5;
+		info.dwSectorSize = 0x10000;
+		info.dwRawChunkSize = 0;
+		info.dwMaxFileCount = file_count;
+		if (!SFileCreateArchive2(path.string().c_str(), &info, &handle)) {
+			std::cout << "Failed create mpq " << path << std::endl;
+			return false;
+		}
+		return true;
+	}
 	bool MPQ::open(const fs::path& path, const unsigned long flags) {
 		return SFileOpenArchive(path.string().c_str(), 0, flags, &handle);
 	}

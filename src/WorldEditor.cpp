@@ -639,7 +639,15 @@ int WorldEditor::customSaveArchive()
 
 	clock_t start = clock();
 
-	if (fs::copy_file(sourceMapPath, tempMapPath)) {
+	//如果源文件路径下不存在文件 则是新建要保存的地图
+	if (!fs::exists(sourceMapPath)) {
+		mpq::MPQ newmap;
+
+		newmap.create(sourceMapPath, 0x64, false);
+		newmap.close();
+	}
+
+	if (fs::exists(sourceMapPath) && fs::copy_file(sourceMapPath, tempMapPath)) {
 
 		//关闭源图的mpq占用
 		this_call<void>(getAddress(0x005261D0), data->mappath);

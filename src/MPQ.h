@@ -58,6 +58,8 @@ namespace mpq {
 			return *this;
 		}
 
+		bool create(const fs::path& path, size_t file_count, bool encrypt);
+
 		bool open(const fs::path& path, unsigned long flags = 0);
 		void close();
 		bool compact();
