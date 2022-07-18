@@ -284,7 +284,10 @@ void WorldEditor::onSaveMap(const char* tempPath, EditorData* data)
 	}
 
 
-	if (v_helper.getConfig() & Helper::INCRE_RESOURCE) 
+	fs::path map_path = getCurrentMapPath();
+
+	//只有增量保存 and 非lni格式的地图 才会启动增量更新
+	if (v_helper.getConfig() & Helper::INCRE_RESOURCE  && map_path.filename() != ".w3x")
 	{
 		customSaveArchive();
 	} 
