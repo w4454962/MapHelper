@@ -629,7 +629,7 @@ int WorldEditor::customSaveArchive() {
 
 	name = name.substr(0, name.length() - 4);
 
-	fs::path tempMapPath = path / name;
+	fs::path tempMapPath = path.parent_path() / ("_temp_" + name);
 
 	fs::path sourceMapPath = path.parent_path() / name;
 
@@ -707,14 +707,19 @@ int WorldEditor::customSaveArchive() {
 					if (*archive_path) { //如果有修改过路径 则添加到指定路径里
 						target = archive_path;
 					}
-					printf("导入文件 <%s>\n", target.string().c_str());
+					if (!mpq.file_exists(target.string().c_str())) {
+						printf("导入文件 <%s>\n", target.string().c_str());
+					} else {
+						printf("更新文件 <%s>\n", target.string().c_str());
+					}
+					
 					mpq.file_add(file_path, target);
 					file_list->emplace(target, true);
 
 					//非测试模式下 保存后要将临时文件删除 避免重复导入
-					if (!data->is_test) {
-						fs::remove(file_path);
-					}
+					//if (!data->is_test) {
+					//	fs::remove(file_path);
+					//}
 					continue;
 				}
 			}

@@ -132,10 +132,16 @@ namespace mpq {
 	}
 
 	void MPQ::file_remove(const fs::path& path) const {
+		if (!file_exists(path)) {
+			return;
+		}
 		SFileRemoveFile(handle, path.string().c_str(), 0);
 	}
 
 	void MPQ::file_rename(const fs::path& source, const fs::path& target) const {
+		if (!file_exists(source)) {
+			return;
+		}
 		SFileRenameFile(handle, source.string().c_str(), target.string().c_str());
 	}
 
@@ -198,7 +204,7 @@ namespace mpq {
 		std::vector<fs::path> delete_list;
 
 		while (SFileFindNextFile(find_handle, &file_data)) {
-			if (callback(file_data.cFileName)) {
+			if (strlen(file_data.cFileName) > 0 && callback(file_data.cFileName)) {
 				delete_list.push_back(file_data.cFileName);
 			}
 		}
