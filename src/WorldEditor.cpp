@@ -615,8 +615,7 @@ int WorldEditor::saveArchive()
 	return 0;
 }
 
-int WorldEditor::customSaveArchive() 	
-{
+int WorldEditor::customSaveArchive() {
 	fs::path path = fs::path(getTempSavePath());
 	path.remove_filename();
 
@@ -647,136 +646,141 @@ int WorldEditor::customSaveArchive()
 		newmap.close();
 	}
 
-	if (fs::exists(sourceMapPath) && fs::copy_file(sourceMapPath, tempMapPath)) {
-
-		//关闭源图的mpq占用
-		this_call<void>(getAddress(0x005261D0), data->mappath);
-
-		auto& ydplugin = get_ydplugin_manager();
-
-		mpq::MPQ mpq(tempMapPath);
-		
-		auto file_list = new std::map<fs::path, bool>();
-
-		//替换文件列表
-		for (const auto i : fs::recursive_directory_iterator(path)) {
-			if (i.is_regular_file() && i.path().filename() != name) {
-				auto source = i.path();
-				auto target = fs::relative(source, path);
-				mpq.file_add(source, target);
-				file_list->emplace(target, true);
-			}
-		}
-
-		//如果打开过 输入管理器 处理mpq文件 进行增量更新
-		if (g_editor_windows[6] != nullptr) {
-			//统计一下 
-			{
-				uintptr_t object = *(uintptr_t*)((uintptr_t)data + 0x3904);
-				uint32_t size = *(uint32_t*)(object + 0x20c);
-				uint32_t ptr = *(uint32_t*)(object + 0x210);
-
-				const char* import_base_path = (const char*)(object);
-
-				//遍历文件列表
-				for (int i = 0; i < size; i++) {
-					uintptr_t p = ptr + i * 0x209;
-					const char* import_path = (const char*)(p + 1);
-					const char* archive_path = (const char*)(p + 0x105);
-					uint8_t byte = *(uint8_t*)(p);
-
-					// 导入文件后 才会生成该路径
-					if (import_base_path && *import_base_path) {
-						fs::path file_path = fs::path(import_base_path) / import_path;
-
-						if (!fs::exists(file_path)) {
-							file_path = fs::path(import_base_path) / "war3mapImported" / import_path;
-						}
-
-						//如果本地有该文件， 则视为添加文件
-						if (fs::exists(file_path)) {
-							fs::path target = fs::path("war3mapImported") / file_path.filename();
-
-							if (*archive_path) { //如果有修改过路径 则添加到指定路径里
-								target = archive_path;
-							}
-							printf("导入文件 <%s>\n", target.string().c_str());
-							mpq.file_add(file_path, target);
-							file_list->emplace(target, true);
-
-							//非测试模式下 保存后要将临时文件删除 避免重复导入
-							if (!data->is_test) {
-								fs::remove(file_path);
-							}
-							continue;
-						}
-					}
-
-					//如果2个名字同时存在 并且不一致  则视为 修改名字
-					if (*import_path && *archive_path && strcmp(import_path, archive_path) != 0) {
-						if (mpq.file_exists(import_path)) {
-							printf("文件重命名 <%s> = <%s>\n", import_path, archive_path);
-							mpq.file_rename(import_path, archive_path);
-							file_list->emplace(archive_path, true);
-							file_list->erase(import_path);
-						}
-						continue;
-					}
-					//	printf("%i %x <%s> %i <%s>\n", i, byte, import_path, 0, archive_path);
-				}
-			}
-
-			//读取输入管理器窗口里的完整路径列表
-			{
-				HWND hwnd = g_editor_windows[6];
-				HANDLE handle = GetPropA(hwnd, "OsGuiPointer");
-				if (handle) {
-					uintptr_t ptr = *(uintptr_t*)((uintptr_t)handle + 0x10);
-					if (ptr) {
-						ptr = *(uintptr_t*)(ptr + 0x8c);
-						if (ptr) {
-							uint32_t size = *(uint32_t*)(ptr + 0x48);
-							ptr = *(uintptr_t*)(ptr + 0x4c);
-	
-							if (ptr && size > 0) {
-								for (int i = 0; i < size; i++) {
-									//const char* name = (const char*)(ptr + 0x190 * i + 0x8);
-									const char* path = (const char*)(ptr + 0x190 * i + 0x88);
-									if (path && *path) {
-										file_list->emplace(fs::path(path), true);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			//处理删除文件
-			mpq.earch_delete_files("*", [&](const fs::path& filename) {
-				if (file_list->find(filename) == file_list->end()) {
-					printf("删除文件 <%s>\n", filename.string().c_str());
-					return true;
-				}
-				return false;
-			});
-		}
-
-	
-		mpq.compact();
-		mpq.close();
-
-	
-		//执行ydwe的编译流程
-		ydplugin.on_save_event(base::a2u(tempMapPath.string()), data->is_test);
-
-		//移动文件目录
-		int ret = fast_call<int>(getAddress(0x004D0F60), tempMapPath.string().c_str(), sourceMapPath.string().c_str(), 1, 0);
-	
-		print("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
-
-		RELEASE(file_list);
+	if (!fs::exists(sourceMapPath) || !fs::copy_file(sourceMapPath, tempMapPath)) {
+		return 0;
 	}
+
+	//关闭源图的mpq占用
+	this_call<void>(getAddress(0x005261D0), data->mappath);
+
+	auto& ydplugin = get_ydplugin_manager();
+
+	mpq::MPQ mpq(tempMapPath);
+
+	auto file_list = new std::map<fs::path, bool>();
+
+	//替换文件列表
+	for (const auto i : fs::recursive_directory_iterator(path)) {
+		if (i.is_regular_file() && i.path().filename() != name) {
+			auto source = i.path();
+			auto target = fs::relative(source, path);
+			mpq.file_add(source, target);
+			file_list->emplace(target, true);
+		}
+	}
+
+	//如果打开过 输入管理器 处理mpq文件 进行增量更新 否则跳过
+	if (g_editor_windows[6] == nullptr) {
+		goto pos;
+	}
+
+	//统计一下 
+	{
+		uintptr_t object = *(uintptr_t*)((uintptr_t)data + 0x3904);
+		uint32_t size = *(uint32_t*)(object + 0x20c);
+		uint32_t ptr = *(uint32_t*)(object + 0x210);
+
+		const char* import_base_path = (const char*)(object);
+
+		//遍历文件列表
+		for (int i = 0; i < size; i++) {
+			uintptr_t p = ptr + i * 0x209;
+			const char* import_path = (const char*)(p + 1);
+			const char* archive_path = (const char*)(p + 0x105);
+			uint8_t byte = *(uint8_t*)(p);
+
+			// 导入文件后 才会生成该路径
+			if (import_base_path && *import_base_path) {
+				fs::path file_path = fs::path(import_base_path) / import_path;
+
+				if (!fs::exists(file_path)) {
+					file_path = fs::path(import_base_path) / "war3mapImported" / import_path;
+				}
+
+				//如果本地有该文件， 则视为添加文件
+				if (fs::exists(file_path)) {
+					fs::path target = fs::path("war3mapImported") / file_path.filename();
+
+					if (*archive_path) { //如果有修改过路径 则添加到指定路径里
+						target = archive_path;
+					}
+					printf("导入文件 <%s>\n", target.string().c_str());
+					mpq.file_add(file_path, target);
+					file_list->emplace(target, true);
+
+					//非测试模式下 保存后要将临时文件删除 避免重复导入
+					if (!data->is_test) {
+						fs::remove(file_path);
+					}
+					continue;
+				}
+			}
+
+			//如果2个名字同时存在 并且不一致  则视为 修改名字
+			if (*import_path && *archive_path && strcmp(import_path, archive_path) != 0) {
+				if (mpq.file_exists(import_path)) {
+					printf("文件重命名 <%s> = <%s>\n", import_path, archive_path);
+					mpq.file_rename(import_path, archive_path);
+					file_list->emplace(archive_path, true);
+					file_list->erase(import_path);
+				}
+				continue;
+			}
+			//	printf("%i %x <%s> %i <%s>\n", i, byte, import_path, 0, archive_path);
+		}
+	}
+
+	//读取输入管理器窗口里的完整路径列表
+	{
+		HWND hwnd = g_editor_windows[6];
+		HANDLE handle = GetPropA(hwnd, "OsGuiPointer");
+		if (handle) {
+			uintptr_t ptr = *(uintptr_t*)((uintptr_t)handle + 0x10);
+			if (ptr) {
+				ptr = *(uintptr_t*)(ptr + 0x8c);
+				if (ptr) {
+					uint32_t size = *(uint32_t*)(ptr + 0x48);
+					ptr = *(uintptr_t*)(ptr + 0x4c);
+
+					if (ptr && size > 0) {
+						for (int i = 0; i < size; i++) {
+							//const char* name = (const char*)(ptr + 0x190 * i + 0x8);
+							const char* path = (const char*)(ptr + 0x190 * i + 0x88);
+							if (path && *path) {
+								file_list->emplace(fs::path(path), true);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	//处理删除文件
+	mpq.earch_delete_files("*", [&](const fs::path& filename) {
+		if (file_list->find(filename) == file_list->end()) {
+			printf("删除文件 <%s>\n", filename.string().c_str());
+			return true;
+		}
+		return false;
+	});
+
+pos:
+
+	mpq.compact();
+	mpq.close();
+
+
+	//执行ydwe的编译流程
+	ydplugin.on_save_event(base::a2u(tempMapPath.string()), data->is_test);
+
+	//移动文件目录
+	int ret = fast_call<int>(getAddress(0x004D0F60), tempMapPath.string().c_str(), sourceMapPath.string().c_str(), 1, 0);
+
+	print("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+
+	RELEASE(file_list);
+
 
 	return 1;
 }
