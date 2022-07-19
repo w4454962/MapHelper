@@ -658,8 +658,12 @@ int WorldEditor::customSaveArchive() {
 
 	auto& ydplugin = get_ydplugin_manager();
 
-	mpq::MPQ mpq(tempMapPath);
+	mpq::MPQ mpq;
 
+	if (!mpq.open(tempMapPath, 0)) {
+		printf("打开地图文件失败， 增量模式失败， 取消增量模式 再重新保存\n");
+		return 0;
+	}
 	auto file_list = new std::map<std::string, bool>();
 
 
