@@ -17,7 +17,6 @@ public:
 
 	void extract();
 
-
 	void on_save_event(const std::string& map_path, bool is_test);
 
 	std::map<std::wstring, std::wstring> m_plugins_path;;

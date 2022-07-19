@@ -292,15 +292,6 @@ log.info("on_save_event map_path", map_path)
 log.info("on_save_event is_test", is_test)
 
 
-	local compiler = package.loaded['compiler']
-	if compiler then --ydwe 1.32版本
-		local save_version = war3_version:is_new() and 24 or 20
-		local result = compiler:compile(fs.path(map_path), global_config, save_version)
-		log.debug("Compiler Result " .. tostring(result))
-		return 
-	end 
-
-
 	--ydwe 1.31 
 
 	--草 acb的孤儿写法 拿不到event里的函数 操他妈的 写个破工具还怕被人调用

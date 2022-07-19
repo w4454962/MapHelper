@@ -645,7 +645,6 @@ int WorldEditor::customSaveArchive() {
 	//如果源文件路径下不存在文件 则是新建要保存的地图
 	if (!fs::exists(sourceMapPath)) {
 		mpq::MPQ newmap;
-
 		newmap.create(sourceMapPath, 0x64, false);
 		newmap.close();
 	}
@@ -663,15 +662,20 @@ int WorldEditor::customSaveArchive() {
 
 	auto file_list = new std::map<std::string, bool>();
 
-	//替换文件列表
-	for (const auto i : fs::recursive_directory_iterator(path)) {
-		if (i.is_regular_file() && i.path().filename() != name) {
-			auto source = i.path();
-			auto target = fs::relative(source, path);
-			mpq.file_add(source, target);
-			file_list->emplace(target.string(), true);
+
+	std::function<void()> add_temp_files = [&]() {
+		//替换文件列表
+		for (const auto i : fs::recursive_directory_iterator(path)) {
+			if (i.is_regular_file() && i.path().filename() != name) {
+				auto source = i.path();
+				auto target = fs::relative(source, path);
+				mpq.file_add(source, target);
+				file_list->emplace(target.string(), true);
+			}
 		}
-	}
+	};
+
+	add_temp_files();
 
 	//如果打开过 输入管理器 处理mpq文件 进行增量更新 否则跳过
 	if (g_editor_windows[6] == nullptr) {
@@ -777,13 +781,38 @@ int WorldEditor::customSaveArchive() {
 
 pos:
 
-	mpq.compact();
-	mpq.close();
+	auto& helper = get_helper();
 
+	
+	if (fs::exists(helper.ydwe_path / "compiler" / "script" / "init.lua")) {
+		// 判断是ydwe1.32
 
-	//执行ydwe的编译流程
-	ydplugin.on_save_event(base::a2u(tempMapPath.string()), data->is_test);
+		fs::path newTempPath = path / name;
 
+		//创建的空地图进行编译
+		mpq::MPQ newmap;
+		newmap.create(newTempPath, 0x64, false);
+		newmap.close();
+
+		//执行ydwe的编译流程
+		ydplugin.on_save_event(base::a2u(newTempPath.string()), data->is_test);
+
+		//把编译完的文件添加到temp地图里
+		add_temp_files();
+
+		mpq.compact(); 
+		mpq.close();
+	
+	} else {
+		//否则是 ydwe1.31
+
+		mpq.compact();
+		mpq.close();
+
+		//执行ydwe的编译流程
+		ydplugin.on_save_event(base::a2u(tempMapPath.string()), data->is_test);
+	}
+	
 	//移动文件目录
 	int ret = fast_call<int>(getAddress(0x004D0F60), tempMapPath.string().c_str(), sourceMapPath.string().c_str(), 1, 0);
 
