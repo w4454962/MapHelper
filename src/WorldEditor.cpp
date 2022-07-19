@@ -661,7 +661,7 @@ int WorldEditor::customSaveArchive() {
 
 	mpq::MPQ mpq(tempMapPath);
 
-	auto file_list = new std::map<fs::path, bool>();
+	auto file_list = new std::map<std::string, bool>();
 
 	//替换文件列表
 	for (const auto i : fs::recursive_directory_iterator(path)) {
@@ -669,7 +669,7 @@ int WorldEditor::customSaveArchive() {
 			auto source = i.path();
 			auto target = fs::relative(source, path);
 			mpq.file_add(source, target);
-			file_list->emplace(target, true);
+			file_list->emplace(target.string(), true);
 		}
 	}
 
@@ -715,7 +715,7 @@ int WorldEditor::customSaveArchive() {
 					}
 					
 					mpq.file_add(file_path, target);
-					file_list->emplace(target, true);
+					file_list->emplace(target.string(), true);
 
 					//非测试模式下 保存后要将临时文件删除 避免重复导入
 					//if (!data->is_test) {
@@ -756,7 +756,8 @@ int WorldEditor::customSaveArchive() {
 							//const char* name = (const char*)(ptr + 0x190 * i + 0x8);
 							const char* path = (const char*)(ptr + 0x190 * i + 0x88);
 							if (path && *path) {
-								file_list->emplace(fs::path(path), true);
+								file_list->emplace(path, true);
+								file_list->emplace(base::u2a(path), true);
 							}
 						}
 					}
@@ -766,9 +767,9 @@ int WorldEditor::customSaveArchive() {
 	}
 
 	//处理删除文件
-	mpq.earch_delete_files("*", [&](const fs::path& filename) {
+	mpq.earch_delete_files("*", [&](const std::string& filename) {
 		if (file_list->find(filename) == file_list->end()) {
-			printf("删除文件 <%s>\n", filename.string().c_str());
+			printf("删除文件 <%s>\n", filename.c_str());
 			return true;
 		}
 		return false;

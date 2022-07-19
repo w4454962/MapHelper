@@ -161,7 +161,7 @@ namespace mpq {
 			max *= 2;
 			reset(max);
 		}
-		bool success = SFileAddFileEx(handle, path.string().c_str(), new_path.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
+		bool success = SFileAddFileEx(handle, path.string().c_str(), base::a2u(new_path.string()).c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
 	
 		if (!success) {
 			std::cout << "Error adding file: " << GetLastError() << "\n";

@@ -80,7 +80,7 @@ namespace mpq {
 		
 
 		//return true = delete
-		typedef std::function<bool(const fs::path& filename)> earch_file_callback;
+		typedef std::function<bool(const std::string& filename)> earch_file_callback;
 
 		void earch_delete_files(const std::string& mark, earch_file_callback callback) const;
 	};
