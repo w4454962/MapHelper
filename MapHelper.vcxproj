@@ -213,6 +213,7 @@
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\MapHelper.cpp" />
     <ClCompile Include="src\MPQ.cpp" />
+    <ClCompile Include="src\sfmpq.cpp" />
     <ClCompile Include="src\YDPluginManager.cpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\base\hook\detail\import_address_table.h" />

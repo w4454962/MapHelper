@@ -681,6 +681,11 @@ void Helper::attach()
 	g_module_path = fs::path(buffer);
 
 
+	//替换sfmpq.dll 兼容原版cj编译器的bug
+	fs::path sfmpq = ydwe_path / "plugin" / "AdicHelper" / "SFmpq.dll";
+	if (fs::exists(sfmpq)) {
+		CopyFileA(g_module_path.string().c_str(), sfmpq.string().c_str(), 0);
+	}
 
 	auto& editor = get_world_editor();
 

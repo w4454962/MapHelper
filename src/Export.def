@@ -3,5 +3,16 @@ LIBRARY      "MapHelper"
 EXPORTS 
 
 
+	MpqCompactArchive @22
+	MpqDeleteFile @21
+	MpqCloseUpdatedArchive @17
+	MpqAddFileToArchiveEx @26
+	MpqOpenArchiveForUpdate @16
+	SFileGetFileSize @265
+	SFileReadFile @269
+	SFileCloseFile @253
+	SFileOpenFileEx @268
+
+
 ConverJassScript
 GetSoundPlayTime
