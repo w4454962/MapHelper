@@ -926,7 +926,7 @@ version 2.3a update:
 
 <green>
 默认显示控制台、默认开启加速保存模式、触发编辑器右上角的按钮可以关闭
-
+可以到触发编辑器右上角 开启增量更新模式， 保存会更快。
 </green>
 
 
@@ -964,7 +964,7 @@ uint32_t Helper::getConfig()
 	if (config == 0) {
 		config = ENABLE_PLUGIN |
 				SUPPER_SPEED_SAVE |
-				INCRE_RESOURCE |
+				//INCRE_RESOURCE |
 				SHOW_CONSOLE;
 
 		setConfig(config);

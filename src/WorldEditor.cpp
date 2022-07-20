@@ -777,7 +777,7 @@ int WorldEditor::customSaveArchive() {
 	//处理删除文件
 	mpq.earch_delete_files("*", [&](const std::string& filename) {
 		if (file_list->find(filename) == file_list->end()) {
-			printf("删除文件 <%s>\n", filename.c_str());
+			//printf("删除文件 <%s>\n", filename.c_str());
 			return true;
 		}
 		return false;
