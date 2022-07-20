@@ -632,13 +632,23 @@ int WorldEditor::customSaveArchive() {
 
 	fs::path tempMapPath = path.parent_path() / ("_temp_" + name);
 
-	fs::path sourceMapPath = path.parent_path() / name;
+	fs::path sourceMapPath = getCurrentMapPath();
+
+	if (!fs::exists(sourceMapPath)) {
+		sourceMapPath = path.parent_path() / name;
+	}
+
+	fs::path targetMapPath = path.parent_path() / name;
 
 	auto data = getEditorData();
 
 	print("增量更新地图文件资源\n");
 
-	print("路径 %s\n", path.string().c_str());
+	print("源图路径 %s\n", sourceMapPath.string().c_str());
+
+	print("临时路径 %s\n", path.string().c_str());
+
+	print("目标路径 %s\n", targetMapPath.string().c_str());
 
 	clock_t start = clock();
 
@@ -818,7 +828,7 @@ pos:
 	}
 	
 	//移动文件目录
-	int ret = fast_call<int>(getAddress(0x004D0F60), tempMapPath.string().c_str(), sourceMapPath.string().c_str(), 1, 0);
+	int ret = fast_call<int>(getAddress(0x004D0F60), tempMapPath.string().c_str(), targetMapPath.string().c_str(), 1, 0);
 
 	print("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
