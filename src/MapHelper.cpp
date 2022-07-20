@@ -815,6 +815,10 @@ void Helper::detach()
 	//释放控制台避免崩溃
 	FreeConsole();
 #endif
+
+	auto& manager = get_ydplugin_manager();
+
+	manager.detach();
 }
 
 

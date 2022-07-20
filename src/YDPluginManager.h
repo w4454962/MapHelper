@@ -31,7 +31,7 @@ protected:
 
 	struct HookInfo {
 		uintptr_t real;
-		HMODULE module;
+		std::string module_name;
 		std::string dll_name;
 		std::string api_name;
 	};

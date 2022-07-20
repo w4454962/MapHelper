@@ -182,17 +182,17 @@ void YDPluginManager::attach() {
 		auto handle = GetModuleHandleA(name.c_str());
 		if (handle) {
 			HookInfo info;
-			info.module = handle;
+			info.module_name = name;
 			info.dll_name = "Kernel32.dll";
 			info.api_name = "CreateProcessW";
-			info.real = base::hook::iat(info.module, info.dll_name.c_str(), info.api_name.c_str(), (uintptr_t)&fakeCreateProcessW);
+			info.real = base::hook::iat(handle, info.dll_name.c_str(), info.api_name.c_str(), (uintptr_t)&fakeCreateProcessW);
 			m_hook_list.push_back(info);
 
 			HookInfo info2;
-			info2.module = handle;
+			info2.module_name = name;
 			info2.dll_name = "Kernel32.dll";
 			info2.api_name = "WaitForSingleObject";
-			info2.real = base::hook::iat(info2.module, info2.dll_name.c_str(), info2.api_name.c_str(), (uintptr_t)&fakeWaitForSingleObject);
+			info2.real = base::hook::iat(handle, info2.dll_name.c_str(), info2.api_name.c_str(), (uintptr_t)&fakeWaitForSingleObject);
 			m_hook_list.push_back(info2);
 		}
 	}
@@ -204,10 +204,10 @@ void YDPluginManager::attach() {
 		auto handle = GetModuleHandleA("event.dll");
 		if (handle && GetModuleHandleA(name.c_str())) {
 			HookInfo info;
-			info.module = handle;
+			info.module_name = "event.dll";
 			info.dll_name = name.c_str();
 			info.api_name = "lua_pushstring";
-			info.real = base::hook::iat(info.module, info.dll_name.c_str(), info.api_name.c_str(), (uintptr_t)&fake_lua_pushstring);
+			info.real = base::hook::iat(handle, info.dll_name.c_str(), info.api_name.c_str(), (uintptr_t)&fake_lua_pushstring);
 			m_hook_list.push_back(info);
 		}
 	}
@@ -228,7 +228,10 @@ void YDPluginManager::detach() {
 	m_attach = false;
 
 	for (auto& info : m_hook_list) {
-		base::hook::iat(info.module, info.dll_name.c_str(), info.api_name.c_str(), info.real);
+		HMODULE handle = GetModuleHandleA(info.module_name.c_str());
+		if (handle) {
+			base::hook::iat(handle, info.dll_name.c_str(), info.api_name.c_str(), info.real);
+		}
 	}
 }
  
