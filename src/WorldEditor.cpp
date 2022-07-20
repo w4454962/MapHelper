@@ -6,6 +6,9 @@
 #include <include\Export.h>
 #include <YDPluginManager.h>
 #include <HashTable.hpp>
+
+#include <algorithm> 
+
 extern MakeEditorData* g_make_editor_data;
 
 std::map<std::string, std::string> g_config_map;
@@ -598,7 +601,7 @@ int WorldEditor::saveArchive()
 	clock_t start = clock();
 
 	int ret = this_call<int>(getAddress(0x0055D720), getEditorData(), pathTemp.string().c_str(), 1);
-
+	
 	if (ret)
 	{
 		path.remove_filename();
@@ -630,36 +633,36 @@ int WorldEditor::customSaveArchive() {
 
 	name = name.substr(0, name.length() - 4);
 
-	fs::path tempMapPath = path.parent_path() / ("_temp_" + name);
+	fs::path temp_map_path = path.parent_path() / ("_temp_" + name);
 
-	fs::path sourceMapPath = getCurrentMapPath();
+	fs::path source_map_path = getCurrentMapPath();
 
-	if (!fs::exists(sourceMapPath)) {
-		sourceMapPath = path.parent_path() / name;
+	if (!fs::exists(source_map_path)) {
+		source_map_path = path.parent_path() / name;
 	}
 
-	fs::path targetMapPath = path.parent_path() / name;
+	fs::path target_map_path = path.parent_path() / name;
 
 	auto data = getEditorData();
 
 	print("增量更新地图文件资源\n");
 
-	print("源图路径 %s\n", sourceMapPath.string().c_str());
+	print("源图路径 %s\n", source_map_path.string().c_str());
 
 	print("临时路径 %s\n", path.string().c_str());
 
-	print("目标路径 %s\n", targetMapPath.string().c_str());
+	print("目标路径 %s\n", target_map_path.string().c_str());
 
 	clock_t start = clock();
 
 	//如果源文件路径下不存在文件 则是新建要保存的地图
-	if (!fs::exists(sourceMapPath)) {
+	if (!fs::exists(source_map_path)) {
 		mpq::MPQ newmap;
-		newmap.create(sourceMapPath, 0x64, false);
+		newmap.create(source_map_path, 0x64, false);
 		newmap.close();
 	}
 
-	if (!fs::exists(sourceMapPath) || !CopyFileA(sourceMapPath.string().c_str(), tempMapPath.string().c_str(), 0)) {
+	if (!fs::exists(source_map_path) || !CopyFileA(source_map_path.string().c_str(), temp_map_path.string().c_str(), 0)) {
 		return 0;
 	}
 
@@ -670,31 +673,34 @@ int WorldEditor::customSaveArchive() {
 
 	mpq::MPQ mpq;
 
-	if (!mpq.open(tempMapPath, 0)) {
+	if (!mpq.open(temp_map_path, 0)) {
 		printf("打开地图文件失败， 增量模式失败， 取消增量模式 再重新保存\n");
 		return 0;
 	}
 	auto file_list = new std::map<std::string, bool>();
 
+	auto ignore_map = new std::map<std::string, bool>();
+
+	ignore_map->emplace(name, true);
 
 	std::function<void()> add_temp_files = [&]() {
 		//替换文件列表
 		for (const auto i : fs::recursive_directory_iterator(path)) {
-			if (i.is_regular_file() && i.path().filename() != name) {
-				auto source = i.path();
-				auto target = fs::relative(source, path);
-				mpq.file_add(source, target);
-				file_list->emplace(target.string(), true);
+			if (!i.is_regular_file()) {
+				continue;
 			}
+			std::string str = i.path().filename().string();
+			std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+
+			if (ignore_map->find(str) != ignore_map->end()) {
+				continue;
+			}
+			auto source = i.path();
+			auto target = fs::relative(source, path);
+			mpq.file_add(source, target);
+			file_list->emplace(target.string(), true);
 		}
 	};
-
-	add_temp_files();
-
-	//如果打开过 输入管理器 处理mpq文件 进行增量更新 否则跳过
-	if (g_editor_windows[6] == nullptr) {
-		goto pos;
-	}
 
 	//统计一下 
 	{
@@ -710,6 +716,22 @@ int WorldEditor::customSaveArchive() {
 			const char* import_path = (const char*)(p + 1);
 			const char* archive_path = (const char*)(p + 0x105);
 			uint8_t byte = *(uint8_t*)(p);
+
+			if (import_path && *import_path) {
+				std::string str(import_path);
+				std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+			
+				//如果有导入文件 则 忽略掉编辑器生成的
+				switch (hash_(str.c_str())) {
+				case "war3mapmap.blp"s_hash:
+				case "war3mapmap.tga"s_hash:
+					ignore_map->emplace("war3mapmap.blp", true);
+					ignore_map->emplace("war3mapmap.tga", true);
+					break;
+				default:
+					break;
+				}
+			}
 
 			// 导入文件后 才会生成该路径
 			if (import_base_path && *import_base_path) {
@@ -755,6 +777,13 @@ int WorldEditor::customSaveArchive() {
 			}
 			//	printf("%i %x <%s> %i <%s>\n", i, byte, import_path, 0, archive_path);
 		}
+	}
+
+	add_temp_files();
+
+	//如果打开过 输入管理器 处理mpq文件 进行增量更新 否则跳过
+	if (g_editor_windows[6] == nullptr) {
+		goto pos;
 	}
 
 	//读取输入管理器窗口里的完整路径列表
@@ -824,16 +853,16 @@ pos:
 		mpq.close();
 
 		//执行ydwe的编译流程
-		ydplugin.on_save_event(base::a2u(tempMapPath.string()), data->is_test);
+		ydplugin.on_save_event(base::a2u(temp_map_path.string()), data->is_test);
 	}
 	
 	//移动文件目录
-	int ret = fast_call<int>(getAddress(0x004D0F60), tempMapPath.string().c_str(), targetMapPath.string().c_str(), 1, 0);
+	int ret = fast_call<int>(getAddress(0x004D0F60), temp_map_path.string().c_str(), target_map_path.string().c_str(), 1, 0);
 
 	print("地图打包完成 耗时 : %f 秒\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	RELEASE(file_list);
-
+	RELEASE(ignore_map);
 
 	return 1;
 }
