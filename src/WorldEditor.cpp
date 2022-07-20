@@ -766,7 +766,7 @@ int WorldEditor::customSaveArchive() {
 			}
 
 			//如果2个名字同时存在 并且不一致  则视为 修改名字
-			if (*import_path && *archive_path && strcmp(import_path, archive_path) != 0) {
+			if (import_path && *import_path && archive_path && *archive_path && strcmp(import_path, archive_path) != 0) {
 				if (mpq.file_exists(import_path)) {
 					printf("文件重命名 <%s> = <%s>\n", import_path, archive_path);
 					mpq.file_rename(import_path, archive_path);
