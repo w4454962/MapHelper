@@ -782,14 +782,8 @@ int WorldEditor::customSaveArchive() {
 	add_temp_files();
 
 	//如果打开过 输入管理器 处理mpq文件 进行增量更新 否则跳过
-	if (g_editor_windows[6] == nullptr) {
-		goto pos;
-	}
-
-	//读取输入管理器窗口里的完整路径列表
-	{
-		HWND hwnd = g_editor_windows[6];
-		HANDLE handle = GetPropA(hwnd, "OsGuiPointer");
+	if (g_editor_windows[6]) {
+		HANDLE handle = GetPropA(g_editor_windows[6], "OsGuiPointer");
 		if (handle) {
 			uintptr_t ptr = *(uintptr_t*)((uintptr_t)handle + 0x10);
 			if (ptr) {
@@ -811,18 +805,16 @@ int WorldEditor::customSaveArchive() {
 				}
 			}
 		}
+
+		//处理删除文件
+		mpq.earch_delete_files("*", [&](const std::string& filename) {
+			if (file_list->find(filename) == file_list->end()) {
+				//printf("删除文件 <%s>\n", filename.c_str());
+				return true;
+			}
+			return false;
+		});
 	}
-
-	//处理删除文件
-	mpq.earch_delete_files("*", [&](const std::string& filename) {
-		if (file_list->find(filename) == file_list->end()) {
-			//printf("删除文件 <%s>\n", filename.c_str());
-			return true;
-		}
-		return false;
-	});
-
-pos:
 
 	auto& helper = get_helper();
 
