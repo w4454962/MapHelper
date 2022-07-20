@@ -893,7 +893,7 @@ void Helper::enableConsole()
 		SetConsoleMode(hStdin, mode);
 		::DeleteMenu(::GetSystemMenu(v_hwnd_console, FALSE), SC_CLOSE, MF_BYCOMMAND);
 		::DrawMenuBar(v_hwnd_console);
-		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.3b");
+		::SetWindowTextA(v_hwnd_console, "ydwe保存加速插件 2.3c");
 
 		
 		std::string text = R"(
@@ -904,9 +904,9 @@ void Helper::enableConsole()
 排名不分先后，为魔兽地图社区的贡献表示感谢。
 bug反馈：魔兽地图编辑器吧 -> @<yellow>w4454962</yellow> 加速器bug反馈群 -> <green>724829943</green>   lua技术交流3群 -> <blue>710331384</blue>。
 						----2022/7/03 
-version 2.3b update:
+version 2.3c update:
 <grey>
-<green>2.3b:
+<green>2.3c:
 	1. 在触发编辑器里新增几个开关，不再使用弹框
 	2. 新增增量保存模式， 极速提升保存的时间 </green>
 2.2r: 修复逆天局部跟逆天数组同名时， 逆天局部自动传参失效的bug
