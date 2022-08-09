@@ -672,7 +672,7 @@ void TriggerEditor::saveSctipt(const char* path)
 	endif
 
 	if ( canDrop ) then
-		)");
+		)"); 
 
 		writer.write_string("\n");
 		ItemTable* itemTable = &worldData->item_table[i];
@@ -682,11 +682,18 @@ void TriggerEditor::saveSctipt(const char* path)
 			ItemTableSetting* itemSetting = &itemTable->item_setting[a];
 
 			writer.write_string("\t\tcall RandomDistReset()\n");
+			int max_race = 100;
 			for (uint32_t b = 0; b < itemSetting->info_count; b++)
 			{
 				ItemTableInfo* info = &itemSetting->item_infos[b];
+				max_race -= (int)info->rate;
 				writer.write_string("\t\tcall RandomDistAddItem(" + WriteRandomDisItem(info->name) + ", " + std::to_string(info->rate) + ")\n");
 			}
+			if (max_race > 0) //如果有剩余概率 则填空物品
+			{ 
+				writer.write_string("\t\tcall RandomDistAddItem( -1, " + std::to_string(max_race) + ")\n");
+			}
+
 			writer.write_string(R"(
 		set itemID=RandomDistChoose()
 		if ( trigUnit != null ) then
