@@ -713,6 +713,11 @@ int WorldEditor::customSaveArchive() {
 		//遍历文件列表
 		for (int i = 0; i < size; i++) {
 			uintptr_t p = ptr + i * 0x209;
+			//第四个标志位  添加  0添加  1非添加
+			//第三个标志位  自定义路径 0默认路径  1自定义路径
+			//第二个标志位  改名  0 非改名   1 改名
+			//第一个个标志位  默认路径是否被修改 0  1
+			uint8_t flag = *(uint8_t*)p;
 			const char* import_path = (const char*)(p + 1);
 			const char* archive_path = (const char*)(p + 0x105);
 			uint8_t byte = *(uint8_t*)(p);
@@ -737,13 +742,18 @@ int WorldEditor::customSaveArchive() {
 			if (import_base_path && *import_base_path) {
 				fs::path file_path = fs::path(import_base_path) / import_path;
 
-				if (!fs::exists(file_path)) {
+				//判断是否为默认路径
+				if (!(flag & 0b0100)) {
 					file_path = fs::path(import_base_path) / "war3mapImported" / import_path;
 				}
 
 				//如果本地有该文件， 则视为添加文件
 				if (fs::exists(file_path)) {
-					fs::path target = fs::path("war3mapImported") / file_path.filename();
+					fs::path target{};
+					if (!(flag & 0b0100))
+						target = fs::path("war3mapImported") / file_path.filename();
+					else
+						target = file_path.filename();
 
 					if (*archive_path) { //如果有修改过路径 则添加到指定路径里
 						target = archive_path;
@@ -777,6 +787,7 @@ int WorldEditor::customSaveArchive() {
 			}
 			//	printf("%i %x <%s> %i <%s>\n", i, byte, import_path, 0, archive_path);
 		}
+		fs::remove_all(import_base_path);
 	}
 
 	add_temp_files();
