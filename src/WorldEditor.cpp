@@ -6,8 +6,9 @@
 #include <include\Export.h>
 #include <YDPluginManager.h>
 #include <HashTable.hpp>
-
+#include <base/util/BinaryReader.h>
 #include <algorithm> 
+#include <unordered_set>
 
 extern MakeEditorData* g_make_editor_data;
 
@@ -677,7 +678,7 @@ int WorldEditor::customSaveArchive() {
 		printf("打开地图文件失败， 增量模式失败， 取消增量模式 再重新保存\n");
 		return 0;
 	}
-	auto file_list = new std::map<std::string, bool>();
+	auto file_list = new std::unordered_set<fs::path>();
 
 	auto ignore_map = new std::map<std::string, bool>();
 
@@ -698,9 +699,38 @@ int WorldEditor::customSaveArchive() {
 			auto source = i.path();
 			auto target = fs::relative(source, path);
 			mpq.file_add(source, target);
-			file_list->emplace(target.string(), true);
 		}
 	};
+
+	//war3mapImported
+	std::function get_default_path = [](fs::path filename) -> fs::path
+	{
+		if(filename.parent_path() == "war3mapImported")
+		{
+			return filename;
+		}
+		return  fs::path("war3mapImported") / filename;
+	};
+
+	std::function parser_imp = [file_list,&mpq,&get_default_path]()
+	{
+		if (!mpq.file_exists("war3map.imp"))
+			return;
+		auto imp = mpq.file_open("war3map.imp");
+		BinaryReader reader(imp.read());
+		reader.advance(4);
+		const auto count = reader.read<uint32_t>();
+		for (int i = 0; i < count; ++i)
+		{
+			auto flag = reader.read<uint8_t>();
+			fs::path path = reader.read_c_string();
+			if (!(flag & 1))
+				path = get_default_path(path);
+			file_list->insert(path);
+		}
+	};
+
+
 
 	//统计一下 
 	{
@@ -708,19 +738,42 @@ int WorldEditor::customSaveArchive() {
 		uint32_t size = *(uint32_t*)(object + 0x20c);
 		uint32_t ptr = *(uint32_t*)(object + 0x210);
 
-		const char* import_base_path = (const char*)(object);
+		fs::path import_base_path = (const char*)(object);
+
+		parser_imp();
+
+		for (int i = 0; i < size; i++) {
+			uintptr_t p = ptr + i * 0x209;
+			uint8_t flag = *(uint8_t*)p;
+			fs::path origin_path = (const char*)(p + 1);
+			if (!(flag & 1))
+				origin_path = get_default_path(origin_path);
+			if (file_list->find(origin_path) != file_list->end())
+				file_list->erase(origin_path);
+		}
+
+		for (const auto & file : *file_list)
+		{
+			mpq.file_remove(file);
+			printf("文件删除 <%s>\n", file.string().c_str());
+		}
+
 
 		//遍历文件列表
 		for (int i = 0; i < size; i++) {
 			uintptr_t p = ptr + i * 0x209;
 			//第四个标志位  添加  0添加  1非添加
-			//第三个标志位  自定义路径 0默认路径  1自定义路径
+			//第三个标志位  目标文件位置 0默认路径  1自定义路径
 			//第二个标志位  改名  0 非改名   1 改名
-			//第一个个标志位  默认路径是否被修改 0  1
+			//第一个个标志位  原文件位置  0 默认路径 1 自定义路径
 			uint8_t flag = *(uint8_t*)p;
 			const char* import_path = (const char*)(p + 1);
 			const char* archive_path = (const char*)(p + 0x105);
 			uint8_t byte = *(uint8_t*)(p);
+			bool add_file = !(flag & (1 << 3));
+			bool target_default = !(flag & (1 << 2));
+			bool rename_file = flag & (1 << 1);
+			bool origin_default = !(flag & 1);
 
 			if (import_path && *import_path) {
 				std::string str(import_path);
@@ -737,95 +790,49 @@ int WorldEditor::customSaveArchive() {
 					break;
 				}
 			}
-
-			// 导入文件后 才会生成该路径
-			if (import_base_path && *import_base_path) {
-				fs::path file_path = fs::path(import_base_path) / import_path;
-
-				//判断是否为默认路径
-				if (!(flag & 0b0100)) {
-					file_path = fs::path(import_base_path) / "war3mapImported" / import_path;
-				}
-
-				//如果本地有该文件， 则视为添加文件
-				if (fs::exists(file_path)) {
-					fs::path target{};
-					if (!(flag & 0b0100))
-						target = fs::path("war3mapImported") / file_path.filename();
-					else
-						target = file_path.filename();
-
-					if (*archive_path) { //如果有修改过路径 则添加到指定路径里
-						target = archive_path;
-					}
-					if (!mpq.file_exists(target.string().c_str())) {
-						printf("导入文件 <%s>\n", target.string().c_str());
-					} else {
-						printf("更新文件 <%s>\n", target.string().c_str());
-					}
-					
-					mpq.file_add(file_path, target);
-					file_list->emplace(target.string(), true);
-
-					//非测试模式下 保存后要将临时文件删除 避免重复导入
-					//if (!data->is_test) {
-					//	fs::remove(file_path);
-					//}
-					continue;
+			uint8_t new_flag = 8;
+			fs::path origin_path = import_path;
+			if (origin_default)
+				origin_path = get_default_path(origin_path);
+			if(add_file)//如果为添加文件
+			{
+				fs::path target_path = origin_path;
+				fs::path local_path = import_base_path / origin_path;
+				mpq.file_add(local_path,target_path);
+				printf("文件添加 <%s> = <%s>\n", local_path.string().c_str(), target_path.string().c_str());
+				*(uint8_t*)p = new_flag;
+				strcpy_s((char*)(p + 1), 0x104, import_path);
+			}
+			else
+			{
+				fs::path local_path = import_base_path / origin_path;
+				if (fs::exists(local_path))
+				{
+					mpq.file_add(local_path, origin_path);
+					printf("文件替换 <%s> = <%s>\n", local_path.string().c_str(), origin_path.string().c_str());
 				}
 			}
 
-			//如果2个名字同时存在 并且不一致  则视为 修改名字
-			if (import_path && *import_path && archive_path && *archive_path && strcmp(import_path, archive_path) != 0) {
-				if (mpq.file_exists(import_path)) {
-					printf("文件重命名 <%s> = <%s>\n", import_path, archive_path);
-					mpq.file_rename(import_path, archive_path);
-					file_list->emplace(archive_path, true);
-					file_list->erase(import_path);
+			if(rename_file)
+			{
+				fs::path target_path = archive_path;
+				mpq.file_rename(origin_path,target_path);
+				printf("文件重命名 <%s> = <%s>\n", origin_path.string().c_str(), target_path.string().c_str());
+				if(!target_default)
+				{
+					new_flag |= 1;
+					new_flag |= 1 << 2;
 				}
-				continue;
+				*(uint8_t*)p = new_flag;
+				strcpy_s((char*)(p + 1), 0x104, target_path.string().c_str());
 			}
-			//	printf("%i %x <%s> %i <%s>\n", i, byte, import_path, 0, archive_path);
+			
+
 		}
 		fs::remove_all(import_base_path);
 	}
 
 	add_temp_files();
-
-	//如果打开过 输入管理器 处理mpq文件 进行增量更新 否则跳过
-	if (g_editor_windows[6]) {
-		HANDLE handle = GetPropA(g_editor_windows[6], "OsGuiPointer");
-		if (handle) {
-			uintptr_t ptr = *(uintptr_t*)((uintptr_t)handle + 0x10);
-			if (ptr) {
-				ptr = *(uintptr_t*)(ptr + 0x8c);
-				if (ptr) {
-					uint32_t size = *(uint32_t*)(ptr + 0x48);
-					ptr = *(uintptr_t*)(ptr + 0x4c);
-
-					if (ptr && size > 0) {
-						for (int i = 0; i < size; i++) {
-							//const char* name = (const char*)(ptr + 0x190 * i + 0x8);
-							const char* path = (const char*)(ptr + 0x190 * i + 0x88);
-							if (path && *path) {
-								file_list->emplace(path, true);
-								file_list->emplace(base::u2a(path), true);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		//处理删除文件
-		mpq.earch_delete_files("*", [&](const std::string& filename) {
-			if (file_list->find(filename) == file_list->end()) {
-				//printf("删除文件 <%s>\n", filename.c_str());
-				return true;
-			}
-			return false;
-		});
-	}
 
 	auto& helper = get_helper();
 
