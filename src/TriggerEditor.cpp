@@ -570,7 +570,7 @@ void TriggerEditor::saveSctipt(const char* path)
 					if (value.empty())
 						writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
 					else
-						writer.write_string("\t\tset udg_" + name + "[i] = \"" + value + "\"\n");
+						writer.write_string("\t\tset udg_" + name + "[i] = \"" + string_replaced(value,"\\","\\\\") + "\"\n");
 				else 
 					writer.write_string("\t\tset udg_" + name + "[i] = " + value + "\n");
 			else
@@ -588,7 +588,7 @@ void TriggerEditor::saveSctipt(const char* path)
 					if (value.empty())
 						writer.write_string("\tset udg_" + name + " = \"\"\n");
 					else
-						writer.write_string("\tset udg_" + name + " = \"" + value + "\"\n");
+						writer.write_string("\tset udg_" + name + " = \"" + string_replaced(value,"\\","\\\\") + "\"\n");
 				else
 					writer.write_string("\tset udg_" + name + " = " + value + "\n");
 			else
