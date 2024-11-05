@@ -27,6 +27,7 @@
  * - https://github.com/yurablok/colored-cout
  ********************************************************************************/
 #pragma once
+#include <string>
 #include <cstdint>
 #include <string_view>
 // usage:
